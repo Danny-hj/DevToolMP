@@ -7,10 +7,12 @@ spring:
     multipart:
       max-file-size: 10MB
       max-request-size: 10MB
-mybatis:
-  configuration:
-    map-underscore-to-camel-case: true
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  mybatis:
+    mapper-locations: classpath:mapper/*.xml
+    type-aliases-package: com.devtoolmp.entity
+    configuration:
+      map-underscore-to-camel-case: true
+      log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
 server:
   port: 8080

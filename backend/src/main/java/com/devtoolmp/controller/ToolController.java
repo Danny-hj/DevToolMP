@@ -4,12 +4,12 @@ import com.devtoolmp.dto.request.ToolCreateRequest;
 import com.devtoolmp.dto.request.ToolUpdateRequest;
 import com.devtoolmp.dto.response.ToolDTO;
 import com.devtoolmp.dto.response.ToolDetailDTO;
+import com.devtoolmp.dto.response.PageResponse;
 import com.devtoolmp.entity.Tool;
 import com.devtoolmp.service.ToolService;
 import com.devtoolmp.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,10 +25,10 @@ public class ToolController {
     private JwtUtil jwtUtil;
 
     @GetMapping
-    public ResponseEntity<Page<ToolDTO>> getTools(
+    public ResponseEntity<PageResponse<ToolDTO>> getTools(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        Page<ToolDTO> tools = toolService.getTools(page, size);
+        PageResponse<ToolDTO> tools = toolService.getTools(page, size);
         return ResponseEntity.ok(tools);
     }
 
@@ -57,11 +57,11 @@ public class ToolController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<Page<ToolDTO>> searchTools(
+    public ResponseEntity<PageResponse<ToolDTO>> searchTools(
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        Page<ToolDTO> tools = toolService.searchTools(keyword, page, size);
+        PageResponse<ToolDTO> tools = toolService.searchTools(keyword, page, size);
         return ResponseEntity.ok(tools);
     }
 

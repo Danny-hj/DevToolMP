@@ -19,4 +19,16 @@ public class User {
     private String githubId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    public void prePersist() {
+        LocalDateTime now = LocalDateTime.now();
+        if (createdAt == null) {
+            createdAt = now;
+        }
+        updatedAt = now;
+    }
+
+    public void preUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }
