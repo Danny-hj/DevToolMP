@@ -1,0 +1,278 @@
+@use './variables.scss' as *;
+
+.ranking-container {
+  padding: $spacing-xl;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.ranking-header {
+  margin-bottom: $spacing-xxl;
+
+  .title {
+    font-size: $font-size-hero;
+    font-weight: 700;
+    margin: 0 0 $spacing-md 0;
+    background: linear-gradient(135deg, $primary-color, #00ffcc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtitle {
+    font-size: $font-size-large;
+    color: $text-color-secondary;
+    margin: 0;
+  }
+}
+
+.ranking-tabs {
+  margin-bottom: $spacing-xl;
+
+  .el-tabs__nav-wrap::after {
+    background-color: $border-color-base;
+  }
+
+  .el-tabs__item {
+    color: $text-color-secondary;
+    font-size: $font-size-large;
+
+    &.is-active {
+      color: $primary-color;
+    }
+
+    &:hover {
+      color: $primary-hover;
+    }
+  }
+
+  .el-tabs__active-bar {
+    background-color: $primary-color;
+  }
+}
+
+.ranking-table-wrapper {
+  background: $background-color-base;
+  border: 1px solid $border-color-base;
+  border-radius: $border-radius-large;
+  overflow: hidden;
+}
+
+.ranking-table {
+  width: 100%;
+
+  .el-table__header-wrapper {
+    th {
+      background-color: $background-color-light;
+      color: $text-color-regular;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: $font-size-small;
+      letter-spacing: 0.5px;
+    }
+  }
+
+  .rank-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: $font-size-large;
+
+    &.rank-1 {
+      background: linear-gradient(135deg, $rank-1-color, #ffed4e);
+      color: #000;
+      box-shadow: 0 0 12px rgba(255, 215, 0, 0.4);
+    }
+
+    &.rank-2 {
+      background: linear-gradient(135deg, $rank-2-color, #e8e8e8);
+      color: #000;
+      box-shadow: 0 0 12px rgba(192, 192, 192, 0.4);
+    }
+
+    &.rank-3 {
+      background: linear-gradient(135deg, $rank-3-color, #daa06d);
+      color: #000;
+      box-shadow: 0 0 12px rgba(205, 127, 50, 0.4);
+    }
+
+    &.rank-other {
+      background: $background-color-lighter;
+      color: $text-color-secondary;
+    }
+  }
+}
+
+.tool-name-cell {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+
+  .tool-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: $border-radius-base;
+    background: $background-color-light;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+
+  .tool-info {
+    .name {
+      font-weight: 600;
+      color: $text-color-primary;
+      margin: 0;
+      font-size: $font-size-base;
+
+      &:hover {
+        color: $primary-color;
+      }
+    }
+
+    .description {
+      font-size: $font-size-small;
+      color: $text-color-secondary;
+      margin: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 300px;
+    }
+  }
+}
+
+.hot-score-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-sm $spacing-md;
+  border-radius: $border-radius-large;
+  font-weight: 600;
+  font-size: $font-size-small;
+
+  &.high {
+    background: rgba($hot-score-high, 0.15);
+    color: $hot-score-high;
+    border: 1px solid rgba($hot-score-high, 0.3);
+  }
+
+  &.medium {
+    background: rgba($hot-score-medium, 0.15);
+    color: $hot-score-medium;
+    border: 1px solid rgba($hot-score-medium, 0.3);
+  }
+
+  &.low {
+    background: rgba($hot-score-low, 0.15);
+    color: $hot-score-low;
+    border: 1px solid rgba($hot-score-low, 0.3);
+  }
+
+  .hot-icon {
+    font-size: 16px;
+  }
+}
+
+.change-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-sm;
+  font-size: $font-size-small;
+  font-weight: 600;
+
+  &.up {
+    color: $success-color;
+  }
+
+  &.down {
+    color: $danger-color;
+  }
+
+  &.neutral {
+    color: $text-color-secondary;
+  }
+}
+
+.stat-number {
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  font-weight: 600;
+}
+
+.install-command {
+  background: $background-color-light;
+  border: 1px solid $border-color-base;
+  border-radius: $border-radius-base;
+  padding: $spacing-sm $spacing-md;
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  font-size: $font-size-small;
+  color: $primary-color;
+  cursor: pointer;
+  transition: $transition-fast;
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-sm;
+
+  &:hover {
+    background: $background-color-lighter;
+    border-color: $primary-color;
+    box-shadow: 0 0 8px rgba(0, 255, 157, 0.2);
+  }
+
+  .copy-icon {
+    font-size: 14px;
+  }
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: $spacing-xxl;
+  color: $text-color-secondary;
+
+  .icon {
+    font-size: 64px;
+    margin-bottom: $spacing-lg;
+    opacity: 0.5;
+  }
+
+  .text {
+    font-size: $font-size-large;
+  }
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+  .ranking-container {
+    padding: $spacing-lg;
+  }
+
+  .ranking-header {
+    .title {
+      font-size: 32px;
+    }
+
+    .subtitle {
+      font-size: $font-size-base;
+    }
+  }
+
+  .tool-name-cell {
+    .tool-info {
+      .description {
+        display: none;
+      }
+    }
+  }
+}

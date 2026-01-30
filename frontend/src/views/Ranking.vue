@@ -1,0 +1,256 @@
+<template>
+  <div class="ranking-container">
+    <!-- ASCII 艺术标题 -->
+    <div class="ranking-header">
+      <h1 class="title">
+        <pre class="ascii-art">
+  ____                 _       _____                _         _____ _
+ / ___|_ __ _   _ ___| |_    |  ___|__  _ __   ___| |__     |  ___| | _____  __
+| |   | '__| | | / __| __|   | |_ / _ \| '_ \ / __| '_ \    | |_  | |/ _ \ \/ /
+| |___| |  | |_| \__ \ |_    |  _| (_) | | | | (__| | | |   |  _| | |  __/>  <
+ \____|_|   \__, |___/\__|   |_|  \___/|_| |_|\___|_| |_|   |_|   |_|\___/_/\_\
+            |___/
+        </pre>
+        <span class="title-text">排行榜</span>
+      </h1>
+      <p class="subtitle">发现最受欢迎的开发工具</p>
+    </div>
+
+    <!-- 标签页 -->
+    <div class="ranking-tabs">
+      <el-tabs v-model="activeTab" @tab-change="handleTabChange">
+        <el-tab-pane label="全部总榜" name="alltime">
+          <span class="tab-label">
+            <el-icon><Trophy /></el-icon>
+            全部总榜
+          </span>
+        </el-tab-pane>
+        <el-tab-pane label="周榜" name="weekly">
+          <span class="tab-label">
+            <el-icon><Calendar /></el-icon>
+            周榜
+          </span>
+        </el-tab-pane>
+        <el-tab-pane label="日榜" name="daily">
+          <span class="tab-label">
+            <el-icon><Sunny /></el-icon>
+            日榜
+          </span>
+        </el-tab-pane>
+        <el-tab-pane label="趋势榜" name="trending">
+          <span class="tab-label">
+            <el-icon><TrendCharts /></el-icon>
+            趋势榜
+          </span>
+        </el-tab-pane>
+      </el-tabs>
+    </div>
+
+    <!-- 排行榜内容 -->
+    <div v-loading="loading" class="ranking-content">
+      <!-- 表格展示 -->
+      <div v-if="!isEmpty && !loading" class="ranking-table-wrapper">
+        <el-table :data="rankings" class="ranking-table">
+          <!-- 排名 -->
+          <el-table-column label="排名" width="80" align="center">
+            <template #default="{ $index }">
+              <span
+                class="rank-number"
+                :class="getRankClass($index)"
+              >
+                {{ $index + 1 }}
+              </span>
+            </template>
+          </el-table-column>
+
+          <!-- 工具信息 -->
+          <el-table-column label="工具名称" min-width="300">
+            <template #default="{ row }">
+              <div class="tool-name-cell">
+                <div class="tool-icon">
+                  {{ row.name.charAt(0).toUpperCase() }}
+                </div>
+                <div class="tool-info">
+                  <router-link :to="`/tools/${row.id}`" class="name">
+                    {{ row.name }}
+                  </router-link>
+                  <p class="description">{{ row.description }}</p>
+                </div>
+              </div>
+            </template>
+          </el-table-column>
+
+          <!-- 热度分数 -->
+          <el-table-column label="热度分数" width="140" align="center">
+            <template #default="{ row }">
+              <div
+                class="hot-score-badge"
+                :class="getHotScoreClass(row.hotScore)"
+              >
+                <span class="hot-icon">🔥</span>
+                <span>{{ row.hotScore?.toFixed(0) || '0' }}</span>
+              </div>
+            </template>
+          </el-table-column>
+
+          <!-- 安装量 -->
+          <el-table-column label="安装量" width="120" align="right">
+            <template #default="{ row }">
+              <span class="stat-number">{{ formatNumber(row.installCount) }}</span>
+            </template>
+          </el-table-column>
+
+          <!-- 收藏数 -->
+          <el-table-column label="收藏数" width="120" align="right">
+            <template #default="{ row }">
+              <span class="stat-number">{{ formatNumber(row.favoriteCount) }}</span>
+            </template>
+          </el-table-column>
+
+          <!-- 浏览数 -->
+          <el-table-column label="浏览数" width="120" align="right">
+            <template #default="{ row }">
+              <span class="stat-number">{{ formatNumber(row.viewCount) }}</span>
+            </template>
+          </el-table-column>
+
+          <!-- 变化 -->
+          <el-table-column label="变化" width="100" align="center">
+            <template #default="{ row }">
+              <div
+                class="change-indicator"
+                :class="getChangeClass(row.changePercentage)"
+              >
+                <el-icon>
+                  <component :is="getChangeIcon(row.changePercentage)" />
+                </el-icon>
+                <span>{{ Math.abs(row.changePercentage)?.toFixed(1) || '0' }}%</span>
+              </div>
+            </template>
+          </el-table-column>
+
+          <!-- 操作 -->
+          <el-table-column label="操作" width="120" align="center">
+            <template #default="{ row }">
+              <div
+                class="install-command"
+                @click="copyInstallCommand(row)"
+              >
+                <span>安装</span>
+                <el-icon class="copy-icon"><DocumentCopy /></el-icon>
+              </div>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+
+      <!-- 空状态 -->
+      <div v-if="isEmpty && !loading" class="empty-state">
+        <div class="icon">📊</div>
+        <p class="text">暂无排行榜数据</p>
+      </div>
+
+      <!-- 错误状态 -->
+      <el-alert
+        v-if="hasError"
+        type="error"
+        :title="error"
+        :closable="false"
+      />
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted, computed } from 'vue'
+import { ElMessage } from 'element-plus'
+import {
+  Trophy,
+  Calendar,
+  Sunny,
+  TrendCharts,
+  ArrowUp,
+  ArrowDown,
+  Minus,
+  DocumentCopy
+} from '@element-plus/icons-vue'
+import { useRankingStore } from '../stores/ranking'
+
+const {
+  rankings,
+  loading,
+  error,
+  activeTab,
+  isEmpty,
+  hasError,
+  fetchRankings,
+  switchTab
+} = useRankingStore()
+
+onMounted(() => {
+  fetchRankings(activeTab.value)
+})
+
+const handleTabChange = (tab) => {
+  switchTab(tab)
+}
+
+const getRankClass = (index) => {
+  if (index === 0) return 'rank-1'
+  if (index === 1) return 'rank-2'
+  if (index === 2) return 'rank-3'
+  return 'rank-other'
+}
+
+const getHotScoreClass = (score) => {
+  if (!score) return 'low'
+  if (score > 1000) return 'high'
+  if (score > 500) return 'medium'
+  return 'low'
+}
+
+const getChangeClass = (percentage) => {
+  if (!percentage) return 'neutral'
+  if (percentage > 0) return 'up'
+  if (percentage < 0) return 'down'
+  return 'neutral'
+}
+
+const getChangeIcon = (percentage) => {
+  if (!percentage) return Minus
+  if (percentage > 0) return ArrowUp
+  if (percentage < 0) return ArrowDown
+  return Minus
+}
+
+const formatNumber = (num) => {
+  if (!num) return '0'
+  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'
+  if (num >= 1000) return (num / 1000).toFixed(1) + 'K'
+  return num.toString()
+}
+
+const copyInstallCommand = async (tool) => {
+  const command = tool.packageName
+    ? `npm install ${tool.packageName}`
+    : `npm install ${tool.githubOwner}/${tool.githubRepo}`
+
+  try {
+    await navigator.clipboard.writeText(command)
+    ElMessage.success('安装命令已复制到剪贴板')
+  } catch (err) {
+    ElMessage.error('复制失败,请手动复制')
+  }
+}
+</script>
+
+<style scoped lang="scss">
+@use '@/assets/styles/variables.scss' as *;
+@use '@/assets/styles/ranking.scss';
+
+.tab-label {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+</style>

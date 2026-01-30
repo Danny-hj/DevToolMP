@@ -47,7 +47,7 @@
         SELECT COUNT(*) FROM ratings WHERE tool_id = #{toolId} AND score = #{score}
     </select>
 
-    <select id="getScoreDistribution" resultType="java.lang.Object[]">
+    <select id="getScoreDistribution" resultType="java.util.Map">
         SELECT score, COUNT(*) as count FROM ratings WHERE tool_id = #{toolId} GROUP BY score
     </select>
 
