@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.devtoolmp.mapper.ToolTagMapper">
+
+    <resultMap id="BaseResultMap" type="com.devtoolmp.entity.ToolTag">
+        <id column="id" property="id"/>
+        <result column="tool_id" property="toolId"/>
+        <result column="tag_name" property="tagName"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT * FROM tool_tags WHERE id = #{id}
+    </select>
+
+    <select id="findByToolId" resultMap="BaseResultMap">
+        SELECT * FROM tool_tags WHERE tool_id = #{toolId}
+    </select>
+
+    <select id="findDistinctTagNames" resultType="string">
+        SELECT DISTINCT tag_name FROM tool_tags
+    </select>
+
+    <insert id="insert" parameterType="com.devtoolmp.entity.ToolTag" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO tool_tags (tool_id, tag_name, created_at)
+        VALUES (#{toolId}, #{tagName}, #{createdAt})
+    </insert>
+
+    <delete id="deleteById">
+        DELETE FROM tool_tags WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteByToolId">
+        DELETE FROM tool_tags WHERE tool_id = #{toolId}
+    </delete>
+
+</mapper>

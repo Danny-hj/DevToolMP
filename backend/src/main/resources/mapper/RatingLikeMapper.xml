@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.devtoolmp.mapper.RatingLikeMapper">
+
+    <resultMap id="BaseResultMap" type="com.devtoolmp.entity.RatingLike">
+        <id column="id" property="id"/>
+        <result column="rating_id" property="ratingId"/>
+        <result column="user_id" property="userId"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT * FROM rating_likes WHERE id = #{id}
+    </select>
+
+    <select id="findByRatingIdAndUserId" resultMap="BaseResultMap">
+        SELECT * FROM rating_likes WHERE rating_id = #{ratingId} AND user_id = #{userId}
+    </select>
+
+    <select id="findByRatingId" resultMap="BaseResultMap">
+        SELECT * FROM rating_likes WHERE rating_id = #{ratingId}
+    </select>
+
+    <insert id="insert" parameterType="com.devtoolmp.entity.RatingLike" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO rating_likes (rating_id, user_id, created_at)
+        VALUES (#{ratingId}, #{userId}, #{createdAt})
+    </insert>
+
+    <delete id="deleteById">
+        DELETE FROM rating_likes WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteByRatingIdAndUserId">
+        DELETE FROM rating_likes WHERE rating_id = #{ratingId} AND user_id = #{userId}
+    </delete>
+
+    <select id="existsByRatingIdAndUserId" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM rating_likes WHERE rating_id = #{ratingId} AND user_id = #{userId}
+    </select>
+
+</mapper>

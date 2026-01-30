@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.devtoolmp.mapper.UserMapper">
+
+    <resultMap id="BaseResultMap" type="com.devtoolmp.entity.User">
+        <id column="id" property="id"/>
+        <result column="username" property="username"/>
+        <result column="email" property="email"/>
+        <result column="password" property="password"/>
+        <result column="avatar" property="avatar"/>
+        <result column="bio" property="bio"/>
+        <result column="github_url" property="githubUrl"/>
+        <result column="github_id" property="githubId"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT * FROM users WHERE id = #{id}
+    </select>
+
+    <select id="findByEmail" resultMap="BaseResultMap">
+        SELECT * FROM users WHERE email = #{email}
+    </select>
+
+    <select id="findByUsername" resultMap="BaseResultMap">
+        SELECT * FROM users WHERE username = #{username}
+    </select>
+
+    <insert id="insert" parameterType="com.devtoolmp.entity.User" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO users (username, email, password, avatar, bio, github_url, github_id, created_at, updated_at)
+        VALUES (#{username}, #{email}, #{password}, #{avatar}, #{bio}, #{githubUrl}, #{githubId}, #{createdAt}, #{updatedAt})
+    </insert>
+
+    <update id="update" parameterType="com.devtoolmp.entity.User">
+        UPDATE users
+        SET username = #{username},
+            email = #{email},
+            password = #{password},
+            avatar = #{avatar},
+            bio = #{bio},
+            github_url = #{githubUrl},
+            github_id = #{githubId},
+            updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM users WHERE id = #{id}
+    </delete>
+
+</mapper>
