@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: devtoolmp-backend
+  profiles:
+    active: dev
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+jwt:
+  secret: devtoolmp-secret-key-for-jwt-token-generation-please-change-in-production
+  expiration: 86400000
+
+github:
+  api:
+    base-url: https://api.github.com
+  oauth:
+    client-id: your-github-client-id
+    client-secret: your-github-client-secret
+    redirect-uri: http://localhost:5173/auth/github/callback
+
+logging:
+  level:
+    com.devtoolmp: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
