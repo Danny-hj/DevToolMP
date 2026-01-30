@@ -129,4 +129,8 @@
         SELECT COUNT(*) FROM tools
     </select>
 
+    <select id="findAll" resultMap="BaseResultMap">
+        SELECT * FROM tools WHERE status = 'active'
+    </select>
+
 </mapper>

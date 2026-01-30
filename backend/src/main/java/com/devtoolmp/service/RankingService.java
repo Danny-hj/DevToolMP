@@ -7,10 +7,14 @@ import com.devtoolmp.entity.Tool;
 import com.devtoolmp.entity.ToolTag;
 import com.devtoolmp.mapper.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,6 +30,7 @@ public class RankingService {
     @Autowired
     private ToolTagMapper toolTagMapper;
 
+    @Cacheable(value = "dailyRanking", key = "'daily'")
     public List<ToolRankingDTO> getDailyRanking() {
         List<Tool> tools = toolMapper.findTop20ByStatusOrderByHotScoreDailyDesc();
         return tools.stream().map(tool -> {
@@ -43,6 +48,7 @@ public class RankingService {
         }).collect(Collectors.toList());
     }
 
+    @Cacheable(value = "weeklyRanking", key = "'weekly'")
     public List<ToolRankingDTO> getWeeklyRanking() {
         List<Tool> tools = toolMapper.findTop20ByStatusOrderByHotScoreWeeklyDesc();
         return tools.stream().map(tool -> {
@@ -60,6 +66,7 @@ public class RankingService {
         }).collect(Collectors.toList());
     }
 
+    @Cacheable(value = "allTimeRanking", key = "'alltime'")
     public List<ToolRankingDTO> getAllTimeRanking() {
         List<Tool> tools = toolMapper.findTop20ByStatusOrderByHotScoreAlltimeDesc();
         return tools.stream().map(tool -> {
@@ -77,11 +84,51 @@ public class RankingService {
         }).collect(Collectors.toList());
     }
 
+    /**
+     * 获取趋势榜(24小时变化最快)
+     */
+    @Cacheable(value = "trendingRanking", key = "'trending'")
+    public List<ToolRankingDTO> getTrendingRankings() {
+        List<Tool> tools = toolMapper.findTop20ByStatusOrderByHotScoreDailyDesc();
+        return tools.stream()
+                .filter(tool -> tool.getHotScoreDaily() != null && tool.getHotScoreDaily().compareTo(BigDecimal.ZERO) > 0)
+                .map(tool -> {
+                    Category category = tool.getCategoryId() != null ? categoryMapper.findById(tool.getCategoryId()) : null;
+                    String categoryName = category != null ? category.getName() : null;
+                    List<ToolTag> toolTags = toolTagMapper.findByToolId(tool.getId());
+                    List<String> tags = toolTags.stream().map(ToolTag::getTagName).collect(Collectors.toList());
+                    ToolDTO toolDTO = ToolDTO.fromEntity(tool, categoryName, tags);
+                    Double changePercentage = calculateChangePercentage(
+                            tool.getViewCount(), tool.getViewCountYesterday(),
+                            tool.getFavoriteCount(), tool.getFavoriteCountYesterday(),
+                            tool.getInstallCount(), tool.getInstallCountYesterday()
+                    );
+                    return ToolRankingDTO.fromToolDTO(toolDTO, tool.getHotScoreDaily(), changePercentage);
+                })
+                .sorted((a, b) -> Double.compare(b.getChangePercentage(), a.getChangePercentage()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 批量更新热度分数
+     * 定时任务:每10分钟执行一次
+     */
     @Transactional
-    public void calculateHotScores() {
-        // Note: This method needs to be implemented differently since MyBatis doesn't have findAll()
-        // For now, this is a placeholder that would need to be implemented based on actual needs
-        // You might need to add a findAll() method to ToolMapper
+    @Scheduled(cron = "0 */10 * * * *")
+    public void updateHotScores() {
+        List<Tool> tools = toolMapper.findAll();
+        for (Tool tool : tools) {
+            BigDecimal dailyScore = calculateHotScore(tool, "daily");
+            BigDecimal weeklyScore = calculateHotScore(tool, "weekly");
+            BigDecimal alltimeScore = calculateHotScore(tool, "alltime");
+
+            tool.setHotScoreDaily(dailyScore);
+            tool.setHotScoreWeekly(weeklyScore);
+            tool.setHotScoreAlltime(alltimeScore);
+            tool.setUpdatedAt(LocalDateTime.now());
+
+            toolMapper.update(tool);
+        }
     }
 
     private BigDecimal calculateHotScore(Tool tool, String period) {
@@ -113,7 +160,7 @@ public class RankingService {
                 (tool.getFavoriteCount() * favoriteWeight * 10) +
                 (tool.getInstallCount() * installWeight * 5);
 
-        return BigDecimal.valueOf(score);
+        return BigDecimal.valueOf(score).setScale(2, RoundingMode.HALF_UP);
     }
 
     private Double calculateChangePercentage(Integer currentViews, Integer yesterdayViews,

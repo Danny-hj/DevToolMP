@@ -7,7 +7,7 @@ import com.devtoolmp.dto.response.CommentReplyDTO;
 import com.devtoolmp.dto.response.RatingStatisticsDTO;
 import com.devtoolmp.dto.response.PageResponse;
 import com.devtoolmp.service.RatingService;
-import com.devtoolmp.util.JwtUtil;
+import com.devtoolmp.service.TokenService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,7 +24,7 @@ public class RatingController {
     private RatingService ratingService;
 
     @Autowired
-    private JwtUtil jwtUtil;
+    private TokenService tokenService;
 
     @GetMapping("/{ratingId}")
     public ResponseEntity<RatingDTO> getRating(@PathVariable Long ratingId) {
@@ -59,12 +59,11 @@ public class RatingController {
             @RequestBody RatingCreateRequest request,
             HttpServletRequest httpRequest) {
         String authHeader = httpRequest.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        Long userId = tokenService.extractUserId(authHeader);
+
+        if (userId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-
-        String token = authHeader.substring(7);
-        Long userId = jwtUtil.extractUserId(token);
 
         RatingDTO rating = ratingService.createRating(toolId, userId, request.getScore(), request.getComment());
         return ResponseEntity.status(HttpStatus.CREATED).body(rating);
@@ -76,12 +75,11 @@ public class RatingController {
             @RequestBody RatingCreateRequest request,
             HttpServletRequest httpRequest) {
         String authHeader = httpRequest.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        Long userId = tokenService.extractUserId(authHeader);
+
+        if (userId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-
-        String token = authHeader.substring(7);
-        Long userId = jwtUtil.extractUserId(token);
 
         RatingDTO rating = ratingService.updateRating(ratingId, userId, request.getScore(), request.getComment());
         return ResponseEntity.ok(rating);
@@ -92,12 +90,11 @@ public class RatingController {
             @PathVariable Long ratingId,
             HttpServletRequest httpRequest) {
         String authHeader = httpRequest.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        Long userId = tokenService.extractUserId(authHeader);
+
+        if (userId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-
-        String token = authHeader.substring(7);
-        Long userId = jwtUtil.extractUserId(token);
 
         ratingService.deleteRating(ratingId, userId);
         return ResponseEntity.noContent().build();
@@ -109,12 +106,11 @@ public class RatingController {
             @RequestBody CommentReplyRequest request,
             HttpServletRequest httpRequest) {
         String authHeader = httpRequest.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        Long userId = tokenService.extractUserId(authHeader);
+
+        if (userId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-
-        String token = authHeader.substring(7);
-        Long userId = jwtUtil.extractUserId(token);
 
         CommentReplyDTO reply = ratingService.createReply(ratingId, userId, request.getContent());
         return ResponseEntity.status(HttpStatus.CREATED).body(reply);
@@ -125,12 +121,11 @@ public class RatingController {
             @PathVariable Long replyId,
             HttpServletRequest httpRequest) {
         String authHeader = httpRequest.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        Long userId = tokenService.extractUserId(authHeader);
+
+        if (userId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-
-        String token = authHeader.substring(7);
-        Long userId = jwtUtil.extractUserId(token);
 
         ratingService.deleteReply(replyId, userId);
         return ResponseEntity.noContent().build();

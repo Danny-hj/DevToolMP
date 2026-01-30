@@ -1,24 +1,146 @@
+@use './variables.scss' as *;
+@use 'sass:color';
+
 :root {
-  --el-bg-color: #1a1a1a;
-  --el-bg-color-page: #000000;
-  --el-text-color-primary: #e0e0e0;
-  --el-text-color-regular: #b0b0b0;
-  --el-text-color-secondary: #909090;
-  --el-border-color: #333333;
-  --el-border-color-light: #444444;
-  --el-fill-color: #2a2a2a;
-  --el-fill-color-light: #3a3a3a;
-  --el-fill-color-lighter: #4a4a4a;
+  // 背景色
+  --el-bg-color: #{$background-color-base};
+  --el-bg-color-page: #{$background-color-page};
+  --el-bg-color-overlay: #{$background-color-lighter};
+
+  // 文本色
+  --el-text-color-primary: #{$text-color-primary};
+  --el-text-color-regular: #{$text-color-regular};
+  --el-text-color-secondary: #{$text-color-secondary};
+  --el-text-color-placeholder: #{$text-color-placeholder};
+
+  // 边框色
+  --el-border-color: #{$border-color-base};
+  --el-border-color-light: #{$border-color-light};
+  --el-border-color-lighter: #{$border-color-lighter};
+  --el-border-color-extra-light: #{$border-color-base};
+
+  // 填充色
+  --el-fill-color: #{$background-color-light};
+  --el-fill-color-light: #{$background-color-lighter};
+  --el-fill-color-lighter: #3a3a3a;
+  --el-fill-color-extra-light: #4a4a4a;
+  --el-fill-color-dark: #2a2a2a;
+  --el-fill-color-darker: #1a1a1a;
+
+  // 主题色
+  --el-color-primary: #{$primary-color};
+  --el-color-primary-light-3: #{color.adjust($primary-color, $lightness: 10%)};
+  --el-color-primary-light-5: #{color.adjust($primary-color, $lightness: 20%)};
+  --el-color-primary-light-7: #{color.adjust($primary-color, $lightness: 30%)};
+  --el-color-primary-light-8: #{color.adjust($primary-color, $lightness: 40%)};
+  --el-color-primary-light-9: #{color.adjust($primary-color, $lightness: 50%)};
+  --el-color-primary-dark-2: #{color.adjust($primary-color, $lightness: -10%)};
+
+  // 其他功能色
+  --el-color-success: #{$success-color};
+  --el-color-warning: #{$warning-color};
+  --el-color-danger: #{$danger-color};
+  --el-color-error: #{$danger-color};
+  --el-color-info: #{$info-color};
 }
 
 body {
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'Droid Sans Mono', 'Source Code Pro', monospace;
   background-color: var(--el-bg-color-page);
   color: var(--el-text-color-primary);
+  line-height: 1.6;
 }
 
 #app {
   min-height: 100vh;
+}
+
+// 滚动条样式
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--el-bg-color-page);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--el-border-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--el-border-color-light);
+}
+
+// 选择文本样式
+::selection {
+  background: rgba(0, 255, 157, 0.2);
+  color: var(--el-text-color-primary);
+}
+
+// 链接样式
+a {
+  color: var(--el-color-primary);
+  text-decoration: none;
+  transition: $transition-fast;
+
+  &:hover {
+    color: var(--el-color-primary-light-3);
+  }
+}
+
+// Element Plus 组件样式覆盖
+.el-card {
+  background-color: var(--el-bg-color);
+  border-color: var(--el-border-color);
+}
+
+.el-button--primary {
+  background-color: var(--el-color-primary);
+  border-color: var(--el-color-primary);
+  color: #000;
+  font-weight: 600;
+
+  &:hover {
+    background-color: var(--el-color-primary-light-3);
+    border-color: var(--el-color-primary-light-3);
+  }
+}
+
+.el-input__wrapper {
+  background-color: var(--el-bg-color);
+  box-shadow: 0 0 0 1px var(--el-border-color) inset;
+
+  &:hover,
+  &.is-focus {
+    box-shadow: 0 0 0 1px var(--el-color-primary) inset;
+  }
+}
+
+.el-table {
+  background-color: var(--el-bg-color);
+  color: var(--el-text-color-primary);
+
+  th {
+    background-color: var(--el-fill-color);
+    color: var(--el-text-color-regular);
+  }
+
+  tr:hover > td {
+    background-color: var(--el-fill-color-light) !important;
+  }
+
+  td {
+    border-color: var(--el-border-color);
+  }
+}
+
+.el-tag {
+  background-color: var(--el-fill-color);
+  border-color: var(--el-border-color);
+  color: var(--el-text-color-regular);
 }

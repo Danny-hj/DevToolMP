@@ -3,6 +3,7 @@ import Home from '@/views/Home.vue'
 import Tools from '@/views/Tools.vue'
 import ToolDetail from '@/views/ToolDetail.vue'
 import Search from '@/views/Search.vue'
+import Ranking from '@/views/Ranking.vue'
 
 const routes = [
   {
@@ -25,6 +26,11 @@ const routes = [
     path: '/search',
     name: 'Search',
     component: Search
+  },
+  {
+    path: '/ranking',
+    name: 'Ranking',
+    component: Ranking
   }
 ]
 

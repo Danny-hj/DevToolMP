@@ -7,7 +7,7 @@ import com.devtoolmp.dto.response.ToolDetailDTO;
 import com.devtoolmp.dto.response.PageResponse;
 import com.devtoolmp.entity.Tool;
 import com.devtoolmp.service.ToolService;
-import com.devtoolmp.util.JwtUtil;
+import com.devtoolmp.service.TokenService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,7 +22,7 @@ public class ToolController {
     private ToolService toolService;
 
     @Autowired
-    private JwtUtil jwtUtil;
+    private TokenService tokenService;
 
     @GetMapping
     public ResponseEntity<PageResponse<ToolDTO>> getTools(
@@ -43,14 +43,7 @@ public class ToolController {
             @PathVariable Long id,
             HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
-        Long userId = null;
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            try {
-                userId = jwtUtil.extractUserId(token);
-            } catch (Exception e) {
-            }
-        }
+        Long userId = tokenService.extractUserId(authHeader);
 
         ToolDetailDTO toolDetail = toolService.getToolDetailById(id, userId);
         return ResponseEntity.ok(toolDetail);
@@ -93,14 +86,7 @@ public class ToolController {
             @PathVariable Long id,
             HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
-        Long userId = null;
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            try {
-                userId = jwtUtil.extractUserId(token);
-            } catch (Exception e) {
-            }
-        }
+        Long userId = tokenService.extractUserId(authHeader);
 
         String ipAddress = request.getRemoteAddr();
         String userAgent = request.getHeader("User-Agent");
@@ -114,12 +100,11 @@ public class ToolController {
             @PathVariable Long id,
             HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        Long userId = tokenService.extractUserId(authHeader);
+
+        if (userId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-
-        String token = authHeader.substring(7);
-        Long userId = jwtUtil.extractUserId(token);
 
         boolean isFavorited = toolService.toggleFavorite(id, userId);
         return ResponseEntity.ok(isFavorited);
@@ -130,12 +115,11 @@ public class ToolController {
             @PathVariable Long id,
             HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        Long userId = tokenService.extractUserId(authHeader);
+
+        if (userId == null) {
             return ResponseEntity.ok(false);
         }
-
-        String token = authHeader.substring(7);
-        Long userId = jwtUtil.extractUserId(token);
 
         boolean isFavorited = toolService.isFavorited(id, userId);
         return ResponseEntity.ok(isFavorited);

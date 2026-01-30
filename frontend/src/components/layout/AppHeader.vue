@@ -17,8 +17,18 @@
       </div>
 
       <nav class="nav-links">
-        <router-link to="/" class="nav-link">首页</router-link>
-        <router-link to="/tools" class="nav-link">工具列表</router-link>
+        <router-link to="/" class="nav-link">
+          <el-icon><HomeFilled /></el-icon>
+          首页
+        </router-link>
+        <router-link to="/tools" class="nav-link">
+          <el-icon><Tools /></el-icon>
+          工具列表
+        </router-link>
+        <router-link to="/ranking" class="nav-link">
+          <el-icon><Trophy /></el-icon>
+          排行榜
+        </router-link>
       </nav>
 
       <div class="user-actions">
@@ -45,6 +55,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { HomeFilled, Tools, Trophy, User } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
@@ -79,19 +90,22 @@ const handleCommand = (command) => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use '@/assets/styles/variables.scss' as *;
+
 .app-header {
-  background-color: #1a1a1a;
-  border-bottom: 1px solid #333;
+  background-color: $background-color-base;
+  border-bottom: 1px solid $border-color-base;
   position: sticky;
   top: 0;
-  z-index: 1000;
+  z-index: $z-index-top;
+  backdrop-filter: blur(10px);
 }
 
 .header-container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 $spacing-xl;
   height: 64px;
   display: flex;
   align-items: center;
@@ -101,46 +115,102 @@ const handleCommand = (command) => {
 .logo a {
   text-decoration: none;
   color: inherit;
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
 }
 
 .logo h1 {
-  font-size: 24px;
+  font-size: $font-size-extra-large;
   margin: 0;
-  color: #409eff;
+  font-weight: 700;
+  background: linear-gradient(135deg, $primary-color, #00ffcc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .search-box {
   flex: 1;
-  max-width: 400px;
-  margin: 0 40px;
+  max-width: 500px;
+  margin: 0 $spacing-xxl;
+
+  :deep(.el-input__wrapper) {
+    background-color: $background-color-light;
+    border: 1px solid $border-color-base;
+
+    &:hover,
+    &.is-focus {
+      border-color: $primary-color;
+      box-shadow: 0 0 8px rgba(0, 255, 157, 0.2);
+    }
+  }
 }
 
 .nav-links {
   display: flex;
-  gap: 24px;
+  gap: $spacing-lg;
 }
 
 .nav-link {
-  color: #e0e0e0;
+  color: $text-color-regular;
   text-decoration: none;
-  font-size: 14px;
-  transition: color 0.3s;
+  font-size: $font-size-base;
+  transition: $transition-fast;
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-sm $spacing-md;
+  border-radius: $border-radius-base;
+
+  &:hover,
+  &.router-link-active {
+    color: $primary-color;
+    background: rgba(0, 255, 157, 0.1);
+  }
 }
 
-.nav-link:hover,
-.nav-link.router-link-active {
-  color: #409eff;
+.user-actions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
 }
 
 .user-name {
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 4px;
-  color: #e0e0e0;
+  gap: $spacing-sm;
+  color: $text-color-regular;
+  padding: $spacing-sm $spacing-md;
+  border-radius: $border-radius-base;
+  transition: $transition-fast;
+
+  &:hover {
+    color: $primary-color;
+    background: rgba(0, 255, 157, 0.1);
+  }
 }
 
-.user-name:hover {
-  color: #409eff;
+@media (max-width: 768px) {
+  .header-container {
+    padding: 0 $spacing-lg;
+  }
+
+  .search-box {
+    display: none;
+  }
+
+  .nav-links {
+    gap: $spacing-md;
+  }
+
+  .nav-link span {
+    display: none;
+  }
+
+  .nav-link .el-icon {
+    font-size: 20px;
+  }
 }
 </style>

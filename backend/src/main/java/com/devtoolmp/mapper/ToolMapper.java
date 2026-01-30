@@ -38,4 +38,6 @@ public interface ToolMapper {
     void deleteById(@Param("id") Long id);
 
     int countAll();
+
+    List<Tool> findAll();
 }
