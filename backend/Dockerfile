@@ -1,10 +1,13 @@
-FROM maven:3.9-openjdk-17-slim
+FROM registry.cn-hangzhou.aliyuncs.com/zhangshier/maven:3.9-eclipse-temurin-21-alpine
 
 WORKDIR /app
 
 COPY pom.xml .
 COPY src ./src
 
-RUN mvn clean install -DskipTests
+RUN mvn clean package -DskipTests && \
+    mv target/*.jar app.jar
 
-CMD ["mvn", "spring-boot:run"]
+EXPOSE 8080
+
+CMD ["java", "-jar", "app.jar"]
