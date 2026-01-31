@@ -162,8 +162,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed, onActivated } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, onMounted, watch, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
   Trophy,
@@ -178,6 +178,7 @@ import {
 import { useRankingStore } from '../stores/ranking'
 
 const route = useRoute()
+const router = useRouter()
 const {
   rankings,
   loading,
@@ -194,19 +195,39 @@ const loadData = async () => {
 }
 
 onMounted(() => {
-  loadData()
-})
-
-// 监听路由变化，确保每次进入页面都刷新数据
-watch(() => route.path, (newPath) => {
-  if (newPath === '/ranking') {
+  // 检查路由参数中的 tab
+  const tabFromQuery = route.query.tab
+  if (tabFromQuery && tabFromQuery !== activeTab.value) {
+    // 如果有 tab 参数且与当前不同，先切换 tab
+    switchTab(tabFromQuery)
+  } else {
+    // 否则加载当前 tab 的数据
     loadData()
   }
-}, { immediate: false })
+})
+
+// 监听路由 query 参数变化
+watch(() => route.query.tab, (newTab) => {
+  if (newTab && newTab !== activeTab.value) {
+    switchTab(newTab)
+  }
+})
 
 const handleTabChange = (tab) => {
-  switchTab(tab)
+  // 如果 tab 没有变化，不执行任何操作
+  if (tab === activeTab.value) return
+
+  // 更新 URL query 参数
+  router.push({ path: '/ranking', query: { tab } })
+  // 注意：不在这里调用 switchTab，让 URL 变化触发下面的 watch
 }
+
+// 监听路由 query 参数变化（用于处理从首页跳转的情况）
+watch(() => route.query.tab, (newTab) => {
+  if (newTab && newTab !== activeTab.value) {
+    switchTab(newTab)
+  }
+})
 
 const getRankClass = (index) => {
   if (index === 0) return 'rank-1'

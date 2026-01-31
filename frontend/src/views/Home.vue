@@ -18,6 +18,7 @@
 
         <!-- 一键安装命令展示 -->
         <div class="install-command-hero" @click="copyInstallCommand">
+          <span class="command-prefix">$</span>
           <span class="command-text">npm install -g devtoolmp</span>
           <el-icon class="copy-icon"><DocumentCopy /></el-icon>
         </div>
@@ -148,7 +149,7 @@
         <tool-card
           v-else
           v-for="tool in popularTools"
-          :key="tool.id"
+          :key="`${tool.id}-${refreshKey}`"
           :tool="tool"
           :hot-score="tool.hotScoreAlltime"
           @click="handleToolClick"
@@ -175,7 +176,7 @@
         <tool-card
           v-else
           v-for="tool in latestTools"
-          :key="tool.id"
+          :key="`${tool.id}-${refreshKey}`"
           :tool="tool"
           @click="handleToolClick"
           @favorite="handleFavorite"
@@ -186,8 +187,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, computed, watch, onUnmounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
   Tools,
@@ -208,13 +209,17 @@ import ToolCard from '@/components/tool/ToolCard.vue'
 import StatsCard from '@/components/home/StatsCard.vue'
 
 const router = useRouter()
+const route = useRoute()
 const toolsStore = useToolsStore()
 
-// 统计数据
+// 添加一个刷新计数器，用于强制重新渲染
+const refreshKey = ref(0)
+
+// 统计数据（使用合理数值，配合K/M单位显示）
 const totalTools = ref(156)
-const totalInstalls = ref(89)
+const totalInstalls = ref(89) // 会显示为 89K
 const totalCategories = ref(12)
-const activeUsers = ref(3245)
+const activeUsers = ref(3.2) // 会显示为 3.2K
 
 const popularTools = computed(() => {
   const tools = toolsStore.tools
@@ -233,9 +238,37 @@ const latestTools = computed(() => {
 
 const loading = computed(() => toolsStore.loading)
 
+// 刷新数据的函数
+const refreshData = async () => {
+  console.log('[Home] refreshData called, refreshKey:', refreshKey.value)
+  // 强制清空现有数据，确保视觉刷新
+  toolsStore.tools = []
+  // 增加刷新计数器
+  refreshKey.value++
+  // 重新获取数据
+  await toolsStore.fetchTools(0, 20)
+  console.log('[Home] Data refresh completed, tools count:', toolsStore.tools.length)
+}
+
 onMounted(() => {
-  toolsStore.fetchTools(0, 20)
+  console.log('[Home] Component mounted, route:', route.path)
+  refreshData()
 })
+
+// 监听路由变化，确保每次进入首页都刷新数据
+// 使用 immediate: false 确保不会在首次挂载时重复执行
+watch(
+  () => route.path,
+  (newPath, oldPath) => {
+    console.log('[Home] Route path changed:', { oldPath, newPath, currentRefreshKey: refreshKey.value })
+    // 当从其他页面导航到首页时，刷新数据
+    if (newPath === '/' && oldPath && oldPath !== '/') {
+      console.log('[Home] Navigated to home from another page, forcing refresh...')
+      refreshData()
+    }
+  },
+  { flush: 'post' }
+)
 
 const handleToolClick = (tool) => {
   router.push(`/tools/${tool.id}`)
@@ -261,6 +294,11 @@ const copyInstallCommand = async () => {
     ElMessage.error('复制失败,请手动复制')
   }
 }
+
+// 组件卸载时清理
+onUnmounted(() => {
+  console.log('[Home] Component unmounted')
+})
 </script>
 
 <style scoped lang="scss">
@@ -273,7 +311,7 @@ const copyInstallCommand = async () => {
 }
 
 .hero-section {
-  background: linear-gradient(135deg, rgba(0, 255, 157, 0.1) 0%, rgba(0, 255, 204, 0.05) 100%);
+  background: linear-gradient(135deg, rgba(0, 255, 157, 0.08) 0%, rgba(0, 255, 204, 0.04) 100%);
   border: 1px solid $border-color-base;
   border-radius: $border-radius-xl;
   padding: $spacing-xxl $spacing-xl;
@@ -289,8 +327,10 @@ const copyInstallCommand = async () => {
     left: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle, rgba(0, 255, 157, 0.1) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(0, 255, 157, 0.06) 0%, transparent 70%);
     animation: rotate 20s linear infinite;
+    z-index: 0;
+    pointer-events: none;
   }
 }
 
@@ -310,11 +350,14 @@ const copyInstallCommand = async () => {
 
 .ascii-art {
   font-size: 8px;
-  line-height: 1;
+  line-height: 1.1;
   color: $primary-color;
   margin: 0 0 $spacing-lg;
   text-shadow: 0 0 20px rgba(0, 255, 157, 0.5);
   font-family: 'Courier New', monospace;
+  white-space: pre;
+  overflow-x: auto;
+  overflow-y: hidden;
 
   @media (max-width: 768px) {
     display: none;
@@ -330,12 +373,15 @@ const copyInstallCommand = async () => {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  line-height: 1.2;
+  word-break: keep-all;
 }
 
 .hero-subtitle {
   font-size: $font-size-large;
   color: $text-color-secondary;
   margin: 0 0 $spacing-xl;
+  line-height: 1.5;
 }
 
 .install-command-hero {
@@ -362,12 +408,21 @@ const copyInstallCommand = async () => {
     transform: scale(1.02);
   }
 
+  .command-prefix {
+    color: $text-color-secondary;
+    user-select: none;
+  }
+
   .command-text {
     flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .copy-icon {
     font-size: 18px;
+    flex-shrink: 0;
   }
 }
 
@@ -388,8 +443,22 @@ const copyInstallCommand = async () => {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: $spacing-xl;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: $spacing-lg;
+}
+
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: $spacing-md;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: $spacing-sm;
+  }
 }
 
 .ranking-preview-section {
@@ -410,7 +479,7 @@ const copyInstallCommand = async () => {
   display: flex;
   align-items: center;
   gap: $spacing-lg;
-  height: 100%;
+  min-height: 80px;
 
   &:hover {
     border-color: $primary-color;
@@ -433,18 +502,26 @@ const copyInstallCommand = async () => {
 
   .tab-info {
     flex: 1;
+    min-width: 0;
+    overflow: hidden;
 
     h3 {
-      margin: 0 0 $spacing-sm;
+      margin: 0 0 $spacing-sm 0;
       font-size: $font-size-large;
       font-weight: 600;
       color: $text-color-primary;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     p {
       margin: 0;
       font-size: $font-size-small;
       color: $text-color-secondary;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
   }
 }
@@ -458,6 +535,8 @@ const copyInstallCommand = async () => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: $spacing-xl;
+  flex-wrap: wrap;
+  gap: $spacing-md;
 
   h2 {
     margin: 0;
@@ -467,6 +546,7 @@ const copyInstallCommand = async () => {
     display: flex;
     align-items: center;
     gap: $spacing-md;
+    flex-wrap: wrap;
   }
 }
 
@@ -478,6 +558,7 @@ const copyInstallCommand = async () => {
   align-items: center;
   gap: $spacing-sm;
   transition: $transition-fast;
+  white-space: nowrap;
 
   &:hover {
     color: $primary-hover;
@@ -496,8 +577,25 @@ const copyInstallCommand = async () => {
     padding: $spacing-lg;
   }
 
+  .hero-section {
+    padding: $spacing-xl $spacing-lg;
+  }
+
   .hero-title {
     font-size: 32px;
+  }
+
+  .hero-subtitle {
+    font-size: $font-size-base;
+  }
+
+  .install-command-hero {
+    padding: $spacing-md;
+    font-size: $font-size-small;
+
+    .command-text {
+      max-width: 200px;
+    }
   }
 
   .tools-grid {
@@ -506,6 +604,63 @@ const copyInstallCommand = async () => {
 
   .stats-grid {
     grid-template-columns: 1fr;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+
+    h2 {
+      font-size: $font-size-large;
+    }
+  }
+
+  .ranking-tab-card {
+    padding: $spacing-lg;
+    min-height: 70px;
+
+    .tab-icon {
+      width: 48px;
+      height: 48px;
+      font-size: 24px;
+    }
+
+    .tab-info h3 {
+      font-size: $font-size-base;
+    }
+
+    .tab-info p {
+      font-size: 11px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .home-page {
+    padding: $spacing-md;
+  }
+
+  .hero-title {
+    font-size: 24px;
+  }
+
+  .install-command-hero {
+    flex-direction: column;
+    gap: $spacing-sm;
+
+    .command-text {
+      max-width: 100%;
+      text-align: center;
+    }
+  }
+
+  .hero-actions {
+    flex-direction: column;
+    width: 100%;
+
+    .el-button {
+      width: 100%;
+    }
   }
 }
 </style>

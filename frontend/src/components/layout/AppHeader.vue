@@ -17,15 +17,15 @@
       </div>
 
       <nav class="nav-links">
-        <router-link to="/" class="nav-link" @click="handleNavClick">
+        <router-link to="/" class="nav-link">
           <el-icon><HomeFilled /></el-icon>
           首页
         </router-link>
-        <router-link to="/tools" class="nav-link" @click="handleNavClick">
+        <router-link to="/tools" class="nav-link">
           <el-icon><Tools /></el-icon>
           工具列表
         </router-link>
-        <router-link to="/ranking" class="nav-link" @click="handleNavClick">
+        <router-link to="/ranking" class="nav-link">
           <el-icon><Trophy /></el-icon>
           排行榜
         </router-link>
@@ -56,31 +56,6 @@ const handleSearch = () => {
       query: { q: searchKeyword.value.trim() }
     })
   }
-}
-
-// 处理导航点击，确保移除所有遮罩层
-const handleNavClick = (event) => {
-  console.log('[AppHeader] Nav link clicked')
-
-  // 移除所有遮罩层
-  const overlays = document.querySelectorAll('.el-overlay')
-  console.log('[AppHeader] Removing', overlays.length, 'overlays')
-  overlays.forEach(overlay => {
-    overlay.remove()
-  })
-
-  // 移除所有对话框
-  const dialogs = document.querySelectorAll('.el-dialog')
-  console.log('[AppHeader] Removing', dialogs.length, 'dialogs')
-  dialogs.forEach(dialog => {
-    dialog.remove()
-  })
-
-  // 清除body上的对话框类
-  document.body.classList.remove('el-popup-parent--hidden')
-  document.body.style.overflow = ''
-
-  console.log('[AppHeader] Cleanup completed, allowing navigation')
 }
 </script>
 

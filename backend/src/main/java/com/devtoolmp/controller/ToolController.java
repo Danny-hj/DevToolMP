@@ -8,13 +8,17 @@ import com.devtoolmp.dto.response.PageResponse;
 import com.devtoolmp.entity.Tool;
 import com.devtoolmp.service.ToolService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/tools")
+@Validated
 public class ToolController {
 
     @Autowired
@@ -54,8 +58,12 @@ public class ToolController {
     }
 
     @PostMapping
-    public ResponseEntity<ToolDTO> createTool(
-            @RequestBody ToolCreateRequest request) {
+    public ResponseEntity<Object> createTool(
+            @Valid @RequestBody ToolCreateRequest request,
+            BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            return ResponseEntity.badRequest().body(bindingResult.getAllErrors());
+        }
         Tool tool = toolService.createTool(request);
         ToolDTO toolDTO = toolService.getToolById(tool.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(toolDTO);
@@ -64,7 +72,7 @@ public class ToolController {
     @PutMapping("/{id}")
     public ResponseEntity<ToolDTO> updateTool(
             @PathVariable Long id,
-            @RequestBody ToolUpdateRequest request) {
+            @Valid @RequestBody ToolUpdateRequest request) {
         Tool tool = toolService.updateTool(id, request);
         ToolDTO toolDTO = toolService.getToolById(tool.getId());
         return ResponseEntity.ok(toolDTO);

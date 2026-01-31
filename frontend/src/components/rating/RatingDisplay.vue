@@ -1,5 +1,5 @@
 <template>
-  <div class="rating-display">
+  <div v-if="statistics" class="rating-display">
     <div class="rating-summary">
       <div class="average-rating">
         <span class="score">{{ (statistics.averageScore || 0).toFixed(1) }}</span>
@@ -26,6 +26,9 @@
       </div>
     </div>
   </div>
+  <div v-else class="rating-display">
+    <el-skeleton :rows="3" animated />
+  </div>
 </template>
 
 <script setup>
@@ -34,15 +37,17 @@ import { computed } from 'vue'
 const props = defineProps({
   statistics: {
     type: Object,
-    required: true
+    default: null
   }
 })
 
 const averageRating = computed(() => {
+  if (!props.statistics) return 0
   return Math.round(props.statistics.averageScore || 0)
 })
 
 const getCount = (score) => {
+  if (!props.statistics) return 0
   switch (score) {
     case 5: return props.statistics.fiveStarCount || 0
     case 4: return props.statistics.fourStarCount || 0
@@ -54,6 +59,7 @@ const getCount = (score) => {
 }
 
 const getPercentage = (score) => {
+  if (!props.statistics) return 0
   const total = props.statistics.totalRatings || 0
   if (total === 0) return 0
   return (getCount(score) / total) * 100

@@ -7,20 +7,35 @@
           <el-icon><Plus /></el-icon>
           添加工具
         </el-button>
+        <el-select
+          v-model="selectedCategory"
+          placeholder="全部分类"
+          clearable
+          @change="handleCategoryChange"
+          style="width: 150px"
+        >
+          <el-option
+            v-for="category in categories"
+            :key="category.id"
+            :label="category.name"
+            :value="category.id"
+          />
+        </el-select>
         <el-switch
           v-model="showPublishButtons"
-          active-text="显示管理按钮"
-          inactive-text="隐藏管理按钮"
+          active-text="管理"
+          inactive-text="管理"
         />
         <el-switch
           v-model="showSyncButtons"
-          active-text="显示同步按钮"
-          inactive-text="隐藏同步按钮"
+          active-text="同步"
+          inactive-text="同步"
         />
         <el-select
           v-model="sortBy"
-          placeholder="排序方式"
+          placeholder="排序"
           @change="handleSort"
+          style="width: 100px"
         >
           <el-option label="最新" value="latest" />
           <el-option label="最热" value="hot" />
@@ -32,7 +47,7 @@
       <el-skeleton v-if="loading" :rows="6" animated />
       <tool-card
         v-else
-        v-for="tool in tools"
+        v-for="tool in filteredTools"
         :key="tool.id"
         :tool="tool"
         :show-publish-button="showPublishButtons"
@@ -82,6 +97,7 @@ const toolsStore = useToolsStore()
 const currentPage = ref(1)
 const pageSize = ref(12)
 const sortBy = ref('latest')
+const selectedCategory = ref(null)
 const showPublishButtons = ref(false)
 const showSyncButtons = ref(false)
 const showAddDialog = ref(false)
@@ -90,6 +106,28 @@ const editingTool = ref(null)
 const tools = computed(() => toolsStore.tools)
 const loading = computed(() => toolsStore.loading)
 const total = computed(() => toolsStore.total)
+
+// 计算所有唯一分类
+const categories = computed(() => {
+  const categoryMap = new Map()
+  tools.value.forEach(tool => {
+    if (tool.categoryId && tool.categoryName) {
+      categoryMap.set(tool.categoryId, {
+        id: tool.categoryId,
+        name: tool.categoryName
+      })
+    }
+  })
+  return Array.from(categoryMap.values()).sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'))
+})
+
+// 根据分类筛选工具
+const filteredTools = computed(() => {
+  if (!selectedCategory.value) {
+    return tools.value
+  }
+  return tools.value.filter(tool => tool.categoryId === selectedCategory.value)
+})
 
 onMounted(() => {
   fetchTools()
@@ -116,6 +154,10 @@ const handleSizeChange = (size) => {
 const handleSort = () => {
   currentPage.value = 1
   fetchTools()
+}
+
+const handleCategoryChange = () => {
+  currentPage.value = 1
 }
 
 const handleToolClick = (tool) => {
@@ -178,25 +220,76 @@ const handleToolSuccess = () => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
+  gap: $spacing-lg;
+  flex-wrap: wrap;
 }
 
 .page-header h1 {
   margin: 0;
   font-size: 32px;
   color: #e0e0e0;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: $spacing-md;
+  }
+
+  .page-header h1 {
+    font-size: 24px;
+    text-align: center;
+  }
+
+  .filters {
+    justify-content: center;
+  }
 }
 
 .filters {
   display: flex;
   gap: 12px;
   align-items: center;
+  flex-wrap: wrap;
+
+  .el-switch {
+    --el-switch-on-text: '开';
+    --el-switch-off-text: '关';
+  }
+
+  .el-button {
+    white-space: nowrap;
+  }
+
+  @media (max-width: 768px) {
+    gap: 8px;
+
+    .el-switch {
+      flex-shrink: 0;
+    }
+  }
 }
 
 .tools-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 20px;
   margin-bottom: 32px;
+}
+
+@media (max-width: 768px) {
+  .tools-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tools-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .pagination {

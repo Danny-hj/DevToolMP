@@ -41,6 +41,12 @@
       <p>{{ tool.description || '暂无描述' }}</p>
     </div>
 
+    <!-- 分类标签 -->
+    <div v-if="tool.categoryName" class="tool-category">
+      <el-icon><FolderOpened /></el-icon>
+      <span>{{ tool.categoryName }}</span>
+    </div>
+
     <div class="tool-stats">
       <div class="stat-item" title="GitHub Stars">
         <el-icon><Star /></el-icon>
@@ -142,7 +148,7 @@
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Tools, Star, View, Collection, CollectionTag, Download, DocumentCopy,
-         CircleCheck, CircleClose, Link, Refresh, Edit } from '@element-plus/icons-vue'
+         CircleCheck, CircleClose, Link, Refresh, Edit, FolderOpened } from '@element-plus/icons-vue'
 import { useToolsStore } from '@/stores/tools'
 
 const props = defineProps({
@@ -271,6 +277,7 @@ const formatNumber = (num) => {
   border: 1px solid $border-color-base;
   border-radius: $border-radius-large;
   padding: $spacing-xl;
+  padding-top: 48px; /* 为徽章留出空间 */
   cursor: pointer;
   transition: $transition-base;
 
@@ -285,10 +292,11 @@ const formatNumber = (num) => {
   position: absolute;
   top: $spacing-md;
   left: $spacing-md;
-  padding: $spacing-sm $spacing-md;
-  border-radius: $border-radius-large;
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $border-radius-base;
   font-weight: 600;
-  font-size: $font-size-small;
+  font-size: 11px;
+  z-index: 1;
 
   &.active {
     background: rgba($success-color, 0.15);
@@ -309,11 +317,12 @@ const formatNumber = (num) => {
   right: $spacing-md;
   display: inline-flex;
   align-items: center;
-  gap: $spacing-sm;
-  padding: $spacing-sm $spacing-md;
-  border-radius: $border-radius-large;
+  gap: $spacing-xs;
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $border-radius-base;
   font-weight: 600;
-  font-size: $font-size-small;
+  font-size: 11px;
+  z-index: 1;
 
   &.high {
     background: rgba($hot-score-high, 0.15);
@@ -334,7 +343,7 @@ const formatNumber = (num) => {
   }
 
   .hot-icon {
-    font-size: 14px;
+    font-size: 12px;
   }
 }
 
@@ -342,23 +351,29 @@ const formatNumber = (num) => {
   display: flex;
   gap: $spacing-md;
   margin-bottom: $spacing-lg;
+  align-items: flex-start;
 }
 
 .tool-icon {
-  width: 56px;
-  height: 56px;
+  width: 48px;
+  height: 48px;
   background: linear-gradient(135deg, $primary-color, #00ffcc);
-  border-radius: $border-radius-large;
+  border-radius: $border-radius-base;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #000;
   flex-shrink: 0;
+
+  .el-icon {
+    font-size: 20px;
+  }
 }
 
 .tool-title {
   flex: 1;
   min-width: 0;
+  overflow: hidden;
 
   h3 {
     margin: 0 0 $spacing-sm;
@@ -368,6 +383,7 @@ const formatNumber = (num) => {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    padding-right: $spacing-md;
   }
 }
 
@@ -416,6 +432,20 @@ const formatNumber = (num) => {
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
   }
+}
+
+.tool-category {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-xs;
+  margin-bottom: $spacing-lg;
+  padding: $spacing-xs $spacing-sm;
+  background: linear-gradient(135deg, rgba($primary-color, 0.1), rgba($primary-color, 0.05));
+  border: 1px solid rgba($primary-color, 0.3);
+  border-radius: $border-radius-base;
+  color: $primary-color;
+  font-size: $font-size-small;
+  font-weight: 600;
 }
 
 .tool-stats {
@@ -479,14 +509,16 @@ const formatNumber = (num) => {
 .tool-footer {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: $spacing-md;
+  flex-wrap: wrap;
 }
 
 .tags {
   display: flex;
   gap: $spacing-sm;
   flex: 1;
+  min-width: 0;
   overflow: hidden;
   flex-wrap: wrap;
 
@@ -494,6 +526,7 @@ const formatNumber = (num) => {
     background: $background-color-light;
     border-color: $border-color-base;
     color: $text-color-regular;
+    flex-shrink: 0;
   }
 }
 
@@ -501,18 +534,42 @@ const formatNumber = (num) => {
   font-size: $font-size-small;
   color: $text-color-secondary;
   padding: $spacing-sm;
+  flex-shrink: 0;
 }
 
 .actions {
   flex-shrink: 0;
   display: flex;
-  gap: $spacing-sm;
+  gap: $spacing-xs;
   flex-wrap: wrap;
+  align-items: center;
+
+  .el-button {
+    padding: 4px 8px;
+    font-size: $font-size-small;
+
+    .el-icon {
+      margin-right: 2px;
+    }
+  }
 }
 
 @media (max-width: 768px) {
   .tool-card {
     padding: $spacing-lg;
+  }
+
+  .tool-icon {
+    width: 40px;
+    height: 40px;
+
+    .el-icon {
+      font-size: 18px;
+    }
+  }
+
+  .tool-title h3 {
+    font-size: $font-size-base;
   }
 
   .tool-stats {
@@ -523,8 +580,19 @@ const formatNumber = (num) => {
     font-size: 12px;
   }
 
-  .actions {
+  .tool-footer {
     flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tags {
+    width: 100%;
+    margin-bottom: $spacing-sm;
+  }
+
+  .actions {
+    width: 100%;
+    justify-content: center;
   }
 }
 </style>

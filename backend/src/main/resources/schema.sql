@@ -1,33 +1,23 @@
-CREATE TABLE IF NOT EXISTS users (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    avatar VARCHAR(500),
-    bio TEXT,
-    github_url VARCHAR(500),
-    github_id VARCHAR(50),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_github_id (github_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- DevToolMP 数据库初始化脚本
 
+-- 分类表
 CREATE TABLE IF NOT EXISTS categories (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(50) NOT NULL,
+    name VARCHAR(100) NOT NULL,
     description TEXT,
     icon VARCHAR(50),
     sort_order INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 工具表
 CREATE TABLE IF NOT EXISTS tools (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(100) NOT NULL,
+    name VARCHAR(255) NOT NULL,
     description TEXT,
     category_id BIGINT,
-    github_owner VARCHAR(100),
-    github_repo VARCHAR(100),
+    github_owner VARCHAR(255),
+    github_repo VARCHAR(255),
     version VARCHAR(50),
     stars INT DEFAULT 0,
     forks INT DEFAULT 0,
@@ -53,6 +43,7 @@ CREATE TABLE IF NOT EXISTS tools (
     INDEX idx_hot_alltime (hot_score_alltime DESC)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 工具标签表
 CREATE TABLE IF NOT EXISTS tool_tags (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     tool_id BIGINT NOT NULL,
@@ -63,78 +54,63 @@ CREATE TABLE IF NOT EXISTS tool_tags (
     INDEX idx_tag (tag_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 收藏表 (使用client_identifier代替user_id)
 CREATE TABLE IF NOT EXISTS favorites (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    user_id BIGINT NOT NULL,
     tool_id BIGINT NOT NULL,
+    client_identifier VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (tool_id) REFERENCES tools(id) ON DELETE CASCADE,
-    UNIQUE KEY uk_user_tool (user_id, tool_id),
-    INDEX idx_user (user_id),
-    INDEX idx_tool (tool_id)
+    UNIQUE KEY uk_tool_client (tool_id, client_identifier),
+    INDEX idx_tool (tool_id),
+    INDEX idx_client (client_identifier)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 浏览记录表
 CREATE TABLE IF NOT EXISTS view_records (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     tool_id BIGINT NOT NULL,
-    user_id BIGINT,
+    client_identifier VARCHAR(255),
     ip_address VARCHAR(50),
     user_agent TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (tool_id) REFERENCES tools(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
     INDEX idx_tool_date (tool_id, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS telemetry_data (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    tool_id BIGINT NOT NULL,
-    event_type VARCHAR(20) NOT NULL,
-    ip_address VARCHAR(50),
-    user_agent TEXT,
-    metadata JSON,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (tool_id) REFERENCES tools(id) ON DELETE CASCADE,
-    INDEX idx_tool_date (tool_id, created_at),
-    INDEX idx_type (event_type)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
+-- 评价表 (使用client_identifier)
 CREATE TABLE IF NOT EXISTS ratings (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     tool_id BIGINT NOT NULL,
-    user_id BIGINT NOT NULL,
+    client_identifier VARCHAR(255) NOT NULL,
     score INT NOT NULL CHECK (score >= 1 AND score <= 5),
     comment TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (tool_id) REFERENCES tools(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    UNIQUE KEY uk_user_tool (user_id, tool_id),
+    UNIQUE KEY uk_tool_client (tool_id, client_identifier),
     INDEX idx_tool (tool_id),
-    INDEX idx_user (user_id)
+    INDEX idx_client (client_identifier)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 评价回复表
 CREATE TABLE IF NOT EXISTS comment_replies (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     rating_id BIGINT NOT NULL,
-    user_id BIGINT NOT NULL,
-    reply_to_user_id BIGINT,
-    content TEXT NOT NULL,
+    client_identifier VARCHAR(255) NOT NULL,
+    reply_content TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (rating_id) REFERENCES ratings(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (reply_to_user_id) REFERENCES users(id) ON DELETE SET NULL,
     INDEX idx_rating (rating_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 评价点赞表
 CREATE TABLE IF NOT EXISTS rating_likes (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     rating_id BIGINT NOT NULL,
-    user_id BIGINT NOT NULL,
+    client_identifier VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (rating_id) REFERENCES comment_replies(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    UNIQUE KEY uk_user_rating (user_id, rating_id),
+    FOREIGN KEY (rating_id) REFERENCES ratings(id) ON DELETE CASCADE,
+    UNIQUE KEY uk_rating_client (rating_id, client_identifier),
     INDEX idx_rating (rating_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -1,5 +1,5 @@
 <template>
-  <span>{{ displayValue }}</span>
+  <span class="animated-number">{{ displayValue }}</span>
 </template>
 
 <script setup>
@@ -22,6 +22,14 @@ const props = defineProps({
 
 const displayValue = ref('0')
 
+const formatNumber = (num) => {
+  // 纯数字格式化，添加千位分隔符
+  if (num >= 10000) {
+    return num.toLocaleString()
+  }
+  return num.toString()
+}
+
 const animate = (start, end, duration) => {
   const range = end - start
   const increment = range / (duration / 16) // 60 FPS
@@ -40,7 +48,7 @@ const animate = (start, end, duration) => {
     if (props.decimals > 0) {
       displayValue.value = current.toFixed(props.decimals)
     } else {
-      displayValue.value = Math.floor(current).toLocaleString()
+      displayValue.value = formatNumber(Math.floor(current))
     }
 
     if (progress < 1) {
@@ -49,7 +57,7 @@ const animate = (start, end, duration) => {
       if (props.decimals > 0) {
         displayValue.value = end.toFixed(props.decimals)
       } else {
-        displayValue.value = end.toLocaleString()
+        displayValue.value = formatNumber(end)
       }
     }
   }
@@ -65,3 +73,10 @@ watch(() => props.value, (newValue, oldValue) => {
   animate(oldValue || 0, newValue, props.duration)
 })
 </script>
+
+<style scoped>
+.animated-number {
+  display: inline-block;
+  min-width: 20px;
+}
+</style>
