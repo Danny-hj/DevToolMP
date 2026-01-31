@@ -1,1121 +1,1390 @@
 # DevToolMP 实现设计文档
 
-## 文档版本
+## 1. 实现概述
 
-- **版本**: 1.0.0
-- **更新日期**: 2026-01-31
-- **作者**: DevToolMP Team
-- **状态**: 生产就绪
-
-## 目录
-
-1. [API 接口设计](#1-api-接口设计)
-2. [数据库实现设计](#2-数据库实现设计)
-3. [核心业务流程](#3-核心业务流程)
-4. [关键算法实现](#4-关键算法实现)
-5. [前端组件设计](#5-前端组件设计)
-6. [状态管理设计](#6-状态管理设计)
-7. [路由与导航设计](#7-路由与导航设计)
-8. [缓存实现细节](#8-缓存实现细节)
-9. [异常处理机制](#9-异常处理机制)
-10. [性能优化方案](#10-性能优化方案)
+### 1.1 项目结构
+```
+DevToolMP/
+├── backend/                    # 后端项目 (Spring Boot)
+│   ├── src/main/java/
+│   │   └── com/devtoolmp/
+│   │       ├── config/         # 配置类
+│   │       ├── controller/     # 控制器
+│   │       ├── dto/            # 数据传输对象
+│   │       │   ├── request/    # 请求DTO
+│   │       │   └── response/   # 响应DTO
+│   │       ├── entity/         # 实体类
+│   │       ├── exception/      # 异常处理
+│   │       ├── mapper/         # MyBatis Mapper
+│   │       ├── schedule/       # 定时任务
+│   │       ├── service/        # 业务服务
+│   │       └── DevToolMpApplication.java
+│   ├── src/main/resources/
+│   │   ├── mapper/             # MyBatis XML映射文件
+│   │   └── application*.yml    # 配置文件
+│   └── pom.xml                 # Maven配置
+├── frontend/                   # 前端项目 (Vue 3)
+│   ├── src/
+│   │   ├── api/                # API调用封装
+│   │   ├── components/         # 组件
+│   │   ├── router/             # 路由配置
+│   │   ├── stores/             # 状态管理
+│   │   ├── views/              # 页面视图
+│   │   ├── App.vue             # 根组件
+│   │   └── main.js             # 入口文件
+│   └── package.json            # 依赖配置
+├── docker-compose.yml          # Docker编排配置
+└── docker-compose.prod.yml     # 生产环境配置
+```
 
 ---
 
-## 1. API 接口设计
+## 2. 后端实现详解
 
-### 1.1 API 设计原则
+### 2.1 配置模块 (config)
 
-**RESTful 规范**:
-- 使用 HTTP 方法语义（GET/POST/PUT/DELETE）
-- 资源导向的 URL 设计
-- 统一的响应格式
-- 标准 HTTP 状态码
+#### 2.1.1 CorsConfig
+**位置**: `com.devtoolmp.config.CorsConfig`
 
-**URL 命名规范**:
-- 使用复数名词: `/api/tools`
-- 层级结构: `/api/tools/{id}/ratings`
-- 小写字母，连字符分隔
-
-**版本控制**:
-- 当前版本: v1（隐式）
-- 未来通过 URL 路径版本: `/api/v2/tools`
-
-### 1.2 统一响应格式
-
-**成功响应**:
-```json
-{
-  "code": 200,
-  "message": "success",
-  "data": { ... }
-}
-```
-
-**错误响应**:
-```json
-{
-  "code": 400,
-  "message": "参数验证失败",
-  "data": null
-}
-```
-
-**分页响应**:
-```json
-{
-  "code": 200,
-  "message": "success",
-  "data": {
-    "content": [...],
-    "currentPage": 0,
-    "pageSize": 20,
-    "totalElements": 100,
-    "totalPages": 5
-  }
-}
-```
-
-### 1.3 核心 API 详细设计
-
-#### 1.3.1 工具管理 API
-
-**获取工具列表**
-```
-GET /api/tools
-Query Parameters:
-  - page: int (default: 0) - 页码
-  - size: int (default: 20) - 每页大小
-  - sort: string (default: latest) - 排序方式 (latest/hot)
-  - categoryId: long (optional) - 分类筛选
-
-Response: 200 OK
-{
-  "content": [
-    {
-      "id": 1,
-      "name": "Vue.js",
-      "description": "渐进式JavaScript框架",
-      "categoryId": 1,
-      "categoryName": "开发工具",
-      "githubOwner": "vuejs",
-      "githubRepo": "vue",
-      "githubUrl": "https://github.com/vuejs/vue",
-      "version": "3.4.0",
-      "stars": 0,
-      "forks": 0,
-      "openIssues": 0,
-      "watchers": 0,
-      "viewCount": 8,
-      "favoriteCount": 2,
-      "installCount": 2,
-      "status": "active",
-      "tags": ["JavaScript", "Vue", "前端框架"],
-      "createdAt": "2026-01-31T09:49:55",
-      "updatedAt": "2026-01-31T10:32:27"
+**实现**:
+```java
+@Configuration
+public class CorsConfig implements WebMvcConfigurer {
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**")
+                .allowedOrigins("*")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedHeaders("*");
     }
-  ],
-  "currentPage": 0,
-  "pageSize": 20,
-  "totalElements": 3,
-  "totalPages": 1
 }
 ```
 
-**获取工具详情**
-```
-GET /api/tools/{id}
+**作用**: 允许前端跨域访问后端API
 
-Response: 200 OK
-{
-  "id": 10,
-  "name": "Vue.js",
-  "description": "渐进式JavaScript框架",
-  "categoryName": "开发工具",
-  "githubUrl": "https://github.com/vuejs/vue",
-  "version": "3.4.0",
-  "stars": 0,
-  "forks": 0,
-  "viewCount": 8,
-  "favoriteCount": 2,
-  "installCount": 2,
-  "averageRating": 4.5,
-  "totalRatings": 10,
-  "isFavorited": true,
-  "tags": ["JavaScript", "Vue"],
-  "createdAt": "2026-01-31T09:49:55",
-  "updatedAt": "2026-01-31T10:32:27"
+#### 2.1.2 CacheConfig
+**位置**: `com.devtoolmp.config.CacheConfig`
+
+**实现**:
+```java
+@Configuration
+@EnableCaching
+public class CacheConfig {
+    @Bean
+    public CacheManager cacheManager(RedisConnectionFactory factory) {
+        RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
+                .entryTtl(Duration.ofHours(1))
+                .disableCachingNullValues();
+        return RedisCacheManager.builder(factory)
+                .cacheDefaults(config)
+                .build();
+    }
 }
 ```
 
-**创建工具**
-```
-POST /api/tools
-Content-Type: application/json
+**作用**: 配置Redis缓存管理器，设置默认缓存时间为1小时
 
-Request:
-{
-  "name": "Tool Name",
-  "description": "Tool description",
-  "categoryId": 1,
-  "githubOwner": "owner",
-  "githubRepo": "repo",
-  "tags": ["tag1", "tag2"],
-  "status": "active"
-}
+#### 2.1.3 RestTemplateConfig
+**位置**: `com.devtoolmp.config.RestTemplateConfig`
 
-Response: 201 Created
-{
-  "id": 12,
-  "name": "Tool Name",
-  ...
+**实现**:
+```java
+@Configuration
+public class RestTemplateConfig {
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
 }
 ```
 
-**记录浏览**
-```
-POST /api/tools/{id}/view
-Headers:
-  X-Client-Identifier: auto-generated from IP+UA
-
-Response: 200 OK
-{
-  "code": 200,
-  "message": "浏览记录已保存"
-}
-```
-
-**切换收藏**
-```
-POST /api/tools/{id}/favorite
-Headers:
-  X-Client-Identifier: auto-generated from IP+UA
-
-Response: 200 OK
-{
-  "code": 200,
-  "message": "success",
-  "data": true  // true: 已收藏, false: 已取消
-}
-```
-
-#### 1.3.2 排行榜 API
-
-**日榜**
-```
-GET /api/tools/ranking/daily
-
-Response: 200 OK
-[
-  {
-    "id": 10,
-    "name": "Vue.js",
-    "description": "渐进式JavaScript框架",
-    "categoryName": "开发工具",
-    "hotScore": 12.40,
-    "installCount": 2,
-    "favoriteCount": 2,
-    "viewCount": 8,
-    "changePercentage": 25.5,  // 较昨日变化百分比
-    "tags": ["JavaScript", "Vue"]
-  },
-  ...
-]
-```
-
-**趋势榜**
-```
-GET /api/tools/ranking/trending
-
-Response: 200 OK
-[
-  {
-    "id": 10,
-    "name": "Vue.js",
-    "hotScore": 12.40,
-    "changePercentage": 150.5,  // 增长最快
-    ...
-  }
-]
-```
-
-#### 1.3.3 评分 API
-
-**创建评分**
-```
-POST /api/ratings
-Headers:
-  X-Client-Identifier: auto-generated from IP+UA
-
-Request:
-{
-  "toolId": 10,
-  "score": 5,
-  "comment": "非常好用的框架",
-  "username": "用户昵称（可选）"
-}
-
-Response: 201 Created
-{
-  "id": 5,
-  "toolId": 10,
-  "score": 5,
-  "comment": "非常好用的框架",
-  "createdAt": "2026-01-31T10:35:00"
-}
-```
-
-**获取评分统计**
-```
-GET /api/ratings/tool/{toolId}/statistics
-
-Response: 200 OK
-{
-  "averageRating": 4.5,
-  "totalRatings": 10,
-  "scoreDistribution": {
-    "5": 6,
-    "4": 2,
-    "3": 1,
-    "2": 1,
-    "1": 0
-  }
-}
-```
-
-#### 1.3.4 GitHub API
-
-**同步工具数据**
-```
-POST /api/github/sync/{toolId}
-
-Response: 200 OK
-{
-  "id": 10,
-  "stars": 150000,
-  "forks": 25000,
-  "openIssues": 150,
-  "watchers": 5000,
-  "syncedAt": "2026-01-31T10:35:00"
-}
-```
+**作用**: 配置RestTemplate Bean用于GitHub API调用
 
 ---
 
-## 2. 数据库实现设计
+### 2.2 实体模块 (entity)
 
-### 2.1 表结构设计
+#### 2.2.1 Tool - 工具实体
+**位置**: `com.devtoolmp.entity.Tool`
 
-#### 2.1.1 tools 表（工具主表）
+**核心字段**:
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | Long | 主键ID |
+| name | String | 工具名称 |
+| description | String | 工具描述 |
+| categoryId | Long | 分类ID |
+| githubOwner | String | GitHub仓库所有者 |
+| githubRepo | String | GitHub仓库名称 |
+| stars | Integer | GitHub星标数 |
+| hotScoreDaily | BigDecimal | 日热度分数 |
+| status | String | 状态 (active/inactive) |
 
-```sql
-CREATE TABLE tools (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  name VARCHAR(100) NOT NULL,
-  description TEXT,
-  category_id BIGINT,
-  github_owner VARCHAR(100),
-  github_repo VARCHAR(100),
-  version VARCHAR(50),
-  stars INT DEFAULT 0,
-  forks INT DEFAULT 0,
-  open_issues INT DEFAULT 0,
-  watchers INT DEFAULT 0,
-  view_count INT DEFAULT 0,
-  favorite_count INT DEFAULT 0,
-  install_count INT DEFAULT 0,
-  view_count_yesterday INT DEFAULT 0,
-  favorite_count_yesterday INT DEFAULT 0,
-  install_count_yesterday INT DEFAULT 0,
-  hot_score_daily DECIMAL(10,2) DEFAULT 0.00,
-  hot_score_weekly DECIMAL(10,2) DEFAULT 0.00,
-  hot_score_alltime DECIMAL(10,2) DEFAULT 0.00,
-  status VARCHAR(20) DEFAULT 'active',
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
-  INDEX idx_status (status),
-  INDEX idx_category_id (category_id),
-  INDEX idx_hot_score_daily (hot_score_daily DESC),
-  INDEX idx_hot_score_weekly (hot_score_weekly DESC),
-  INDEX idx_hot_score_alltime (hot_score_alltime DESC)
-);
+**辅助方法**:
+```java
+// 实体持久化前回调
+public void prePersist() {
+    LocalDateTime now = LocalDateTime.now();
+    if (createdAt == null) createdAt = now;
+    updatedAt = now;
+}
+
+// 获取GitHub URL
+public String getGitHubUrl() {
+    return "https://github.com/" + githubOwner + "/" + githubRepo;
+}
 ```
 
-**字段说明**:
-- `view_count_yesterday`: 昨日浏览数，用于计算变化百分比
-- `hot_score_daily/weekly/alltime`: 三个维度的热度分数
-- `status`: 工具状态（active=上架, inactive=下架）
+#### 2.2.2 Rating - 评价实体
+**位置**: `com.devtoolmp.entity.Rating`
 
-#### 2.1.2 favorites 表（收藏表）
+**核心字段**:
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | Long | 主键ID |
+| toolId | Long | 关联工具ID |
+| clientIdentifier | String | 客户端标识 |
+| score | Integer | 评分 (1-5) |
+| comment | String | 评价内容 |
 
-```sql
-CREATE TABLE favorites (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  client_identifier VARCHAR(500) NOT NULL,
-  tool_id BIGINT NOT NULL,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (tool_id) REFERENCES tools(id) ON DELETE CASCADE,
-  UNIQUE KEY uk_client_tool (client_identifier, tool_id),
-  INDEX idx_client_identifier (client_identifier),
-  INDEX idx_tool_id (tool_id)
-);
+#### 2.2.3 其他实体
+- `Category`: 分类实体
+- `Favorite`: 收藏记录
+- `ViewRecord`: 浏览记录
+- `ToolTag`: 工具标签
+- `CommentReply`: 评价回复
+- `RatingLike`: 评价点赞
+
+---
+
+### 2.3 数据访问模块 (mapper)
+
+#### 2.3.1 ToolMapper
+**位置**: `com.devtoolmp.mapper.ToolMapper`
+
+**接口方法**:
+```java
+public interface ToolMapper {
+    Tool findById(Long id);
+    List<Tool> findByStatus(String status);
+    List<Tool> findByStatusWithPage(String status, int offset, int size);
+    List<Tool> searchByKeyword(String keyword);
+    int countByStatus(String status);
+    void insert(Tool tool);
+    void update(Tool tool);
+    void deleteById(Long id);
+}
 ```
 
-**设计要点**:
-- 使用 `client_identifier` 替代 `user_id`
-- 复合唯一索引确保同一客户端不能重复收藏
-- 级联删除：工具删除时自动删除收藏记录
-
-#### 2.1.3 ratings 表（评分表）
-
-```sql
-CREATE TABLE ratings (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  tool_id BIGINT NOT NULL,
-  client_identifier VARCHAR(500) NOT NULL,
-  score INT NOT NULL CHECK (score >= 1 AND score <= 5),
-  comment TEXT,
-  username VARCHAR(100),
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (tool_id) REFERENCES tools(id) ON DELETE CASCADE,
-  UNIQUE KEY uk_client_tool (client_identifier, tool_id),
-  INDEX idx_tool_id (tool_id),
-  INDEX idx_score (score)
-);
-```
-
-**约束说明**:
-- `score` 字段约束：1-5 星
-- 同一客户端对同一工具只能评分一次
-
-#### 2.1.4 view_records 表（浏览记录表）
-
-```sql
-CREATE TABLE view_records (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  tool_id BIGINT NOT NULL,
-  client_identifier VARCHAR(500) NOT NULL,
-  ip_address VARCHAR(50),
-  user_agent VARCHAR(500),
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (tool_id) REFERENCES tools(id) ON DELETE CASCADE,
-  INDEX idx_tool_id (tool_id),
-  INDEX idx_created_at (created_at)
-);
-```
-
-### 2.2 MyBatis Mapper 设计
-
-#### 2.2.1 ToolMapper.xml
-
-**查询配置**:
+**XML映射** (`mapper/ToolMapper.xml`):
 ```xml
-<mapper namespace="com.devtoolmp.mapper.ToolMapper">
-  <resultMap id="BaseResultMap" type="com.devtoolmp.entity.Tool">
-    <id column="id" property="id"/>
-    <result column="name" property="name"/>
-    <result column="description" property="description"/>
-    <!-- ... 其他字段映射 -->
-  </resultMap>
+<select id="findById" resultType="Tool">
+    SELECT * FROM tools WHERE id = #{id}
+</select>
 
-  <!-- 查找活跃工具（分页） -->
-  <select id="findByStatus" resultMap="BaseResultMap">
+<select id="searchByKeyword" resultType="Tool">
     SELECT * FROM tools
     WHERE status = 'active'
-    ORDER BY created_at DESC
-    LIMIT #{offset}, #{limit}
-  </select>
-
-  <!-- 查找日榜前20 -->
-  <select id="findTop20ByStatusOrderByHotScoreDailyDesc" resultMap="BaseResultMap">
-    SELECT * FROM tools
-    WHERE status = 'active'
-    ORDER BY hot_score_daily DESC
-    LIMIT 20
-  </select>
-
-  <!-- 更新热度分数 -->
-  <update id="updateHotScores">
-    UPDATE tools SET
-      hot_score_daily = #{daily},
-      hot_score_weekly = #{weekly},
-      hot_score_alltime = #{alltime},
-      updated_at = NOW()
-    WHERE id = #{id}
-  </update>
-</mapper>
+    AND (name LIKE CONCAT('%', #{keyword}, '%')
+         OR description LIKE CONCAT('%', #{keyword}, '%'))
+</select>
 ```
 
-**驼峰命名转换**:
-```yaml
-mybatis:
-  configuration:
-    map-underscore-to-camel-case: true
-```
+#### 2.3.2 RatingMapper
+**位置**: `com.devtoolmp.mapper.RatingMapper`
 
----
-
-## 3. 核心业务流程
-
-### 3.1 工具浏览记录流程
-
-```
-┌─────────────┐
-│  用户访问   │
-│  工具详情页  │
-└──────┬──────┘
-       │
-       ↓
-┌─────────────────────────────────────────────────────────────┐
-│  ToolController.recordView(id)                             │
-│  1. 获取 clientIdentifier (IP + User-Agent)               │
-│  2. 创建 ViewRecord 实体                                    │
-│  3. 保存到数据库                                           │
-│  4. 异步更新工具的 view_count                              │
-└─────────────────────────────────────────────────────────────┘
-       │
-       ↓
-┌─────────────────────────────────────────────────────────────┐
-│  定时任务 (每小时)                                          │
-│  1. 统计昨日的 view_count, favorite_count, install_count   │
-│  2. 更新 view_count_yesterday 等字段                        │
-│  3. 重新计算热度分数                                        │
-└─────────────────────────────────────────────────────────────┘
-```
-
-**实现代码** (ToolController.java):
+**接口方法**:
 ```java
-@PostMapping("/{id}/view")
-public ResponseEntity<?> recordView(@PathVariable Long id) {
-    String clientIdentifier = getClientIdentifierFromRequest(request);
-
-    ViewRecord viewRecord = new ViewRecord();
-    viewRecord.setToolId(id);
-    viewRecord.setClientIdentifier(clientIdentifier);
-    viewRecord.setIpAddress(request.getRemoteAddr());
-    viewRecord.setUserAgent(request.getHeader("User-Agent"));
-
-    viewRecordMapper.insert(viewRecord);
-
-    // 异步更新浏览数
-    toolService.incrementViewCount(id);
-
-    return ApiResponse.success();
+public interface RatingMapper {
+    Rating findById(Long id);
+    List<Rating> findByToolId(Long toolId);
+    int countByToolId(Long toolId);
+    Double getAverageScoreByToolId(Long toolId);
+    void insert(Rating rating);
+    void update(Rating rating);
+    void deleteById(Long id);
 }
 ```
 
-### 3.2 收藏功能流程
+#### 2.3.3 其他Mapper
+- `CategoryMapper`: 分类数据操作
+- `FavoriteMapper`: 收藏数据操作
+- `ViewRecordMapper`: 浏览记录操作
+- `ToolTagMapper`: 标签数据操作
+- `CommentReplyMapper`: 回复数据操作
+- `RatingLikeMapper`: 点赞数据操作
 
-```
-┌─────────────┐
-│ 用户点击     │
-│ 收藏按钮     │
-└──────┬──────┘
-       │
-       ↓
-┌─────────────────────────────────────────────────────────────┐
-│  ToolController.toggleFavorite(id)                         │
-│  1. 获取 clientIdentifier                                   │
-│  2. 查询是否已收藏                                          │
-│  3. 如果已收藏 → 删除                                       │
-│  4. 如果未收藏 → 创建                                       │
-│  5. 更新工具的 favoriteCount                                │
-└─────────────────────────────────────────────────────────────┘
-       │
-       ↓
-┌─────────────────────────────────────────────────────────────┐
-│  返回结果                                                   │
-│  - true: 收藏成功                                           │
-│  - false: 取消收藏                                          │
-└─────────────────────────────────────────────────────────────┘
-```
+---
 
-**实现代码** (ToolService.java):
+### 2.4 业务服务模块 (service)
+
+#### 2.4.1 ToolService
+**位置**: `com.devtoolmp.service.ToolService`
+
+**核心方法**:
+
+**创建工具**:
 ```java
-public boolean toggleFavorite(Long toolId) {
-    String clientIdentifier = getClientIdentifier();
+@Transactional
+public Tool createTool(ToolCreateRequest request) {
+    // 1. 创建工具实体
+    Tool tool = new Tool();
+    tool.setName(request.getName());
+    tool.setDescription(request.getDescription());
+    tool.setCategoryId(request.getCategoryId());
+    tool.setGithubOwner(request.getGithubOwner());
+    tool.setGithubRepo(request.getGithubRepo());
+    tool.prePersist();
 
-    Favorite favorite = favoriteMapper
-        .findByClientIdentifierAndToolId(clientIdentifier, toolId);
+    // 2. 保存到数据库
+    toolMapper.insert(tool);
+
+    // 3. 保存标签
+    if (request.getTags() != null) {
+        for (String tagName : request.getTags()) {
+            ToolTag tag = new ToolTag();
+            tag.setToolId(tool.getId());
+            tag.setTagName(tagName.trim());
+            toolTagMapper.insert(tag);
+        }
+    }
+
+    return tool;
+}
+```
+
+**记录浏览**:
+```java
+@Transactional
+public void recordView(Long toolId, String clientIdentifier, String ipAddress, String userAgent) {
+    // 1. 获取工具并增加浏览计数
+    Tool tool = toolMapper.findById(toolId);
+    tool.setViewCount(tool.getViewCount() + 1);
+    tool.preUpdate();
+    toolMapper.update(tool);
+
+    // 2. 创建浏览记录
+    ViewRecord record = new ViewRecord();
+    record.setToolId(toolId);
+    record.setClientIdentifier(clientIdentifier);
+    record.setIpAddress(ipAddress);
+    record.setUserAgent(userAgent);
+    record.prePersist();
+    viewRecordMapper.insert(record);
+}
+```
+
+**切换收藏**:
+```java
+@Transactional
+public boolean toggleFavorite(Long toolId, String clientIdentifier) {
+    // 1. 检查是否已收藏
+    Favorite favorite = favoriteMapper.findByClientIdentifierAndToolId(clientIdentifier, toolId);
+    Tool tool = toolMapper.findById(toolId);
 
     if (favorite != null) {
-        // 取消收藏
+        // 已收藏，取消收藏
         favoriteMapper.deleteByClientIdentifierAndToolId(clientIdentifier, toolId);
-        decrementFavoriteCount(toolId);
+        tool.setFavoriteCount(tool.getFavoriteCount() - 1);
+        toolMapper.update(tool);
         return false;
     } else {
-        // 添加收藏
+        // 未收藏，添加收藏
         favorite = new Favorite();
-        favorite.setToolId(toolId);
         favorite.setClientIdentifier(clientIdentifier);
+        favorite.setToolId(toolId);
+        favorite.prePersist();
         favoriteMapper.insert(favorite);
-        incrementFavoriteCount(toolId);
+        tool.setFavoriteCount(tool.getFavoriteCount() + 1);
+        toolMapper.update(tool);
         return true;
     }
 }
 ```
 
-### 3.3 排行榜更新流程
+#### 2.4.2 GitHubService
+**位置**: `com.devtoolmp.service.GitHubService`
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│  Scheduled Tasks (每10分钟执行)                             │
-│  1. 获取所有活跃工具                                        │
-│  2. 对每个工具:                                            │
-│     - 统计昨日数据（浏览、收藏、安装）                        │
-│     - 计算三个维度的热度分数                                │
-│     - 更新数据库                                            │
-│  3. 清除 Redis 缓存                                         │
-└─────────────────────────────────────────────────────────────┘
-```
-
-**实现代码** (RankingService.java):
+**获取仓库信息**:
 ```java
-@Scheduled(fixedRate = 600000) // 每10分钟
-public void updateHotScores() {
-    List<Tool> tools = toolMapper.findAll();
+@Cacheable(value = "githubRepoInfo", key = "#owner + '/' + #repo")
+public Map<String, Object> fetchRepositoryInfo(String owner, String repo) {
+    String url = GITHUB_API_BASE + "/repos/" + owner + "/" + repo;
 
-    for (Tool tool : tools) {
-        // 获取昨日数据
-        int yesterdayViews = getViewCountSince(tool.getId(), LocalDateTime.now().minusDays(1));
-        int yesterdayFavorites = getFavoriteCountSince(tool.getId(), LocalDateTime.now().minusDays(1));
-        int yesterdayInstalls = getInstallCountSince(tool.getId(), LocalDateTime.now().minusDays(1));
+    HttpHeaders headers = new HttpHeaders();
+    headers.set("Accept", "application/vnd.github.v3+json");
 
-        // 更新昨日统计
-        tool.setViewCountYesterday(yesterdayViews);
-        tool.setFavoriteCountYesterday(yesterdayFavorites);
-        tool.setInstallCountYesterday(yesterdayInstalls);
-
-        // 计算热度分数
-        BigDecimal dailyScore = calculateHotScore(
-            tool.getViewCount(), tool.getFavoriteCount(), tool.getInstallCount(),
-            dailyRank.getWeight() // 0.2, 0.3, 0.5
-        );
-
-        // 更新数据库
-        toolMapper.updateHotScores(
-            tool.getId(),
-            dailyScore,
-            weeklyScore,
-            alltimeScore
-        );
+    if (githubApiToken != null && !githubApiToken.isEmpty()) {
+        headers.set("Authorization", "Bearer " + githubApiToken);
     }
 
-    // 清除缓存
-    evictRankingCaches();
+    HttpEntity<String> entity = new HttpEntity<>(headers);
+    ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
+
+    if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+        return response.getBody();
+    }
+
+    return null;
+}
+```
+
+**同步GitHub数据**:
+```java
+@Transactional
+public Tool syncGitHubData(Long toolId) {
+    Tool tool = toolMapper.findById(toolId);
+
+    Map<String, Object> repoInfo = fetchRepositoryInfo(tool.getGithubOwner(), tool.getGithubRepo());
+
+    // 更新GitHub统计数据
+    tool.setStars(getIntegerValue(repoInfo, "stargazers_count"));
+    tool.setForks(getIntegerValue(repoInfo, "forks_count"));
+    tool.setOpenIssues(getIntegerValue(repoInfo, "open_issues_count"));
+    tool.setWatchers(getIntegerValue(repoInfo, "watchers_count"));
+
+    tool.preUpdate();
+    toolMapper.update(tool);
+
+    return tool;
+}
+```
+
+#### 2.4.3 RatingService
+**位置**: `com.devtoolmp.service.RatingService`
+
+**创建评价**:
+```java
+@Transactional
+public Rating createRating(RatingCreateRequest request, String clientIdentifier) {
+    // 1. 验证工具存在
+    Tool tool = toolMapper.findById(request.getToolId());
+    if (tool == null) {
+        throw new RuntimeException("Tool not found");
+    }
+
+    // 2. 检查是否已评价
+    Rating existing = ratingMapper.findByClientIdentifierAndToolId(clientIdentifier, request.getToolId());
+    if (existing != null) {
+        throw new RuntimeException("Already rated");
+    }
+
+    // 3. 创建评价
+    Rating rating = new Rating();
+    rating.setToolId(request.getToolId());
+    rating.setClientIdentifier(clientIdentifier);
+    rating.setScore(request.getScore());
+    rating.setComment(request.getComment());
+    rating.prePersist();
+    ratingMapper.insert(rating);
+
+    return rating;
+}
+```
+
+#### 2.4.4 RankingService
+**位置**: `com.devtoolmp.service.RankingService`
+
+**获取排行榜**:
+```java
+public List<ToolRankingDTO> getRanking(String type, int limit) {
+    List<Tool> tools;
+
+    switch (type.toLowerCase()) {
+        case "daily":
+            tools = toolMapper.findTopByHotScoreDaily(limit);
+            break;
+        case "weekly":
+            tools = toolMapper.findTopByHotScoreWeekly(limit);
+            break;
+        case "alltime":
+            tools = toolMapper.findTopByHotScoreAlltime(limit);
+            break;
+        default:
+            throw new IllegalArgumentException("Invalid ranking type");
+    }
+
+    return tools.stream()
+        .map(tool -> ToolRankingDTO.fromEntity(tool))
+        .collect(Collectors.toList());
 }
 ```
 
 ---
 
-## 4. 关键算法实现
+### 2.5 控制器模块 (controller)
 
-### 4.1 热度分数计算算法
+#### 2.5.1 ToolController
+**位置**: `com.devtoolmp.controller.ToolController`
 
-**公式**:
-```
-hotScore = (viewCount × w1) + (favoriteCount × 10 × w2) + (installCount × 5 × w3)
+**API端点**:
 
-其中:
-- viewCount: 浏览数
-- favoriteCount: 收藏数（权重 × 10）
-- installCount: 安装数（权重 × 5）
-- w1, w2, w3: 不同维度的权重系数
-```
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/tools` | 获取工具列表 (分页) |
+| GET | `/tools/{id}` | 获取工具详情 |
+| GET | `/tools/{id}/detail` | 获取工具完整详情 (含用户状态) |
+| GET | `/tools/search` | 搜索工具 |
+| POST | `/tools` | 创建工具 |
+| PUT | `/tools/{id}` | 更新工具 |
+| DELETE | `/tools/{id}` | 删除工具 |
+| POST | `/tools/{id}/view` | 记录浏览 |
+| POST | `/tools/{id}/favorite` | 切换收藏 |
+| POST | `/tools/{id}/install` | 记录安装 |
+| PUT | `/tools/{id}/publish` | 发布工具 |
+| PUT | `/tools/{id}/unpublish` | 下架工具 |
 
-**权重配置**:
-- **日榜**: { view: 0.2, favorite: 0.3, install: 0.5 }
-  - 最重视安装，其次是收藏
-
-- **周榜**: { view: 0.3, favorite: 0.3, install: 0.4 }
-  - 平衡考虑，安装权重略高
-
-- **总榜**: { view: 0.4, favorite: 0.3, install: 0.3 }
-  - 重视长期价值，浏览和收藏权重提升
-
-**实现代码**:
+**实现示例**:
 ```java
-private BigDecimal calculateHotScore(int views, int favorites, int installs,
-                                       double viewWeight, double favoriteWeight,
-                                       double installWeight) {
-    double score = (views * viewWeight)
-                  + (favorites * 10 * favoriteWeight)
-                  + (installs * 5 * installWeight);
+@RestController
+@RequestMapping("/tools")
+public class ToolController {
 
-    return BigDecimal.valueOf(score)
-        .setScale(2, RoundingMode.HALF_UP);
-}
-
-// 使用示例
-BigDecimal dailyScore = calculateHotScore(
-    tool.getViewCount(),
-    tool.getFavoriteCount(),
-    tool.getInstallCount(),
-    0.2, 0.3, 0.5  // 日榜权重
-);
-```
-
-**计算示例**:
-```
-工具 A 数据:
-- 浏览数: 1000
-- 收藏数: 50
-- 安装数: 20
-
-日榜计算:
-= (1000 × 0.2) + (50 × 10 × 0.3) + (20 × 5 × 0.5)
-= 200 + 150 + 50
-= 400
-
-周榜计算:
-= (1000 × 0.3) + (50 × 10 × 0.3) + (20 × 5 × 0.4)
-= 300 + 150 + 40
-= 490
-
-总榜计算:
-= (1000 × 0.4) + (50 × 10 × 0.3) + (20 × 5 × 0.3)
-= 400 + 150 + 30
-= 580
-```
-
-### 4.2 变化百分比计算
-
-**公式**:
-```
-changePercentage = ((current - previous) / previous) × 100
-
-如果 previous = 0，则:
-- 如果 current > 0: changePercentage = 100
-- 否则: changePercentage = 0
-```
-
-**实现代码**:
-```java
-private Double calculateChangePercentage(int currentViews, int previousViews,
-                                         int currentFavorites, int previousFavorites,
-                                         int currentInstalls, int previousInstalls) {
-    double currentTotal = currentViews + currentFavorites * 10 + currentInstalls * 5;
-    double previousTotal = previousViews + previousFavorites * 10 + previousInstalls * 5;
-
-    if (previousTotal == 0) {
-        return currentTotal > 0 ? 100.0 : 0.0;
+    @GetMapping
+    public ResponseEntity<PageResponse<ToolDTO>> getTools(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        PageResponse<ToolDTO> tools = toolService.getTools(page, size);
+        return ResponseEntity.ok(tools);
     }
 
-    double change = ((currentTotal - previousTotal) / previousTotal) * 100;
-    return Math.round(change * 10.0) / 10.0; // 保留一位小数
+    @PostMapping("/{id}/favorite")
+    public ResponseEntity<Boolean> toggleFavorite(
+            @PathVariable Long id,
+            HttpServletRequest request) {
+        String clientIdentifier = getClientIdentifier(request);
+        boolean isFavorited = toolService.toggleFavorite(id, clientIdentifier);
+        return ResponseEntity.ok(isFavorited);
+    }
+
+    private String getClientIdentifier(HttpServletRequest request) {
+        String ipAddress = request.getRemoteAddr();
+        String userAgent = request.getHeader("User-Agent");
+        return ipAddress + ":" + (userAgent != null ? userAgent : "");
+    }
 }
 ```
 
-### 4.3 客户端标识符生成
+#### 2.5.2 RatingController
+**位置**: `com.devtoolmp.controller.RatingController`
 
-**算法**:
-```
-clientIdentifier = MD5(IP + ":" + User-Agent)
+**API端点**:
 
-或简化版本:
-clientIdentifier = IP + ":" + User-Agent
-```
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/ratings/{toolId}` | 获取工具评价列表 |
+| POST | `/ratings` | 创建评价 |
+| POST | `/ratings/{id}/reply` | 回复评价 |
+| POST | `/ratings/{id}/like` | 点赞评价 |
 
-**实现代码**:
-```java
-private String getClientIdentifierFromRequest(HttpServletRequest request) {
-    String ip = request.getRemoteAddr();
-    String userAgent = request.getHeader("User-Agent");
-    return ip + ":" + userAgent;
-}
-```
+#### 2.5.3 RankingController
+**位置**: `com.devtoolmp.controller.RankingController`
 
-**安全性考虑**:
-- IP 可以被伪造
-- User-Agent 可以被修改
-- 不涉及敏感操作，安全性可接受
+**API端点**:
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/ranking/{type}` | 获取排行榜 (daily/weekly/alltime) |
+
+#### 2.5.4 SearchController
+**位置**: `com.devtoolmp.controller.SearchController`
+
+**API端点**:
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/search` | 搜索工具 |
 
 ---
 
-## 5. 前端组件设计
+### 2.6 定时任务模块 (schedule)
 
-### 5.1 组件层次结构
+#### 2.6.1 GitHubSyncScheduler
+**位置**: `com.devtoolmp.schedule.GitHubSyncScheduler`
 
-```
-App.vue
-├── AppHeader.vue (导航栏)
-│   ├── Logo
-│   ├── SearchBox
-│   ├── NavLinks
-│   └── UserActions
-├── RouterView
-│   ├── Home.vue
-│   │   ├── Hero Section
-│   │   ├── StatsCard.vue (统计卡片)
-│   │   │   └── AnimatedNumber.vue (数字动画)
-│   │   ├── QuickRankingCards
-│   │   └── HotToolsGrid
-│   │       └── ToolCard.vue (工具卡片)
-│   ├── Tools.vue (工具列表页)
-│   │   ├── ToolFilters
-│   │   ├── ToolGrid
-│   │   │   └── ToolCard.vue
-│   │   └── Pagination
-│   ├── ToolDetail.vue (工具详情页)
-│   │   ├── ToolHeader
-│   │   ├── ToolStats
-│   │   ├── RatingDisplay.vue (评分展示)
-│   │   └── RatingForm.vue (评分表单)
-│   ├── Search.vue (搜索页)
-│   └── Ranking.vue (排行榜页)
-│       ├── RankingTabs
-│       └── RankingTable
-└── AppFooter.vue
+**实现**:
+```java
+@Component
+public class GitHubSyncScheduler {
+
+    @Scheduled(cron = "0 0 2 * * ?")
+    public void syncGitHubDataDaily() {
+        log.info("Starting daily GitHub data sync at {}", LocalDateTime.now());
+        try {
+            var result = gitHubService.syncAllToolsGitHubData();
+            log.info("GitHub data sync completed: {}", result);
+        } catch (Exception e) {
+            log.error("Error during daily GitHub data sync", e);
+        }
+    }
+}
 ```
 
-### 5.2 核心组件设计
+**执行时间**: 每天凌晨2点
 
-#### 5.2.1 ToolCard.vue（工具卡片）
+---
 
-**Props**:
+### 2.7 异常处理模块 (exception)
+
+#### 2.7.1 GlobalExceptionHandler
+**位置**: `com.devtoolmp.exception.GlobalExceptionHandler`
+
+**实现**:
+```java
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ApiResponse> handleBusinessException(BusinessException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(e.getMessage()));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse> handleException(Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("Internal server error"));
+    }
+}
+```
+
+---
+
+### 2.8 DTO模块 (dto)
+
+#### 2.8.1 请求DTO
+
+**ToolCreateRequest**:
+```java
+public class ToolCreateRequest {
+    @NotBlank(message = "Name is required")
+    private String name;
+
+    @NotBlank(message = "Description is required")
+    private String description;
+
+    @NotNull(message = "Category is required")
+    private Long categoryId;
+
+    private String githubOwner;
+    private String githubRepo;
+    private String version;
+    private String status;
+    private List<String> tags;
+}
+```
+
+**RatingCreateRequest**:
+```java
+public class RatingCreateRequest {
+    @NotNull(message = "Tool ID is required")
+    private Long toolId;
+
+    @Min(value = 1, message = "Score must be at least 1")
+    @Max(value = 5, message = "Score must be at most 5")
+    private Integer score;
+
+    private String comment;
+}
+```
+
+#### 2.8.2 响应DTO
+
+**ApiResponse** - 统一响应格式:
+```java
+public class ApiResponse<T> {
+    private int code;
+    private String message;
+    private T data;
+
+    public static <T> ApiResponse<T> success(T data) {
+        return new ApiResponse<>(200, "Success", data);
+    }
+
+    public static <T> ApiResponse<T> error(String message) {
+        return new ApiResponse<>(500, message, null);
+    }
+}
+```
+
+**PageResponse** - 分页响应:
+```java
+public class PageResponse<T> {
+    private List<T> content;
+    private int page;
+    private int size;
+    private long total;
+
+    public static <T> PageResponse<T> of(List<T> content, int page, int size, long total) {
+        return new PageResponse<>(content, page, size, total);
+    }
+}
+```
+
+---
+
+## 3. 前端实现详解
+
+### 3.1 项目结构
+```
+frontend/src/
+├── api/                    # API调用
+│   └── index.js           # Axios配置与API方法
+├── components/            # 组件
+│   ├── layout/           # 布局组件
+│   │   ├── AppHeader.vue
+│   │   └── AppFooter.vue
+│   ├── tool/             # 工具组件
+│   │   ├── ToolCard.vue
+│   │   └── ToolFormDialog.vue
+│   ├── rating/           # 评价组件
+│   │   ├── RatingDisplay.vue
+│   │   └── RatingForm.vue
+│   └── home/             # 首页组件
+│       ├── StatsCard.vue
+│       └── AnimatedNumber.vue
+├── views/                # 页面视图
+│   ├── Home.vue          # 首页
+│   ├── Tools.vue         # 工具列表
+│   ├── ToolDetail.vue    # 工具详情
+│   ├── Search.vue        # 搜索页面
+│   └── Ranking.vue       # 排行榜
+├── stores/               # Pinia状态管理
+│   ├── tools.js
+│   ├── rating.js
+│   ├── ranking.js
+│   └── user.js
+├── router/               # 路由配置
+│   └── index.js
+├── App.vue               # 根组件
+└── main.js               # 入口文件
+```
+
+---
+
+### 3.2 API层 (api/index.js)
+
+**Axios配置**:
 ```javascript
-{
+import axios from 'axios'
+
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api',
+  timeout: 10000
+})
+
+// 请求拦截器
+api.interceptors.request.use(
+  config => {
+    return config
+  },
+  error => {
+    return Promise.reject(error)
+  }
+)
+
+// 响应拦截器
+api.interceptors.response.use(
+  response => {
+    return response.data
+  },
+  error => {
+    console.error('API Error:', error)
+    return Promise.reject(error)
+  }
+)
+
+export default api
+```
+
+**API方法**:
+```javascript
+// 工具相关API
+export const toolApi = {
+  // 获取工具列表
+  getTools: (page = 0, size = 20) => {
+    return api.get('/tools', { params: { page, size } })
+  },
+
+  // 获取工具详情
+  getToolDetail: (id) => {
+    return api.get(`/tools/${id}/detail`)
+  },
+
+  // 搜索工具
+  searchTools: (keyword, page = 0, size = 20) => {
+    return api.get('/tools/search', { params: { keyword, page, size } })
+  },
+
+  // 切换收藏
+  toggleFavorite: (id) => {
+    return api.post(`/tools/${id}/favorite`)
+  },
+
+  // 记录浏览
+  recordView: (id) => {
+    return api.post(`/tools/${id}/view`)
+  }
+}
+
+// 评价相关API
+export const ratingApi = {
+  // 获取工具评价
+  getRatings: (toolId) => {
+    return api.get(`/ratings/${toolId}`)
+  },
+
+  // 创建评价
+  createRating: (data) => {
+    return api.post('/ratings', data)
+  }
+}
+
+// 排行榜API
+export const rankingApi = {
+  // 获取排行榜
+  getRanking: (type = 'daily', limit = 20) => {
+    return api.get(`/ranking/${type}`, { params: { limit } })
+  }
+}
+```
+
+---
+
+### 3.3 状态管理 (stores/)
+
+#### 3.3.1 tools.js
+```javascript
+import { defineStore } from 'pinia'
+import { toolApi } from '@/api'
+
+export const useToolsStore = defineStore('tools', {
+  state: () => ({
+    tools: [],
+    currentTool: null,
+    loading: false,
+    total: 0
+  }),
+
+  actions: {
+    async fetchTools(page = 0, size = 20) {
+      this.loading = true
+      try {
+        const response = await toolApi.getTools(page, size)
+        this.tools = response.content
+        this.total = response.total
+      } catch (error) {
+        console.error('Failed to fetch tools:', error)
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async fetchToolDetail(id) {
+      this.loading = true
+      try {
+        const response = await toolApi.getToolDetail(id)
+        this.currentTool = response
+        return response
+      } catch (error) {
+        console.error('Failed to fetch tool detail:', error)
+      } finally {
+        this.loading = false
+      }
+    }
+  }
+})
+```
+
+#### 3.3.2 user.js
+```javascript
+import { defineStore } from 'pinia'
+
+export const useUserStore = defineStore('user', {
+  state: () => ({
+    clientIdentifier: null
+  }),
+
+  actions: {
+    initClientIdentifier() {
+      // 生成客户端标识
+      const fingerprint = this.generateFingerprint()
+      this.clientIdentifier = fingerprint
+    },
+
+    generateFingerprint() {
+      // 简单的指纹生成
+      return 'client_' + Math.random().toString(36).substr(2, 9)
+    }
+  }
+})
+```
+
+---
+
+### 3.4 核心组件
+
+#### 3.4.1 ToolCard.vue - 工具卡片组件
+```vue
+<template>
+  <el-card class="tool-card" @click="goToDetail">
+    <div class="tool-header">
+      <h3>{{ tool.name }}</h3>
+      <el-tag>{{ tool.categoryName }}</el-tag>
+    </div>
+    <p class="description">{{ tool.description }}</p>
+    <div class="stats">
+      <span><i class="el-icon-star-on"></i> {{ tool.stars }}</span>
+      <span><i class="el-icon-view"></i> {{ tool.viewCount }}</span>
+      <span><i class="el-icon-collection"></i> {{ tool.favoriteCount }}</span>
+    </div>
+    <div class="tags">
+      <el-tag v-for="tag in tool.tags" :key="tag" size="small">
+        {{ tag }}
+      </el-tag>
+    </div>
+  </el-card>
+</template>
+
+<script setup>
+import { useRouter } from 'vue-router'
+
+const props = defineProps({
   tool: {
     type: Object,
     required: true
-  },
-  showPublishButton: {
-    type: Boolean,
-    default: false
-  },
-  showSyncButton: {
-    type: Boolean,
-    default: false
   }
-}
-```
-
-**Emits**:
-```javascript
-[
-  'click',        // 点击卡片
-  'favorite',     // 收藏/取消
-  'publish',      // 上架
-  'unpublish',    // 下架
-  'synced'        // 同步完成
-]
-```
-
-**Features**:
-- 工具信息展示（名称、描述、标签）
-- GitHub 信息（stars, forks）
-- 统计数据（浏览、收藏、安装）
-- 热度分数徽章
-- 一键复制安装命令
-- 收藏按钮
-
-#### 5.2.2 RatingDisplay.vue（评分展示）
-
-**Props**:
-```javascript
-{
-  statistics: {
-    type: Object,
-    required: true
-  }
-}
-```
-
-**Features**:
-- 平均分展示（大号显示）
-- 总评分人数
-- 五星进度条
-- 评分分布直方图
-
-**实现逻辑**:
-```javascript
-const ratingDistribution = computed(() => {
-  if (!props.statistics?.scoreDistribution) return []
-
-  return [5, 4, 3, 2, 1].map(score => ({
-    score,
-    count: props.statistics.scoreDistribution[score] || 0,
-    percentage: calculatePercentage(score)
-  }))
 })
-```
 
-#### 5.2.3 RatingForm.vue（评分表单）
+const router = useRouter()
 
-**Props**:
-```javascript
-{
-  toolId: {
-    type: Number,
-    required: true
-  }
+const goToDetail = () => {
+  router.push(`/tools/${props.tool.id}`)
 }
+</script>
 ```
 
-**Emits**:
-```javascript
-[
-  'success'  // 评分成功
-]
-```
+#### 3.4.2 RatingForm.vue - 评价表单组件
+```vue
+<template>
+  <el-dialog v-model="visible" title="提交评价" width="500px">
+    <el-form :model="form" :rules="rules" ref="formRef">
+      <el-form-item label="评分" prop="score">
+        <el-rate v-model="form.score" :max="5" />
+      </el-form-item>
+      <el-form-item label="评论" prop="comment">
+        <el-input
+          v-model="form.comment"
+          type="textarea"
+          :rows="4"
+          placeholder="分享你的使用体验..."
+        />
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="visible = false">取消</el-button>
+      <el-button type="primary" @click="submit">提交</el-button>
+    </template>
+  </el-dialog>
+</template>
 
-**Features**:
-- 星级评分选择
-- 评论输入（可选）
-- 昵称输入（可选）
-- 表单验证
+<script setup>
+import { ref, reactive } from 'vue'
+import { ratingApi } from '@/api'
 
-**表单规则**:
-```javascript
+const visible = ref(false)
+const formRef = ref()
+const form = reactive({
+  toolId: null,
+  score: 5,
+  comment: ''
+})
+
 const rules = {
-  score: [
-    { required: true, message: '请选择评分', trigger: 'change' }
-  ],
-  comment: [
-    { max: 500, message: '评论不能超过500字', trigger: 'blur' }
-  ],
-  username: [
-    { max: 50, message: '昵称不能超过50字', trigger: 'blur' }
-  ]
+  score: [{ required: true, message: '请选择评分', trigger: 'change' }],
+  comment: [{ required: true, message: '请输入评论内容', trigger: 'blur' }]
 }
+
+const emit = defineEmits('submitted')
+
+const submit = async () => {
+  await formRef.value.validate()
+  await ratingApi.createRating(form)
+  visible.value = false
+  emit('submitted')
+}
+
+const open = (toolId) => {
+  form.toolId = toolId
+  visible.value = true
+}
+
+defineExpose({ open })
+</script>
 ```
 
 ---
 
-## 6. 状态管理设计
+### 3.5 页面视图
 
-### 6.1 Pinia Store 架构
+#### 3.5.1 Home.vue - 首页
+```vue
+<template>
+  <div class="home">
+    <AppHeader />
 
-**Store 列表**:
-- `tools.js` - 工具状态管理
-- `rating.js` - 评分状态管理
-- `ranking.js` - 排行榜状态管理
-- `user.js` - 用户状态管理（简化版）
+    <section class="hero">
+      <h1>发现优秀的开发者工具</h1>
+      <p>一站式工具探索、评价与排行平台</p>
+      <el-input
+        v-model="searchKeyword"
+        placeholder="搜索工具..."
+        @keyup.enter="search"
+      >
+        <template #append>
+          <el-button @click="search">搜索</el-button>
+        </template>
+      </el-input>
+    </section>
 
-### 6.2 tools.js Store 设计
+    <section class="stats">
+      <StatsCard
+        title="收录工具"
+        :value="totalTools"
+        icon="el-icon-box"
+      />
+      <StatsCard
+        title="总浏览量"
+        :value="totalViews"
+        icon="el-icon-view"
+      />
+      <StatsCard
+        title="总收藏量"
+        :value="totalFavorites"
+        icon="el-icon-star-on"
+      />
+    </section>
 
-**状态**:
-```javascript
-{
-  tools: [],           // 工具列表
-  currentTool: null,   // 当前工具详情
-  loading: false,      // 加载状态
-  error: null,         // 错误信息
-  total: 0             // 总数
-}
+    <section class="trending">
+      <h2>热门工具</h2>
+      <div class="tool-list">
+        <ToolCard
+          v-for="tool in trendingTools"
+          :key="tool.id"
+          :tool="tool"
+        />
+      </div>
+    </section>
+
+    <AppFooter />
+  </div>
+</template>
 ```
 
-**Actions**:
-```javascript
-{
-  fetchTools(page, size),        // 获取工具列表
-  fetchToolDetail(id),            // 获取工具详情
-  searchTools(keyword),           // 搜索工具
-  toggleFavorite(id),             // 切换收藏
-  recordView(id),                 // 记录浏览
-  recordInstall(id)               // 记录安装
+#### 3.5.2 ToolDetail.vue - 工具详情页
+```vue
+<template>
+  <div class="tool-detail">
+    <AppHeader />
+
+    <div class="container" v-if="tool">
+      <div class="header">
+        <h1>{{ tool.name }}</h1>
+        <el-tag>{{ tool.categoryName }}</el-tag>
+        <el-button
+          :type="tool.favorited ? 'warning' : 'default'"
+          @click="toggleFavorite"
+        >
+          {{ tool.favorited ? '已收藏' : '收藏' }}
+        </el-button>
+      </div>
+
+      <div class="info">
+        <p class="description">{{ tool.description }}</p>
+
+        <div class="github-info" v-if="tool.githubUrl">
+          <h3>GitHub 仓库</h3>
+          <el-link :href="tool.githubUrl" target="_blank">
+            {{ tool.githubOwner }}/{{ tool.githubRepo }}
+          </el-link>
+          <div class="stats">
+            <span>⭐ {{ tool.stars }}</span>
+            <span>🍴 {{ tool.forks }}</span>
+            <span>👁️ {{ tool.watchers }}</span>
+            <span>🐛 {{ tool.openIssues }}</span>
+          </div>
+        </div>
+
+        <div class="tags">
+          <el-tag v-for="tag in tool.tags" :key="tag">
+            {{ tag }}
+          </el-tag>
+        </div>
+
+        <div class="stats">
+          <span>👁️ 浏览 {{ tool.viewCount }}</span>
+          <span>⭐ 收藏 {{ tool.favoriteCount }}</span>
+          <span>📥 安装 {{ tool.installCount }}</span>
+        </div>
+      </div>
+
+      <div class="ratings">
+        <div class="header">
+          <h2>用户评价</h2>
+          <el-button type="primary" @click="ratingFormRef.open(tool.id)">
+            写评价
+          </el-button>
+        </div>
+
+        <div class="average">
+          <span class="score">{{ tool.averageRating?.toFixed(1) || '-' }}</span>
+          <span class="count">({{ tool.totalRatings }} 条评价)</span>
+        </div>
+
+        <div class="rating-list">
+          <div v-for="rating in ratings" :key="rating.id" class="rating-item">
+            <el-rate v-model="rating.score" disabled />
+            <p>{{ rating.comment }}</p>
+            <span class="time">{{ formatTime(rating.createdAt) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <RatingForm ref="ratingFormRef" @submitted="loadRatings" />
+    <AppFooter />
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { useToolsStore } from '@/stores/tools'
+import { toolApi } from '@/api'
+import RatingForm from '@/components/rating/RatingForm.vue'
+
+const route = useRoute()
+const toolsStore = useToolsStore()
+
+const tool = ref(null)
+const ratings = ref([])
+const ratingFormRef = ref(null)
+
+const loadTool = async () => {
+  tool.value = await toolsStore.fetchToolDetail(route.params.id)
+  await toolApi.recordView(route.params.id)
 }
-```
 
-**实现示例**:
-```javascript
-export const useToolsStore = defineStore('tools', () => {
-  const tools = ref([])
-  const currentTool = ref(null)
-  const loading = ref(false)
-  const error = ref(null)
-  const total = ref(0)
+const loadRatings = async () => {
+  // 加载评价列表
+}
 
-  async function fetchTools(page = 0, size = 20) {
-    loading.value = true
-    error.value = null
+const toggleFavorite = async () => {
+  const result = await toolApi.toggleFavorite(tool.value.id)
+  tool.value.favorited = result
+}
 
-    try {
-      const response = await request.get('/tools', {
-        params: { page, size }
-      })
-      tools.value = response.content
-      total.value = response.totalElements
-    } catch (err) {
-      error.value = err.message
-    } finally {
-      loading.value = false
-    }
-  }
-
-  async function toggleFavorite(id) {
-    try {
-      const isFavorited = await request.post(`/tools/${id}/favorite`)
-
-      // 更新本地状态
-      if (currentTool.value && currentTool.value.id === id) {
-        currentTool.value.isFavorited = isFavorited
-        if (isFavorited) {
-          currentTool.value.favoriteCount++
-        } else {
-          currentTool.value.favoriteCount--
-        }
-      }
-
-      return isFavorited
-    } catch (error) {
-      throw error
-    }
-  }
-
-  return {
-    tools,
-    currentTool,
-    loading,
-    error,
-    total,
-    fetchTools,
-    toggleFavorite
-    // ... 其他方法
-  }
+onMounted(() => {
+  loadTool()
 })
-```
-
-### 6.3 ranking.js Store 设计
-
-**状态**:
-```javascript
-{
-  rankings: [],      // 排行榜数据
-  loading: false,    // 加载状态
-  error: null,       // 错误信息
-  activeTab: 'alltime'  // 当前标签
-}
-```
-
-**Actions**:
-```javascript
-{
-  fetchRankings(type),    // 获取排行榜 (daily/weekly/alltime/trending)
-  switchTab(tab),         // 切换标签
-  refresh()               // 刷新当前榜单
-}
-```
-
-**路由监听**:
-```javascript
-// 监听路由变化，确保每次进入排行榜都刷新数据
-watch(() => route.path, (newPath) => {
-  if (newPath === '/ranking') {
-    fetchRankings(activeTab.value)
-  }
-})
+</script>
 ```
 
 ---
 
-## 7. 路由与导航设计
+### 3.6 路由配置 (router/index.js)
 
-### 7.1 路由配置
-
-**路由表**:
 ```javascript
+import { createRouter, createWebHistory } from 'vue-router'
+
 const routes = [
   {
     path: '/',
     name: 'Home',
-    component: Home
+    component: () => import('@/views/Home.vue')
   },
   {
     path: '/tools',
     name: 'Tools',
-    component: Tools
+    component: () => import('@/views/Tools.vue')
   },
   {
     path: '/tools/:id',
     name: 'ToolDetail',
-    component: ToolDetail,
-    props: true  // 路由参数作为 props 传递
+    component: () => import('@/views/ToolDetail.vue')
   },
   {
     path: '/search',
     name: 'Search',
-    component: Search
+    component: () => import('@/views/Search.vue')
   },
   {
     path: '/ranking',
     name: 'Ranking',
-    component: Ranking
+    component: () => import('@/views/Ranking.vue')
   }
 ]
-```
 
-### 7.2 导航守卫设计
-
-**beforeEach 守卫**:
-```javascript
-router.beforeEach((to, from, next) => {
-  console.log('[Router] Navigating from', from.path, 'to', to.path)
-
-  // 关闭所有 Element Plus 对话框和遮罩层
-  const overlays = document.querySelectorAll('.el-overlay')
-  overlays.forEach(overlay => overlay.remove())
-
-  // 移除对话框 body 类
-  document.body.classList.remove('el-popup-parent--hidden')
-
-  // 关闭所有对话框
-  const dialogs = document.querySelectorAll('.el-dialog')
-  dialogs.forEach(dialog => dialog.remove())
-
-  next()
-})
-```
-
-**问题背景**:
-- Element Plus 对话框的遮罩层 (`.el-overlay`) z-index 很高（2000+）
-- 路由切换时遮罩层没有被正确清理
-- 导致新页面的所有点击事件被遮罩层拦截
-
-**解决方案**:
-1. 路由守卫强制清理所有遮罩层和对话框
-2. 全局点击监听器作为后备方案
-3. 导航链接的点击处理器
-
-### 7.3 编程式导航
-
-**使用示例**:
-```javascript
-import { useRouter } from 'vue-router'
-
-const router = useRouter()
-
-// 导航到工具详情
-router.push(`/tools/${toolId}`)
-
-// 带查询参数
-router.push({
-  name: 'Search',
-  query: { q: 'Vue' }
+const router = createRouter({
+  history: createWebHistory(),
+  routes
 })
 
-// 返回上一页
-router.back()
-
-// 替换当前路由
-router.replace('/ranking')
+export default router
 ```
 
 ---
 
-## 8. 缓存实现细节
+## 4. 数据库实现
 
-### 8.1 Redis 配置
+### 4.1 初始化SQL
 
-**application-dev.yml**:
+```sql
+-- 创建数据库
+CREATE DATABASE IF NOT EXISTS devtoolmp CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+USE devtoolmp;
+
+-- 分类表
+CREATE TABLE categories (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 工具表
+CREATE TABLE tools (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    category_id BIGINT,
+    github_owner VARCHAR(255),
+    github_repo VARCHAR(255),
+    version VARCHAR(50),
+    stars INT DEFAULT 0,
+    forks INT DEFAULT 0,
+    open_issues INT DEFAULT 0,
+    watchers INT DEFAULT 0,
+    view_count INT DEFAULT 0,
+    favorite_count INT DEFAULT 0,
+    install_count INT DEFAULT 0,
+    view_count_yesterday INT DEFAULT 0,
+    favorite_count_yesterday INT DEFAULT 0,
+    install_count_yesterday INT DEFAULT 0,
+    hot_score_daily DECIMAL(10,2) DEFAULT 0,
+    hot_score_weekly DECIMAL(10,2) DEFAULT 0,
+    hot_score_alltime DECIMAL(10,2) DEFAULT 0,
+    status VARCHAR(20) DEFAULT 'active',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (category_id) REFERENCES categories(id)
+);
+
+-- 工具标签表
+CREATE TABLE tool_tags (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    tool_id BIGINT NOT NULL,
+    tag_name VARCHAR(50) NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (tool_id) REFERENCES tools(id) ON DELETE CASCADE
+);
+
+-- 评价表
+CREATE TABLE ratings (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    tool_id BIGINT NOT NULL,
+    client_identifier VARCHAR(255) NOT NULL,
+    score INT NOT NULL CHECK (score >= 1 AND score <= 5),
+    comment TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (tool_id) REFERENCES tools(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_tool_client (tool_id, client_identifier)
+);
+
+-- 收藏表
+CREATE TABLE favorites (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    tool_id BIGINT NOT NULL,
+    client_identifier VARCHAR(255) NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (tool_id) REFERENCES tools(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_tool_client (tool_id, client_identifier)
+);
+
+-- 浏览记录表
+CREATE TABLE view_records (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    tool_id BIGINT NOT NULL,
+    client_identifier VARCHAR(255),
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (tool_id) REFERENCES tools(id) ON DELETE CASCADE
+);
+
+-- 评价回复表
+CREATE TABLE comment_replies (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    rating_id BIGINT NOT NULL,
+    client_identifier VARCHAR(255) NOT NULL,
+    reply_content TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (rating_id) REFERENCES ratings(id) ON DELETE CASCADE
+);
+
+-- 评价点赞表
+CREATE TABLE rating_likes (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    rating_id BIGINT NOT NULL,
+    client_identifier VARCHAR(255) NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (rating_id) REFERENCES ratings(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_rating_client (rating_id, client_identifier)
+);
+
+-- 创建索引
+CREATE INDEX idx_tools_status ON tools(status);
+CREATE INDEX idx_tools_category ON tools(category_id);
+CREATE INDEX idx_tools_hot_daily ON tools(hot_score_daily DESC);
+CREATE INDEX idx_tools_hot_weekly ON tools(hot_score_weekly DESC);
+CREATE INDEX idx_tools_hot_alltime ON tools(hot_score_alltime DESC);
+CREATE INDEX idx_ratings_tool ON ratings(tool_id);
+CREATE INDEX idx_view_records_tool ON view_records(tool_id);
+```
+
+---
+
+## 5. 部署配置
+
+### 5.1 Docker Compose配置
+
+**开发环境** (`docker-compose.yml`):
+```yaml
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: devtoolmp-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: devtoolmp
+      MYSQL_USER: devtool
+      MYSQL_PASSWORD: devtool123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      timeout: 20s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: devtoolmp-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: devtoolmp-backend
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/devtoolmp?useSSL=false&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: devtool
+      SPRING_DATASOURCE_PASSWORD: devtool123
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: devtoolmp-frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  mysql-data:
+  redis-data:
+```
+
+### 5.2 Dockerfile配置
+
+**后端Dockerfile** (`backend/Dockerfile`):
+```dockerfile
+FROM maven:3.9-eclipse-temurin-21 AS build
+WORKDIR /app
+COPY pom.xml .
+RUN mvn dependency:go-offline
+COPY src ./src
+RUN mvn clean package -DskipTests
+
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
+```
+
+**前端Dockerfile** (`frontend/Dockerfile`):
+```dockerfile
+FROM node:20-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+
+FROM nginx:alpine
+COPY --from=build /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+---
+
+## 6. 配置文件详解
+
+### 6.1 后端配置
+
+**application.yml** (主配置):
 ```yaml
 spring:
+  application:
+    name: devtoolmp-backend
+  profiles:
+    active: dev
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
   data:
     redis:
-      host: localhost
+      host: redis
       port: 6379
-      password:
       database: 0
       timeout: 5000ms
       jedis:
@@ -1124,333 +1393,122 @@ spring:
           max-wait: -1ms
           max-idle: 8
           min-idle: 0
-```
 
-**Redis 连接池**:
-- 最大连接数: 8
-- 最大等待时间: -1ms（无限等待）
-- 最大空闲连接: 8
-- 最小空闲连接: 0
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.devtoolmp.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
-### 8.2 缓存注解使用
-
-**@Cacheable 注解**:
-```java
-@Cacheable(value = "dailyRanking", key = "'daily'")
-public List<ToolRankingDTO> getDailyRanking() {
-    // 方法实现
-}
-```
-
-**缓存配置**:
-- **value**: 缓存名称（命名空间）
-- **key**: 缓存键（SpEL 表达式）
-- **unless**: 条件排除
-- **condition**: 条件缓存
-
-**缓存键生成**:
-```
-dailyRanking::daily
-weeklyRanking::weekly
-allTimeRanking::alltime
-trendingRanking::trending
-```
-
-### 8.3 缓存失效策略
-
-**主动失效**:
-```java
-@CacheEvict(value = "dailyRanking", allEntries = true)
-public void evictDailyRanking() {
-    // 清除所有日榜缓存
-}
-```
-
-**定时失效**:
-```java
-@Cacheable(value = "dailyRanking", key = "'daily'", unless = "#result == null")
-```
-
-**TTL 配置**（通过 Redis 配置）:
-```java
-@Bean
-public RedisCacheConfiguration cacheConfiguration() {
-    return RedisCacheConfiguration.defaultCacheConfig()
-        .entryTtl(Duration.ofMinutes(10))  // 10分钟过期
-        .disableCachingNullValues()
-        .serializeKeysWith(RedisSerializationContext.SerializationPair
-            .fromSerializer(new StringRedisSerializer()))
-        .serializeValuesWith(RedisSerializationContext.SerializationPair
-            .fromSerializer(new GenericJackson2JsonRedisSerializer()));
-}
-```
-
-### 8.4 缓存预热
-
-**启动时预热**:
-```java
-@PostConstruct
-public void warmUpCache() {
-    // 预加载排行榜数据
-    getDailyRanking();
-    getWeeklyRanking();
-    getAllTimeRanking();
-    getTrendingRankings();
-}
-```
-
----
-
-## 9. 异常处理机制
-
-### 9.1 异常类型定义
-
-**业务异常**:
-```java
-public class BusinessException extends RuntimeException {
-    private final String code;
-
-    public BusinessException(String code, String message) {
-        super(message);
-        this.code = code;
-    }
-}
-```
-
-**自定义异常**:
-- `ToolNotFoundException` - 工具不存在
-- `CategoryNotFoundException` - 分类不存在
-- `InvalidRatingException` - 无效评分
-- `DuplicateRatingException` - 重复评分
-
-### 9.2 全局异常处理器
-
-**GlobalExceptionHandler**:
-```java
-@RestControllerAdvice
-public class GlobalExceptionHandler {
-
-    @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<?> handleBusinessException(BusinessException e) {
-        return ResponseEntity
-            .status(HttpStatus.BAD_REQUEST)
-            .body(ApiResponse.error(e.getMessage()));
-    }
-
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<?> handleValidationException(
-            MethodArgumentNotValidException e) {
-        String message = e.getBindingResult().getAllErrors()
-            .stream()
-            .map(DefaultMessage::getDefaultMessage)
-            .collect(Collectors.joining(", "));
-
-        return ResponseEntity
-            .status(HttpStatus.BAD_REQUEST)
-            .body(ApiResponse.error("参数验证失败: " + message));
-    }
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<?> handleGeneralException(Exception e) {
-        log.error("未处理的异常", e);
-
-        return ResponseEntity
-            .status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .body(ApiResponse.error("服务器内部错误"));
-    }
-}
-```
-
-### 9.3 前端错误处理
-
-**Axios 拦截器**:
-```javascript
-request.interceptors.response.use(
-  response => {
-    return response.data
-  },
-  error => {
-    if (error.response) {
-      const { status, data } = error.response
-
-      switch (status) {
-        case 400:
-          ElMessage.error(data.message || '请求参数错误')
-          break
-        case 404:
-          ElMessage.error('请求的资源不存在')
-          break
-        case 500:
-          ElMessage.error('服务器错误')
-          break
-        default:
-          ElMessage.error(data.message || '请求失败')
-      }
-    } else {
-      ElMessage.error('网络错误')
-    }
-
-    return Promise.reject(error)
-  }
-)
-```
-
----
-
-## 10. 性能优化方案
-
-### 10.1 数据库优化
-
-**索引优化**:
-```sql
--- 复合索引
-CREATE INDEX idx_status_category ON tools(status, category_id);
-CREATE INDEX idx_hot_score_daily ON tools(hot_score_daily DESC);
-
--- 覆盖索引
-CREATE INDEX idx_ranking_cover ON tools(status, hot_score_daily, id, name);
-```
-
-**查询优化**:
-- 使用 `LIMIT` 限制结果集
-- 避免 `SELECT *`，只查询需要的字段
-- 使用 `JOIN` 代替多次查询
-- 批量查询代替循环查询
-
-**批量更新示例**:
-```java
-// 不推荐：N+1 查询
-for (Tool tool : tools) {
-    toolMapper.updateHotScores(tool.getId(), ...);
-}
-
-// 推荐：批量更新
-List<Tool> tools = toolMapper.findAll();
-for (Tool tool : tools) {
-    calculateHotScores(tool);
-}
-toolMapper.batchUpdateHotScores(tools);
-```
-
-### 10.2 前端优化
-
-**代码分割**:
-```javascript
-const Ranking = () => import('@/views/Ranking.vue')
-const ToolDetail = () => import('@/views/ToolDetail.vue')
-```
-
-**图片优化**:
-- 使用 WebP 格式
-- 懒加载图片
-- CDN 加速
-
-**组件懒加载**:
-```vue
-<template>
-  <div>
-    <ToolCard v-for="tool in visibleTools" :key="tool.id" />
-  </div>
-</template>
-
-<script setup>
-import { ref } from 'vue'
-
-const visibleTools = ref(tools.slice(0, 20))
-
-// 滚动加载更多
-function loadMore() {
-  visibleTools.value.push(...tools.slice(offset, offset + 20))
-}
-</script>
-```
-
-### 10.3 API 优化
-
-**减少请求次数**:
-- 合并多个接口
-- 使用 GraphQL（未来）
-- 批量操作
-
-**响应压缩**:
-```yaml
 server:
-  compression:
-    enabled: true
-    mime-types: application/json,application/xml,text/html,text/xml,text/plain
+  port: 8080
+  servlet:
+    context-path: /api
+
+github:
+  api:
+    base-url: https://api.github.com
+    token: your-github-token-here
+
+logging:
+  level:
+    com.devtoolmp: DEBUG
+    org.hibernate.SQL: DEBUG
 ```
 
-### 10.4 缓存优化
-
-**多级缓存**:
+**application-dev.yml** (开发环境):
+```yaml
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/devtoolmp?useSSL=false&serverTimezone=UTC
+    username: devtool
+    password: devtool123
+    driver-class-name: com.mysql.cj.jdbc.Driver
 ```
-L1: 浏览器缓存 (1小时)
-L2: CDN 缓存 (10分钟)
-L3: Redis 缓存 (10分钟)
-L4: 数据库查询缓存
-```
 
-**缓存预热**:
-- 应用启动时预加载热门数据
-- 定时任务刷新缓存
-- 前端预加载下一页数据
+### 6.2 前端配置
+
+**vite.config.js**:
+```javascript
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+
+export default defineConfig({
+  plugins: [vue()],
+  server: {
+    port: 5173,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true
+      }
+    }
+  }
+})
+```
 
 ---
 
-## 附录
+## 7. 开发指南
 
-### A. 常见问题排查
+### 7.1 后端开发
 
-**问题 1**: 排行榜数据不更新
-- 检查定时任务是否运行
-- 检查 Redis 连接是否正常
-- 手动清除缓存: `redis-cli FLUSHDB`
+**启动后端**:
+```bash
+cd backend
+mvn spring-boot:run
+```
 
-**问题 2**: 浏览数统计不准确
-- 检查 clientIdentifier 生成逻辑
-- 检查 ViewRecord 是否正确保存
-- 检查定时任务是否正确更新
+**运行测试**:
+```bash
+mvn test
+```
 
-**问题 3**: Element Plus 对话框无法关闭
-- 检查路由守卫是否生效
-- 检查 `.el-overlay` 元素是否存在
-- 手动清理: `document.querySelectorAll('.el-overlay').forEach(el => el.remove())`
+**打包**:
+```bash
+mvn clean package
+```
 
-### B. 性能监控
+### 7.2 前端开发
 
-**关键指标**:
-- API 响应时间 < 200ms (P95)
-- 首屏加载时间 < 2s
-- 排行榜查询 < 100ms
-- 工具详情查询 < 50ms
+**安装依赖**:
+```bash
+cd frontend
+npm install
+```
 
-**监控工具**:
-- Spring Boot Actuator
-- Redis INFO 命令
-- MySQL Slow Query Log
-- Chrome DevTools Performance
+**启动开发服务器**:
+```bash
+npm run dev
+```
 
-### C. 开发最佳实践
+**构建生产版本**:
+```bash
+npm run build
+```
 
-**后端**:
-1. 使用 `@Transactional` 确保数据一致性
-2. 使用 `@Cacheable` 缓存热点数据
-3. 使用 `@Validated` 验证参数
-4. 使用日志记录关键操作
-5. 编写单元测试覆盖核心逻辑
+### 7.3 Docker部署
 
-**前端**:
-1. 使用 Composition API 组织代码
-2. 使用 Pinia 管理全局状态
-3. 使用 `<script setup>` 简化代码
-4. 使用 computed 优化计算
-5. 使用 watch 监听变化
+**启动所有服务**:
+```bash
+docker-compose up -d
+```
+
+**查看日志**:
+```bash
+docker-compose logs -f backend
+```
+
+**停止服务**:
+```bash
+docker-compose down
+```
 
 ---
 
-**文档结束**
+## 版本历史
 
-相关文档:
-- [架构设计文档](./ARCHITECTURE_DESIGN.md)
-- [CLAUDE.md](./CLAUDE.md)
-- [API 文档](./docs/API.md)
+| 版本 | 日期 | 说明 |
+|------|------|------|
+| 1.0.0 | 2025-01-31 | 初始实现设计文档 |

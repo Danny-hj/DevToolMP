@@ -28,9 +28,6 @@ public class ToolService {
     private ViewRecordMapper viewRecordMapper;
 
     @Autowired
-    private TelemetryDataMapper telemetryDataMapper;
-
-    @Autowired
     private ToolTagMapper toolTagMapper;
 
     @Autowired
@@ -248,14 +245,6 @@ public class ToolService {
         tool.setInstallCount(tool.getInstallCount() + 1);
         tool.preUpdate();
         toolMapper.update(tool);
-
-        TelemetryData telemetryData = new TelemetryData();
-        telemetryData.setToolId(toolId);
-        telemetryData.setEventType("install");
-        telemetryData.setIpAddress(ipAddress);
-        telemetryData.setUserAgent(userAgent);
-        telemetryData.prePersist();
-        telemetryDataMapper.insert(telemetryData);
     }
 
     @Transactional
