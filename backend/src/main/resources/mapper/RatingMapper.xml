@@ -6,7 +6,8 @@
     <resultMap id="BaseResultMap" type="com.devtoolmp.entity.Rating">
         <id column="id" property="id"/>
         <result column="tool_id" property="toolId"/>
-        <result column="user_id" property="userId"/>
+        <result column="client_identifier" property="clientIdentifier"/>
+        <result column="username" property="username"/>
         <result column="score" property="score"/>
         <result column="comment" property="comment"/>
         <result column="created_at" property="createdAt"/>
@@ -17,8 +18,8 @@
         SELECT * FROM ratings WHERE id = #{id}
     </select>
 
-    <select id="findByToolIdAndUserId" resultMap="BaseResultMap">
-        SELECT * FROM ratings WHERE tool_id = #{toolId} AND user_id = #{userId}
+    <select id="findByToolIdAndClientIdentifier" resultMap="BaseResultMap">
+        SELECT * FROM ratings WHERE tool_id = #{toolId} AND client_identifier = #{clientIdentifier}
     </select>
 
     <select id="findByToolId" resultMap="BaseResultMap">
@@ -26,17 +27,8 @@
         LIMIT #{limit} OFFSET #{offset}
     </select>
 
-    <select id="findByUserId" resultMap="BaseResultMap">
-        SELECT * FROM ratings WHERE user_id = #{userId}
-        LIMIT #{limit} OFFSET #{offset}
-    </select>
-
     <select id="countByToolId" resultType="int">
         SELECT COUNT(*) FROM ratings WHERE tool_id = #{toolId}
-    </select>
-
-    <select id="countByUserId" resultType="int">
-        SELECT COUNT(*) FROM ratings WHERE user_id = #{userId}
     </select>
 
     <select id="getAverageScoreByToolId" resultType="java.lang.Double">
@@ -52,8 +44,8 @@
     </select>
 
     <insert id="insert" parameterType="com.devtoolmp.entity.Rating" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO ratings (tool_id, user_id, score, comment, created_at, updated_at)
-        VALUES (#{toolId}, #{userId}, #{score}, #{comment}, #{createdAt}, #{updatedAt})
+        INSERT INTO ratings (tool_id, client_identifier, username, score, comment, created_at, updated_at)
+        VALUES (#{toolId}, #{clientIdentifier}, #{username}, #{score}, #{comment}, #{createdAt}, #{updatedAt})
     </insert>
 
     <update id="update" parameterType="com.devtoolmp.entity.Rating">

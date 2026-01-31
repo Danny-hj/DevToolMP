@@ -6,19 +6,6 @@ const request = axios.create({
   timeout: 10000
 })
 
-request.interceptors.request.use(
-  config => {
-    const token = localStorage.getItem('token')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
-    return config
-  },
-  error => {
-    return Promise.reject(error)
-  }
-)
-
 request.interceptors.response.use(
   response => {
     return response.data
@@ -27,11 +14,6 @@ request.interceptors.response.use(
     if (error.response) {
       const { status, data } = error.response
       switch (status) {
-        case 401:
-          ElMessage.error('未授权，请先登录')
-          localStorage.removeItem('token')
-          window.location.href = '/login'
-          break
         case 403:
           ElMessage.error('拒绝访问')
           break

@@ -1,36 +1,46 @@
 package com.devtoolmp.config;
 
-import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
-import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.cache.RedisCacheConfiguration;
+import org.springframework.data.redis.cache.RedisCacheManager;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.RedisSerializationContext;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 /**
- * 缓存配置
+ * Redis缓存配置
  */
 @Configuration
 @EnableCaching
 public class CacheConfig {
 
     /**
-     * 配置缓存管理器
+     * 配置Redis缓存管理器
      */
     @Bean
-    public CacheManager cacheManager() {
-        CaffeineCacheManager cacheManager = new CaffeineCacheManager();
-        cacheManager.setCaffeine(Caffeine.newBuilder()
-                // 初始容量
-                .initialCapacity(100)
-                // 最大容量
-                .maximumSize(1000)
-                // 写入后过期时间
-                .expireAfterWrite(10, TimeUnit.MINUTES)
-                // 统计缓存命中率
-                .recordStats());
-        return cacheManager;
+    public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
+        // 配置序列化
+        RedisSerializationContext.SerializationPair<Object> jsonSerializer =
+                RedisSerializationContext.SerializationPair.fromSerializer(
+                        new GenericJackson2JsonRedisSerializer());
+
+        // 配置缓存
+        RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
+                .entryTtl(Duration.ofMinutes(10)) // 设置缓存过期时间为10分钟
+                .serializeKeysWith(
+                        RedisSerializationContext.SerializationPair.fromSerializer(
+                                new StringRedisSerializer()))
+                .serializeValuesWith(jsonSerializer)
+                .disableCachingNullValues(); // 不缓存null值
+
+        return RedisCacheManager.builder(connectionFactory)
+                .cacheDefaults(config)
+                .build();
     }
 }

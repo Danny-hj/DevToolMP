@@ -13,4 +13,6 @@ public class RatingCreateRequest {
     private Integer score;
 
     private String comment;
+
+    private String username;
 }

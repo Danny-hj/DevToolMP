@@ -7,7 +7,6 @@ import com.devtoolmp.dto.response.CommentReplyDTO;
 import com.devtoolmp.dto.response.RatingStatisticsDTO;
 import com.devtoolmp.dto.response.PageResponse;
 import com.devtoolmp.service.RatingService;
-import com.devtoolmp.service.TokenService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,9 +21,6 @@ public class RatingController {
 
     @Autowired
     private RatingService ratingService;
-
-    @Autowired
-    private TokenService tokenService;
 
     @GetMapping("/{ratingId}")
     public ResponseEntity<RatingDTO> getRating(@PathVariable Long ratingId) {
@@ -58,14 +54,10 @@ public class RatingController {
             @PathVariable Long toolId,
             @RequestBody RatingCreateRequest request,
             HttpServletRequest httpRequest) {
-        String authHeader = httpRequest.getHeader("Authorization");
-        Long userId = tokenService.extractUserId(authHeader);
+        String clientIdentifier = getClientIdentifier(httpRequest);
+        String username = request.getUsername() != null ? request.getUsername() : "匿名用户";
 
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        RatingDTO rating = ratingService.createRating(toolId, userId, request.getScore(), request.getComment());
+        RatingDTO rating = ratingService.createRating(toolId, clientIdentifier, username, request.getScore(), request.getComment());
         return ResponseEntity.status(HttpStatus.CREATED).body(rating);
     }
 
@@ -74,14 +66,9 @@ public class RatingController {
             @PathVariable Long ratingId,
             @RequestBody RatingCreateRequest request,
             HttpServletRequest httpRequest) {
-        String authHeader = httpRequest.getHeader("Authorization");
-        Long userId = tokenService.extractUserId(authHeader);
+        String clientIdentifier = getClientIdentifier(httpRequest);
 
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        RatingDTO rating = ratingService.updateRating(ratingId, userId, request.getScore(), request.getComment());
+        RatingDTO rating = ratingService.updateRating(ratingId, clientIdentifier, request.getScore(), request.getComment());
         return ResponseEntity.ok(rating);
     }
 
@@ -89,14 +76,9 @@ public class RatingController {
     public ResponseEntity<Void> deleteRating(
             @PathVariable Long ratingId,
             HttpServletRequest httpRequest) {
-        String authHeader = httpRequest.getHeader("Authorization");
-        Long userId = tokenService.extractUserId(authHeader);
+        String clientIdentifier = getClientIdentifier(httpRequest);
 
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        ratingService.deleteRating(ratingId, userId);
+        ratingService.deleteRating(ratingId, clientIdentifier);
         return ResponseEntity.noContent().build();
     }
 
@@ -105,14 +87,10 @@ public class RatingController {
             @PathVariable Long ratingId,
             @RequestBody CommentReplyRequest request,
             HttpServletRequest httpRequest) {
-        String authHeader = httpRequest.getHeader("Authorization");
-        Long userId = tokenService.extractUserId(authHeader);
+        String clientIdentifier = getClientIdentifier(httpRequest);
+        String username = request.getUsername() != null ? request.getUsername() : "匿名用户";
 
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        CommentReplyDTO reply = ratingService.createReply(ratingId, userId, request.getContent());
+        CommentReplyDTO reply = ratingService.createReply(ratingId, clientIdentifier, username, request.getContent());
         return ResponseEntity.status(HttpStatus.CREATED).body(reply);
     }
 
@@ -120,14 +98,18 @@ public class RatingController {
     public ResponseEntity<Void> deleteReply(
             @PathVariable Long replyId,
             HttpServletRequest httpRequest) {
-        String authHeader = httpRequest.getHeader("Authorization");
-        Long userId = tokenService.extractUserId(authHeader);
+        String clientIdentifier = getClientIdentifier(httpRequest);
 
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        ratingService.deleteReply(replyId, userId);
+        ratingService.deleteReply(replyId, clientIdentifier);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * 使用IP地址和User-Agent生成客户端标识符
+     */
+    private String getClientIdentifier(HttpServletRequest request) {
+        String ipAddress = request.getRemoteAddr();
+        String userAgent = request.getHeader("User-Agent");
+        return ipAddress + ":" + (userAgent != null ? userAgent : "");
     }
 }

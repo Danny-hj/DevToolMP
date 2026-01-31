@@ -11,7 +11,8 @@ import java.time.LocalDateTime;
 public class Rating {
     private Long id;
     private Long toolId;
-    private Long userId;
+    private String clientIdentifier;
+    private String username;
     private Integer score;
     private String comment;
     private LocalDateTime createdAt;

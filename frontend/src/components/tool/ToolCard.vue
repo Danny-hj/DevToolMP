@@ -1,5 +1,10 @@
 <template>
   <div class="tool-card" @click="handleClick">
+    <!-- 状态徽章 -->
+    <div class="status-badge" :class="statusClass">
+      {{ statusText }}
+    </div>
+
     <!-- 热度分数徽章 -->
     <div v-if="hotScore" class="hot-score-badge" :class="hotScoreClass">
       <span class="hot-icon">🔥</span>
@@ -59,6 +64,16 @@
         </span>
       </div>
       <div class="actions">
+        <!-- 上架/下架按钮 -->
+        <el-button
+          v-if="showPublishButton"
+          :type="tool.status === 'active' ? 'warning' : 'success'"
+          size="small"
+          @click.stop="handleTogglePublish"
+        >
+          <el-icon><component :is="tool.status === 'active' ? 'CircleClose' : 'CircleCheck'" /></el-icon>
+          {{ tool.status === 'active' ? '下架' : '上架' }}
+        </el-button>
         <el-button
           type="primary"
           size="small"
@@ -76,7 +91,7 @@
 <script setup>
 import { computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Tools, Star, View, Collection, CollectionTag, Download, DocumentCopy } from '@element-plus/icons-vue'
+import { Tools, Star, View, Collection, CollectionTag, Download, DocumentCopy, CircleCheck, CircleClose } from '@element-plus/icons-vue'
 
 const props = defineProps({
   tool: {
@@ -86,10 +101,14 @@ const props = defineProps({
   hotScore: {
     type: Number,
     default: null
+  },
+  showPublishButton: {
+    type: Boolean,
+    default: false // 默认不显示上架按钮，可根据需求控制
   }
 })
 
-const emit = defineEmits(['click', 'favorite'])
+const emit = defineEmits(['click', 'favorite', 'publish', 'unpublish'])
 
 const installCommand = computed(() => {
   if (props.tool.packageName) {
@@ -110,12 +129,28 @@ const hotScoreClass = computed(() => {
   return 'low'
 })
 
+const statusClass = computed(() => {
+  return props.tool.status === 'active' ? 'active' : 'inactive'
+})
+
+const statusText = computed(() => {
+  return props.tool.status === 'active' ? '已上架' : '已下架'
+})
+
 const handleClick = () => {
   emit('click', props.tool)
 }
 
 const handleFavorite = async () => {
   emit('favorite', props.tool)
+}
+
+const handleTogglePublish = async () => {
+  if (props.tool.status === 'active') {
+    emit('unpublish', props.tool)
+  } else {
+    emit('publish', props.tool)
+  }
 }
 
 const copyInstallCommand = async () => {
@@ -154,6 +189,28 @@ const formatNumber = (num) => {
     border-color: $primary-color;
     transform: translateY(-4px);
     box-shadow: $box-shadow-glow;
+  }
+}
+
+.status-badge {
+  position: absolute;
+  top: $spacing-md;
+  left: $spacing-md;
+  padding: $spacing-sm $spacing-md;
+  border-radius: $border-radius-large;
+  font-weight: 600;
+  font-size: $font-size-small;
+
+  &.active {
+    background: rgba($success-color, 0.15);
+    color: $success-color;
+    border: 1px solid rgba($success-color, 0.3);
+  }
+
+  &.inactive {
+    background: rgba($info-color, 0.15);
+    color: $info-color;
+    border: 1px solid rgba($info-color, 0.3);
   }
 }
 
@@ -336,6 +393,8 @@ const formatNumber = (num) => {
 
 .actions {
   flex-shrink: 0;
+  display: flex;
+  gap: $spacing-sm;
 }
 
 @media (max-width: 768px) {
@@ -349,6 +408,10 @@ const formatNumber = (num) => {
 
   .stat-item {
     font-size: 12px;
+  }
+
+  .actions {
+    flex-direction: column;
   }
 }
 </style>

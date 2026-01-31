@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 public class ViewRecord {
     private Long id;
     private Long toolId;
-    private Long userId;
+    private String clientIdentifier;
     private String ipAddress;
     private String userAgent;
     private LocalDateTime createdAt;

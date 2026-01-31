@@ -1,6 +1,5 @@
 package com.devtoolmp.service;
 
-import com.devtoolmp.dto.request.RatingCreateRequest;
 import com.devtoolmp.dto.response.RatingDTO;
 import com.devtoolmp.dto.response.CommentReplyDTO;
 import com.devtoolmp.dto.response.RatingStatisticsDTO;
@@ -11,9 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,9 +21,6 @@ public class RatingService {
 
     @Autowired
     private CommentReplyMapper commentReplyMapper;
-
-    @Autowired
-    private UserMapper userMapper;
 
     @Autowired
     private ToolMapper toolMapper;
@@ -73,15 +67,16 @@ public class RatingService {
     }
 
     @Transactional
-    public RatingDTO createRating(Long toolId, Long userId, Integer score, String comment) {
-        Rating existingRating = ratingMapper.findByToolIdAndUserId(toolId, userId);
+    public RatingDTO createRating(Long toolId, String clientIdentifier, String username, Integer score, String comment) {
+        Rating existingRating = ratingMapper.findByToolIdAndClientIdentifier(toolId, clientIdentifier);
         if (existingRating != null) {
-            throw new RuntimeException("User has already rated this tool");
+            throw new RuntimeException("该客户端已对此工具评分");
         }
 
         Rating rating = new Rating();
         rating.setToolId(toolId);
-        rating.setUserId(userId);
+        rating.setClientIdentifier(clientIdentifier);
+        rating.setUsername(username);
         rating.setScore(score);
         rating.setComment(comment);
         rating.prePersist();
@@ -90,13 +85,13 @@ public class RatingService {
     }
 
     @Transactional
-    public RatingDTO updateRating(Long ratingId, Long userId, Integer score, String comment) {
+    public RatingDTO updateRating(Long ratingId, String clientIdentifier, Integer score, String comment) {
         Rating rating = ratingMapper.findById(ratingId);
         if (rating == null) {
             throw new RuntimeException("Rating not found");
         }
-        if (!rating.getUserId().equals(userId)) {
-            throw new RuntimeException("User can only update their own rating");
+        if (!rating.getClientIdentifier().equals(clientIdentifier)) {
+            throw new RuntimeException("只能修改自己的评分");
         }
         rating.setScore(score);
         rating.setComment(comment);
@@ -106,13 +101,13 @@ public class RatingService {
     }
 
     @Transactional
-    public void deleteRating(Long ratingId, Long userId) {
+    public void deleteRating(Long ratingId, String clientIdentifier) {
         Rating rating = ratingMapper.findById(ratingId);
         if (rating == null) {
             throw new RuntimeException("Rating not found");
         }
-        if (!rating.getUserId().equals(userId)) {
-            throw new RuntimeException("User can only delete their own rating");
+        if (!rating.getClientIdentifier().equals(clientIdentifier)) {
+            throw new RuntimeException("只能删除自己的评分");
         }
         commentReplyMapper.deleteByRatingId(ratingId);
         ratingMapper.deleteById(ratingId);
@@ -124,7 +119,7 @@ public class RatingService {
     }
 
     @Transactional
-    public CommentReplyDTO createReply(Long ratingId, Long userId, String content) {
+    public CommentReplyDTO createReply(Long ratingId, String clientIdentifier, String username, String content) {
         Rating rating = ratingMapper.findById(ratingId);
         if (rating == null) {
             throw new RuntimeException("Rating not found");
@@ -132,7 +127,8 @@ public class RatingService {
 
         CommentReply reply = new CommentReply();
         reply.setRatingId(ratingId);
-        reply.setUserId(userId);
+        reply.setClientIdentifier(clientIdentifier);
+        reply.setUsername(username);
         reply.setContent(content);
         reply.prePersist();
         commentReplyMapper.insert(reply);
@@ -140,27 +136,24 @@ public class RatingService {
     }
 
     @Transactional
-    public void deleteReply(Long replyId, Long userId) {
+    public void deleteReply(Long replyId, String clientIdentifier) {
         CommentReply reply = commentReplyMapper.findById(replyId);
         if (reply == null) {
             throw new RuntimeException("Reply not found");
         }
-        if (!reply.getUserId().equals(userId)) {
-            throw new RuntimeException("User can only delete their own reply");
+        if (!reply.getClientIdentifier().equals(clientIdentifier)) {
+            throw new RuntimeException("只能删除自己的回复");
         }
         commentReplyMapper.deleteById(replyId);
     }
 
     private RatingDTO convertToDTO(Rating rating) {
-        User user = userMapper.findById(rating.getUserId());
         RatingDTO dto = new RatingDTO();
         dto.setId(rating.getId());
         dto.setToolId(rating.getToolId());
-        dto.setUserId(rating.getUserId());
-        if (user != null) {
-            dto.setUsername(user.getUsername());
-            dto.setUserAvatar(user.getAvatar());
-        }
+        dto.setUserId(null); // 不再使用userId
+        dto.setUsername(rating.getUsername());
+        dto.setUserAvatar(null);
         dto.setScore(rating.getScore());
         dto.setComment(rating.getComment());
         dto.setLikes(0);
@@ -170,22 +163,14 @@ public class RatingService {
     }
 
     private CommentReplyDTO convertToReplyDTO(CommentReply reply) {
-        User user = userMapper.findById(reply.getUserId());
-        User replyToUser = reply.getReplyToUserId() != null ?
-                userMapper.findById(reply.getReplyToUserId()) : null;
-
         CommentReplyDTO dto = new CommentReplyDTO();
         dto.setId(reply.getId());
         dto.setRatingId(reply.getRatingId());
-        dto.setUserId(reply.getUserId());
-        if (user != null) {
-            dto.setUsername(user.getUsername());
-            dto.setUserAvatar(user.getAvatar());
-        }
-        if (replyToUser != null) {
-            dto.setReplyToUsername(replyToUser.getUsername());
-            dto.setReplyToUserId(replyToUser.getId());
-        }
+        dto.setUserId(null); // 不再使用userId
+        dto.setUsername(reply.getUsername());
+        dto.setUserAvatar(null);
+        dto.setReplyToUserId(reply.getReplyToUserId());
+        dto.setReplyToUsername(reply.getReplyToUsername());
         dto.setContent(reply.getContent());
         dto.setCreatedAt(reply.getCreatedAt());
         return dto;

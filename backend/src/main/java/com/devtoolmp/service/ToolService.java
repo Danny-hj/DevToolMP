@@ -5,16 +5,11 @@ import com.devtoolmp.dto.request.ToolUpdateRequest;
 import com.devtoolmp.dto.response.*;
 import com.devtoolmp.entity.*;
 import com.devtoolmp.mapper.*;
-import com.devtoolmp.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,15 +35,6 @@ public class ToolService {
 
     @Autowired
     private RatingMapper ratingMapper;
-
-    @Autowired
-    private CommentReplyMapper commentReplyMapper;
-
-    @Autowired
-    private JwtUtil jwtUtil;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
 
     @Transactional
     public Tool createTool(ToolCreateRequest request) {
@@ -110,7 +96,7 @@ public class ToolService {
         return ToolDTO.fromEntity(tool, categoryName, tags);
     }
 
-    public ToolDetailDTO getToolDetailById(Long id, Long userId) {
+    public ToolDetailDTO getToolDetailById(Long id, String clientIdentifier) {
         Tool tool = toolMapper.findById(id);
         if (tool == null) {
             throw new RuntimeException("Tool not found");
@@ -124,8 +110,8 @@ public class ToolService {
         Long totalRatings = (long) ratingMapper.countByToolId(id);
 
         boolean isFavorited = false;
-        if (userId != null) {
-            isFavorited = favoriteMapper.existsByUserIdAndToolId(userId, id);
+        if (clientIdentifier != null) {
+            isFavorited = favoriteMapper.existsByClientIdentifierAndToolId(clientIdentifier, id);
         }
 
         ToolDetailDTO dto = new ToolDetailDTO();
@@ -190,7 +176,7 @@ public class ToolService {
     }
 
     @Transactional
-    public void recordView(Long toolId, Long userId, String ipAddress, String userAgent) {
+    public void recordView(Long toolId, String clientIdentifier, String ipAddress, String userAgent) {
         Tool tool = toolMapper.findById(toolId);
         if (tool == null) {
             throw new RuntimeException("Tool not found");
@@ -201,7 +187,7 @@ public class ToolService {
 
         ViewRecord viewRecord = new ViewRecord();
         viewRecord.setToolId(toolId);
-        viewRecord.setUserId(userId);
+        viewRecord.setClientIdentifier(clientIdentifier);
         viewRecord.setIpAddress(ipAddress);
         viewRecord.setUserAgent(userAgent);
         viewRecord.prePersist();
@@ -209,22 +195,22 @@ public class ToolService {
     }
 
     @Transactional
-    public boolean toggleFavorite(Long toolId, Long userId) {
-        Favorite favorite = favoriteMapper.findByUserIdAndToolId(userId, toolId);
+    public boolean toggleFavorite(Long toolId, String clientIdentifier) {
+        Favorite favorite = favoriteMapper.findByClientIdentifierAndToolId(clientIdentifier, toolId);
         Tool tool = toolMapper.findById(toolId);
         if (tool == null) {
             throw new RuntimeException("Tool not found");
         }
 
         if (favorite != null) {
-            favoriteMapper.deleteByUserIdAndToolId(userId, toolId);
+            favoriteMapper.deleteByClientIdentifierAndToolId(clientIdentifier, toolId);
             tool.setFavoriteCount(tool.getFavoriteCount() - 1);
             tool.preUpdate();
             toolMapper.update(tool);
             return false;
         } else {
             favorite = new Favorite();
-            favorite.setUserId(userId);
+            favorite.setClientIdentifier(clientIdentifier);
             favorite.setToolId(toolId);
             favorite.prePersist();
             favoriteMapper.insert(favorite);
@@ -235,8 +221,8 @@ public class ToolService {
         }
     }
 
-    public boolean isFavorited(Long toolId, Long userId) {
-        return favoriteMapper.existsByUserIdAndToolId(userId, toolId);
+    public boolean isFavorited(Long toolId, String clientIdentifier) {
+        return favoriteMapper.existsByClientIdentifierAndToolId(clientIdentifier, toolId);
     }
 
     @Transactional
@@ -256,5 +242,27 @@ public class ToolService {
         telemetryData.setUserAgent(userAgent);
         telemetryData.prePersist();
         telemetryDataMapper.insert(telemetryData);
+    }
+
+    @Transactional
+    public void publishTool(Long toolId) {
+        Tool tool = toolMapper.findById(toolId);
+        if (tool == null) {
+            throw new RuntimeException("Tool not found");
+        }
+        tool.setStatus("active");
+        tool.preUpdate();
+        toolMapper.update(tool);
+    }
+
+    @Transactional
+    public void unpublishTool(Long toolId) {
+        Tool tool = toolMapper.findById(toolId);
+        if (tool == null) {
+            throw new RuntimeException("Tool not found");
+        }
+        tool.setStatus("inactive");
+        tool.preUpdate();
+        toolMapper.update(tool);
     }
 }

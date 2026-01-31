@@ -7,7 +7,6 @@ import com.devtoolmp.dto.response.ToolDetailDTO;
 import com.devtoolmp.dto.response.PageResponse;
 import com.devtoolmp.entity.Tool;
 import com.devtoolmp.service.ToolService;
-import com.devtoolmp.service.TokenService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,9 +19,6 @@ public class ToolController {
 
     @Autowired
     private ToolService toolService;
-
-    @Autowired
-    private TokenService tokenService;
 
     @GetMapping
     public ResponseEntity<PageResponse<ToolDTO>> getTools(
@@ -42,10 +38,9 @@ public class ToolController {
     public ResponseEntity<ToolDetailDTO> getToolDetail(
             @PathVariable Long id,
             HttpServletRequest request) {
-        String authHeader = request.getHeader("Authorization");
-        Long userId = tokenService.extractUserId(authHeader);
+        String clientIdentifier = getClientIdentifier(request);
 
-        ToolDetailDTO toolDetail = toolService.getToolDetailById(id, userId);
+        ToolDetailDTO toolDetail = toolService.getToolDetailById(id, clientIdentifier);
         return ResponseEntity.ok(toolDetail);
     }
 
@@ -85,13 +80,11 @@ public class ToolController {
     public ResponseEntity<Void> recordView(
             @PathVariable Long id,
             HttpServletRequest request) {
-        String authHeader = request.getHeader("Authorization");
-        Long userId = tokenService.extractUserId(authHeader);
-
+        String clientIdentifier = getClientIdentifier(request);
         String ipAddress = request.getRemoteAddr();
         String userAgent = request.getHeader("User-Agent");
 
-        toolService.recordView(id, userId, ipAddress, userAgent);
+        toolService.recordView(id, clientIdentifier, ipAddress, userAgent);
         return ResponseEntity.ok().build();
     }
 
@@ -99,14 +92,9 @@ public class ToolController {
     public ResponseEntity<Boolean> toggleFavorite(
             @PathVariable Long id,
             HttpServletRequest request) {
-        String authHeader = request.getHeader("Authorization");
-        Long userId = tokenService.extractUserId(authHeader);
+        String clientIdentifier = getClientIdentifier(request);
 
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        boolean isFavorited = toolService.toggleFavorite(id, userId);
+        boolean isFavorited = toolService.toggleFavorite(id, clientIdentifier);
         return ResponseEntity.ok(isFavorited);
     }
 
@@ -114,14 +102,9 @@ public class ToolController {
     public ResponseEntity<Boolean> checkFavorite(
             @PathVariable Long id,
             HttpServletRequest request) {
-        String authHeader = request.getHeader("Authorization");
-        Long userId = tokenService.extractUserId(authHeader);
+        String clientIdentifier = getClientIdentifier(request);
 
-        if (userId == null) {
-            return ResponseEntity.ok(false);
-        }
-
-        boolean isFavorited = toolService.isFavorited(id, userId);
+        boolean isFavorited = toolService.isFavorited(id, clientIdentifier);
         return ResponseEntity.ok(isFavorited);
     }
 
@@ -134,5 +117,26 @@ public class ToolController {
 
         toolService.recordInstall(id, ipAddress, userAgent);
         return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}/publish")
+    public ResponseEntity<Void> publishTool(@PathVariable Long id) {
+        toolService.publishTool(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}/unpublish")
+    public ResponseEntity<Void> unpublishTool(@PathVariable Long id) {
+        toolService.unpublishTool(id);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 使用IP地址和User-Agent生成客户端标识符
+     */
+    private String getClientIdentifier(HttpServletRequest request) {
+        String ipAddress = request.getRemoteAddr();
+        String userAgent = request.getHeader("User-Agent");
+        return ipAddress + ":" + (userAgent != null ? userAgent : "");
     }
 }

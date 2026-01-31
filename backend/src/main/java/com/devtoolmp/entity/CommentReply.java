@@ -11,8 +11,10 @@ import java.time.LocalDateTime;
 public class CommentReply {
     private Long id;
     private Long ratingId;
-    private Long userId;
+    private String clientIdentifier;
+    private String username;
     private Long replyToUserId;
+    private String replyToUsername;
     private String content;
     private LocalDateTime createdAt;
 

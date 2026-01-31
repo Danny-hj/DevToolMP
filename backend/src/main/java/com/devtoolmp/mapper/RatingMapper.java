@@ -11,15 +11,11 @@ public interface RatingMapper {
 
     Rating findById(@Param("id") Long id);
 
-    Rating findByToolIdAndUserId(@Param("toolId") Long toolId, @Param("userId") Long userId);
+    Rating findByToolIdAndClientIdentifier(@Param("toolId") Long toolId, @Param("clientIdentifier") String clientIdentifier);
 
     List<Rating> findByToolId(@Param("toolId") Long toolId, @Param("offset") int offset, @Param("limit") int limit);
 
-    List<Rating> findByUserId(@Param("userId") Long userId, @Param("offset") int offset, @Param("limit") int limit);
-
     int countByToolId(@Param("toolId") Long toolId);
-
-    int countByUserId(@Param("userId") Long userId);
 
     Double getAverageScoreByToolId(@Param("toolId") Long toolId);
 

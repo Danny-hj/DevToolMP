@@ -18,6 +18,22 @@ services:
     networks:
       - devtoolmp-network
 
+  redis:
+    image: redis:7-alpine
+    container_name: devtoolmp-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - devtoolmp-network
+    restart: unless-stopped
+
   backend:
     build:
       context: ./backend
@@ -30,8 +46,12 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/devtoolmp?useSSL=false&serverTimezone=UTC&characterEncoding=utf8
       SPRING_DATASOURCE_USERNAME: devtool
       SPRING_DATASOURCE_PASSWORD: devtool123
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
     depends_on:
       mysql:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - devtoolmp-network
@@ -54,6 +74,7 @@ services:
 
 volumes:
   mysql-data:
+  redis-data:
 
 networks:
   devtoolmp-network:

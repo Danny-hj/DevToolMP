@@ -5,7 +5,7 @@
 
     <resultMap id="BaseResultMap" type="com.devtoolmp.entity.Favorite">
         <id column="id" property="id"/>
-        <result column="user_id" property="userId"/>
+        <result column="client_identifier" property="clientIdentifier"/>
         <result column="tool_id" property="toolId"/>
         <result column="created_at" property="createdAt"/>
     </resultMap>
@@ -14,34 +14,34 @@
         SELECT * FROM favorites WHERE id = #{id}
     </select>
 
-    <select id="findByUserIdAndToolId" resultMap="BaseResultMap">
-        SELECT * FROM favorites WHERE user_id = #{userId} AND tool_id = #{toolId}
+    <select id="findByClientIdentifierAndToolId" resultMap="BaseResultMap">
+        SELECT * FROM favorites WHERE client_identifier = #{clientIdentifier} AND tool_id = #{toolId}
     </select>
 
-    <select id="findByUserId" resultMap="BaseResultMap">
-        SELECT * FROM favorites WHERE user_id = #{userId}
+    <select id="findByClientIdentifier" resultMap="BaseResultMap">
+        SELECT * FROM favorites WHERE client_identifier = #{clientIdentifier}
         LIMIT #{limit} OFFSET #{offset}
     </select>
 
-    <select id="countByUserId" resultType="int">
-        SELECT COUNT(*) FROM favorites WHERE user_id = #{userId}
+    <select id="countByClientIdentifier" resultType="int">
+        SELECT COUNT(*) FROM favorites WHERE client_identifier = #{clientIdentifier}
     </select>
 
     <insert id="insert" parameterType="com.devtoolmp.entity.Favorite" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO favorites (user_id, tool_id, created_at)
-        VALUES (#{userId}, #{toolId}, #{createdAt})
+        INSERT INTO favorites (client_identifier, tool_id, created_at)
+        VALUES (#{clientIdentifier}, #{toolId}, #{createdAt})
     </insert>
 
     <delete id="deleteById">
         DELETE FROM favorites WHERE id = #{id}
     </delete>
 
-    <delete id="deleteByUserIdAndToolId">
-        DELETE FROM favorites WHERE user_id = #{userId} AND tool_id = #{toolId}
+    <delete id="deleteByClientIdentifierAndToolId">
+        DELETE FROM favorites WHERE client_identifier = #{clientIdentifier} AND tool_id = #{toolId}
     </delete>
 
-    <select id="existsByUserIdAndToolId" resultType="boolean">
-        SELECT COUNT(*) > 0 FROM favorites WHERE user_id = #{userId} AND tool_id = #{toolId}
+    <select id="existsByClientIdentifierAndToolId" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM favorites WHERE client_identifier = #{clientIdentifier} AND tool_id = #{toolId}
     </select>
 
 </mapper>

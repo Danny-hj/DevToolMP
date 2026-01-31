@@ -3,6 +3,11 @@
     <div class="page-header">
       <h1>工具列表</h1>
       <div class="filters">
+        <el-switch
+          v-model="showPublishButtons"
+          active-text="显示管理按钮"
+          inactive-text="隐藏管理按钮"
+        />
         <el-select
           v-model="sortBy"
           placeholder="排序方式"
@@ -21,8 +26,11 @@
         v-for="tool in tools"
         :key="tool.id"
         :tool="tool"
+        :show-publish-button="showPublishButtons"
         @click="handleToolClick"
         @favorite="handleFavorite"
+        @publish="handlePublish"
+        @unpublish="handleUnpublish"
       />
     </div>
 
@@ -43,6 +51,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { useToolsStore } from '@/stores/tools'
 import ToolCard from '@/components/tool/ToolCard.vue'
 
@@ -52,6 +61,7 @@ const toolsStore = useToolsStore()
 const currentPage = ref(1)
 const pageSize = ref(12)
 const sortBy = ref('latest')
+const showPublishButtons = ref(false) // 默认不显示管理按钮
 
 const tools = computed(() => toolsStore.tools)
 const loading = computed(() => toolsStore.loading)
@@ -95,6 +105,26 @@ const handleFavorite = async (tool) => {
     console.error('收藏失败:', error)
   }
 }
+
+const handlePublish = async (tool) => {
+  try {
+    await toolsStore.publishTool(tool.id)
+    ElMessage.success('工具已上架')
+  } catch (error) {
+    ElMessage.error('上架失败')
+    console.error('上架失败:', error)
+  }
+}
+
+const handleUnpublish = async (tool) => {
+  try {
+    await toolsStore.unpublishTool(tool.id)
+    ElMessage.success('工具已下架')
+  } catch (error) {
+    ElMessage.error('下架失败')
+    console.error('下架失败:', error)
+  }
+}
 </script>
 
 <style scoped>
@@ -120,6 +150,7 @@ const handleFavorite = async (tool) => {
 .filters {
   display: flex;
   gap: 12px;
+  align-items: center;
 }
 
 .tools-grid {

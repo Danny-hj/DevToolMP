@@ -86,6 +86,42 @@ export const useToolsStore = defineStore('tools', () => {
     }
   }
 
+  const publishTool = async (id) => {
+    try {
+      await request.put(`/tools/${id}/publish`)
+      // 更新当前工具状态
+      if (currentTool.value && currentTool.value.id === id) {
+        currentTool.value.status = 'active'
+      }
+      // 更新列表中的工具状态
+      const tool = tools.value.find(t => t.id === id)
+      if (tool) {
+        tool.status = 'active'
+      }
+    } catch (error) {
+      console.error('上架工具失败:', error)
+      throw error
+    }
+  }
+
+  const unpublishTool = async (id) => {
+    try {
+      await request.put(`/tools/${id}/unpublish`)
+      // 更新当前工具状态
+      if (currentTool.value && currentTool.value.id === id) {
+        currentTool.value.status = 'inactive'
+      }
+      // 更新列表中的工具状态
+      const tool = tools.value.find(t => t.id === id)
+      if (tool) {
+        tool.status = 'inactive'
+      }
+    } catch (error) {
+      console.error('下架工具失败:', error)
+      throw error
+    }
+  }
+
   return {
     tools,
     currentTool,
@@ -96,6 +132,8 @@ export const useToolsStore = defineStore('tools', () => {
     searchTools,
     recordView,
     toggleFavorite,
-    recordInstall
+    recordInstall,
+    publishTool,
+    unpublishTool
   }
 })

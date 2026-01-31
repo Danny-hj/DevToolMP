@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class Favorite {
     private Long id;
-    private Long userId;
+    private String clientIdentifier;
     private Long toolId;
     private LocalDateTime createdAt;
 

@@ -6,8 +6,10 @@
     <resultMap id="BaseResultMap" type="com.devtoolmp.entity.CommentReply">
         <id column="id" property="id"/>
         <result column="rating_id" property="ratingId"/>
-        <result column="user_id" property="userId"/>
+        <result column="client_identifier" property="clientIdentifier"/>
+        <result column="username" property="username"/>
         <result column="reply_to_user_id" property="replyToUserId"/>
+        <result column="reply_to_username" property="replyToUsername"/>
         <result column="content" property="content"/>
         <result column="created_at" property="createdAt"/>
     </resultMap>
@@ -21,8 +23,8 @@
     </select>
 
     <insert id="insert" parameterType="com.devtoolmp.entity.CommentReply" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO comment_replies (rating_id, user_id, reply_to_user_id, content, created_at)
-        VALUES (#{ratingId}, #{userId}, #{replyToUserId}, #{content}, #{createdAt})
+        INSERT INTO comment_replies (rating_id, client_identifier, username, reply_to_user_id, reply_to_username, content, created_at)
+        VALUES (#{ratingId}, #{clientIdentifier}, #{username}, #{replyToUserId}, #{replyToUsername}, #{content}, #{createdAt})
     </insert>
 
     <delete id="deleteById">
