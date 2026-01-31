@@ -2,6 +2,7 @@ package com.devtoolmp.service;
 
 import com.devtoolmp.dto.response.ToolDTO;
 import com.devtoolmp.dto.response.ToolRankingDTO;
+import com.devtoolmp.dto.response.PageResponse;
 import com.devtoolmp.entity.Category;
 import com.devtoolmp.entity.Tool;
 import com.devtoolmp.entity.ToolTag;
@@ -48,6 +49,28 @@ public class RankingService {
         }).collect(Collectors.toList());
     }
 
+    public PageResponse<ToolRankingDTO> getDailyRanking(int page, int size) {
+        int offset = page * size;
+        List<Tool> tools = toolMapper.findByStatusOrderByHotScoreDailyDescWithPage("active", offset, size);
+        int total = toolMapper.countByStatus("active");
+
+        List<ToolRankingDTO> rankingDTOs = tools.stream().map(tool -> {
+            Category category = tool.getCategoryId() != null ? categoryMapper.findById(tool.getCategoryId()) : null;
+            String categoryName = category != null ? category.getName() : null;
+            List<ToolTag> toolTags = toolTagMapper.findByToolId(tool.getId());
+            List<String> tags = toolTags.stream().map(ToolTag::getTagName).collect(Collectors.toList());
+            ToolDTO toolDTO = ToolDTO.fromEntity(tool, categoryName, tags);
+            Double changePercentage = calculateChangePercentage(
+                    tool.getViewCount(), tool.getViewCountYesterday(),
+                    tool.getFavoriteCount(), tool.getFavoriteCountYesterday(),
+                    tool.getInstallCount(), tool.getInstallCountYesterday()
+            );
+            return ToolRankingDTO.fromToolDTO(toolDTO, tool.getHotScoreDaily(), changePercentage);
+        }).collect(Collectors.toList());
+
+        return PageResponse.of(rankingDTOs, page, size, (long) total);
+    }
+
     @Cacheable(value = "weeklyRanking", key = "'weekly'")
     public List<ToolRankingDTO> getWeeklyRanking() {
         List<Tool> tools = toolMapper.findTop20ByStatusOrderByHotScoreWeeklyDesc();
@@ -66,6 +89,28 @@ public class RankingService {
         }).collect(Collectors.toList());
     }
 
+    public PageResponse<ToolRankingDTO> getWeeklyRanking(int page, int size) {
+        int offset = page * size;
+        List<Tool> tools = toolMapper.findByStatusOrderByHotScoreWeeklyDescWithPage("active", offset, size);
+        int total = toolMapper.countByStatus("active");
+
+        List<ToolRankingDTO> rankingDTOs = tools.stream().map(tool -> {
+            Category category = tool.getCategoryId() != null ? categoryMapper.findById(tool.getCategoryId()) : null;
+            String categoryName = category != null ? category.getName() : null;
+            List<ToolTag> toolTags = toolTagMapper.findByToolId(tool.getId());
+            List<String> tags = toolTags.stream().map(ToolTag::getTagName).collect(Collectors.toList());
+            ToolDTO toolDTO = ToolDTO.fromEntity(tool, categoryName, tags);
+            Double changePercentage = calculateChangePercentage(
+                    tool.getViewCount(), tool.getViewCountYesterday(),
+                    tool.getFavoriteCount(), tool.getFavoriteCountYesterday(),
+                    tool.getInstallCount(), tool.getInstallCountYesterday()
+            );
+            return ToolRankingDTO.fromToolDTO(toolDTO, tool.getHotScoreWeekly(), changePercentage);
+        }).collect(Collectors.toList());
+
+        return PageResponse.of(rankingDTOs, page, size, (long) total);
+    }
+
     @Cacheable(value = "allTimeRanking", key = "'alltime'")
     public List<ToolRankingDTO> getAllTimeRanking() {
         List<Tool> tools = toolMapper.findTop20ByStatusOrderByHotScoreAlltimeDesc();
@@ -82,6 +127,28 @@ public class RankingService {
             );
             return ToolRankingDTO.fromToolDTO(toolDTO, tool.getHotScoreAlltime(), changePercentage);
         }).collect(Collectors.toList());
+    }
+
+    public PageResponse<ToolRankingDTO> getAllTimeRanking(int page, int size) {
+        int offset = page * size;
+        List<Tool> tools = toolMapper.findByStatusOrderByHotScoreAlltimeDescWithPage("active", offset, size);
+        int total = toolMapper.countByStatus("active");
+
+        List<ToolRankingDTO> rankingDTOs = tools.stream().map(tool -> {
+            Category category = tool.getCategoryId() != null ? categoryMapper.findById(tool.getCategoryId()) : null;
+            String categoryName = category != null ? category.getName() : null;
+            List<ToolTag> toolTags = toolTagMapper.findByToolId(tool.getId());
+            List<String> tags = toolTags.stream().map(ToolTag::getTagName).collect(Collectors.toList());
+            ToolDTO toolDTO = ToolDTO.fromEntity(tool, categoryName, tags);
+            Double changePercentage = calculateChangePercentage(
+                    tool.getViewCount(), tool.getViewCountYesterday(),
+                    tool.getFavoriteCount(), tool.getFavoriteCountYesterday(),
+                    tool.getInstallCount(), tool.getInstallCountYesterday()
+            );
+            return ToolRankingDTO.fromToolDTO(toolDTO, tool.getHotScoreAlltime(), changePercentage);
+        }).collect(Collectors.toList());
+
+        return PageResponse.of(rankingDTOs, page, size, (long) total);
     }
 
     /**

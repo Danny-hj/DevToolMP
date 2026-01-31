@@ -2,18 +2,19 @@
   <div class="tool-card" @click="handleClick">
     <!-- 状态徽章 -->
     <div class="status-badge" :class="statusClass">
-      {{ statusText }}
+      <el-icon><component :is="statusIcon" /></el-icon>
+      <span>{{ statusText }}</span>
     </div>
 
     <!-- 热度分数徽章 -->
     <div v-if="hotScore" class="hot-score-badge" :class="hotScoreClass">
       <span class="hot-icon">🔥</span>
-      <span>{{ hotScore.toFixed(0) }}</span>
+      <span class="hot-value">{{ hotScore.toFixed(0) }}</span>
     </div>
 
     <div class="tool-header">
       <div class="tool-icon">
-        <el-icon size="24"><Tools /></el-icon>
+        {{ tool.name.charAt(0).toUpperCase() }}
       </div>
       <div class="tool-title">
         <h3>{{ tool.name }}</h3>
@@ -47,27 +48,49 @@
       <span>{{ tool.categoryName }}</span>
     </div>
 
+    <!-- 统计数据 -->
     <div class="tool-stats">
       <div class="stat-item" title="GitHub Stars">
-        <el-icon><Star /></el-icon>
-        <span>{{ formatNumber(tool.stars) }}</span>
+        <div class="stat-icon">
+          <el-icon><Star /></el-icon>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ formatNumber(tool.stars) }}</span>
+          <span class="stat-label">Stars</span>
+        </div>
       </div>
       <div class="stat-item" title="浏览量">
-        <el-icon><View /></el-icon>
-        <span>{{ formatNumber(tool.viewCount) }}</span>
+        <div class="stat-icon">
+          <el-icon><View /></el-icon>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ formatNumber(tool.viewCount) }}</span>
+          <span class="stat-label">浏览</span>
+        </div>
       </div>
       <div class="stat-item" title="收藏数">
-        <el-icon><Collection /></el-icon>
-        <span>{{ formatNumber(tool.favoriteCount) }}</span>
+        <div class="stat-icon">
+          <el-icon><Collection /></el-icon>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ formatNumber(tool.favoriteCount) }}</span>
+          <span class="stat-label">收藏</span>
+        </div>
       </div>
       <div class="stat-item" title="安装量">
-        <el-icon><Download /></el-icon>
-        <span>{{ formatNumber(tool.installCount) }}</span>
+        <div class="stat-icon">
+          <el-icon><Download /></el-icon>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ formatNumber(tool.installCount) }}</span>
+          <span class="stat-label">安装</span>
+        </div>
       </div>
     </div>
 
     <!-- 安装命令 -->
     <div class="install-command" @click.stop="copyInstallCommand">
+      <span class="command-icon">$</span>
       <span class="command-text">{{ installCommand }}</span>
       <el-icon class="copy-icon"><DocumentCopy /></el-icon>
     </div>
@@ -78,6 +101,7 @@
           v-for="tag in displayTags"
           :key="tag"
           size="small"
+          class="tool-tag"
         >
           {{ tag }}
         </el-tag>
@@ -94,6 +118,7 @@
           size="small"
           plain
           @click.stop="handleSyncGitHub"
+          class="action-btn"
         >
           <el-icon><Refresh /></el-icon>
           同步
@@ -105,6 +130,7 @@
           size="small"
           plain
           @click.stop="handleEdit"
+          class="action-btn"
         >
           <el-icon><Edit /></el-icon>
           编辑
@@ -115,6 +141,7 @@
           :type="tool.status === 'active' ? 'warning' : 'success'"
           size="small"
           @click.stop="handleTogglePublish"
+          class="action-btn"
         >
           <el-icon><component :is="tool.status === 'active' ? 'CircleClose' : 'CircleCheck'" /></el-icon>
           {{ tool.status === 'active' ? '下架' : '上架' }}
@@ -126,6 +153,7 @@
           size="small"
           plain
           @click.stop="openGitHub"
+          class="action-btn"
         >
           <el-icon><Link /></el-icon>
           GitHub
@@ -135,6 +163,7 @@
           size="small"
           :plain="!tool.isFavorited"
           @click.stop="handleFavorite"
+          class="action-btn favorite-btn"
         >
           <el-icon><CollectionTag /></el-icon>
           {{ tool.isFavorited ? '已收藏' : '收藏' }}
@@ -147,8 +176,8 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Tools, Star, View, Collection, CollectionTag, Download, DocumentCopy,
-         CircleCheck, CircleClose, Link, Refresh, Edit, FolderOpened } from '@element-plus/icons-vue'
+import { Star, View, Collection, CollectionTag, Download, DocumentCopy,
+         CircleCheck, CircleClose, Link, Refresh, Edit, FolderOpened, Select, CircleCheckFilled } from '@element-plus/icons-vue'
 import { useToolsStore } from '@/stores/tools'
 
 const props = defineProps({
@@ -203,6 +232,10 @@ const hotScoreClass = computed(() => {
 
 const statusClass = computed(() => {
   return props.tool.status === 'active' ? 'active' : 'inactive'
+})
+
+const statusIcon = computed(() => {
+  return props.tool.status === 'active' ? 'CircleCheckFilled' : 'WarningFilled'
 })
 
 const statusText = computed(() => {
@@ -273,18 +306,37 @@ const formatNumber = (num) => {
 
 .tool-card {
   position: relative;
-  background-color: $background-color-base;
+  background: linear-gradient(135deg, rgba($background-color-light, 0.5) 0%, rgba($background-color-base, 0.8) 100%);
   border: 1px solid $border-color-base;
-  border-radius: $border-radius-large;
+  border-radius: $border-radius-xl;
   padding: $spacing-xl;
-  padding-top: 48px; /* 为徽章留出空间 */
+  padding-top: 56px; /* 为徽章留出更多空间 */
   cursor: pointer;
-  transition: $transition-base;
+  transition: all $transition-base;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, $primary-color 0%, #00ffcc 100%);
+    opacity: 0;
+    transition: opacity $transition-base;
+  }
 
   &:hover {
-    border-color: $primary-color;
-    transform: translateY(-4px);
-    box-shadow: $box-shadow-glow;
+    border-color: rgba($primary-color, 0.5);
+    transform: translateY(-6px);
+    box-shadow:
+      0 8px 24px rgba(0, 255, 157, 0.15),
+      0 4px 12px rgba(0, 0, 0, 0.3);
+
+    &::before {
+      opacity: 1;
+    }
   }
 }
 
@@ -292,22 +344,32 @@ const formatNumber = (num) => {
   position: absolute;
   top: $spacing-md;
   left: $spacing-md;
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-xs;
   padding: $spacing-xs $spacing-sm;
   border-radius: $border-radius-base;
   font-weight: 600;
   font-size: 11px;
   z-index: 1;
+  backdrop-filter: blur(10px);
+
+  .el-icon {
+    font-size: 12px;
+  }
 
   &.active {
-    background: rgba($success-color, 0.15);
+    background: linear-gradient(135deg, rgba($success-color, 0.2), rgba($success-color, 0.1));
     color: $success-color;
-    border: 1px solid rgba($success-color, 0.3);
+    border: 1px solid rgba($success-color, 0.4);
+    box-shadow: 0 2px 8px rgba($success-color, 0.3);
   }
 
   &.inactive {
-    background: rgba($info-color, 0.15);
-    color: $info-color;
-    border: 1px solid rgba($info-color, 0.3);
+    background: linear-gradient(135deg, rgba($warning-color, 0.2), rgba($warning-color, 0.1));
+    color: $warning-color;
+    border: 1px solid rgba($warning-color, 0.4);
+    box-shadow: 0 2px 8px rgba($warning-color, 0.3);
   }
 }
 
@@ -319,54 +381,84 @@ const formatNumber = (num) => {
   align-items: center;
   gap: $spacing-xs;
   padding: $spacing-xs $spacing-sm;
-  border-radius: $border-radius-base;
-  font-weight: 600;
-  font-size: 11px;
+  border-radius: $border-radius-large;
+  font-weight: 700;
+  font-size: 12px;
   z-index: 1;
+  backdrop-filter: blur(10px);
+
+  .hot-icon {
+    font-size: 14px;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  .hot-value {
+    font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  }
 
   &.high {
-    background: rgba($hot-score-high, 0.15);
-    color: $hot-score-high;
-    border: 1px solid rgba($hot-score-high, 0.3);
+    background: linear-gradient(135deg, rgba(255, 87, 34, 0.2), rgba(255, 193, 7, 0.15));
+    color: #ff5722;
+    border: 1px solid rgba(255, 87, 34, 0.4);
+    box-shadow: 0 2px 8px rgba(255, 87, 34, 0.3);
   }
 
   &.medium {
-    background: rgba($hot-score-medium, 0.15);
-    color: $hot-score-medium;
-    border: 1px solid rgba($hot-score-medium, 0.3);
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.2), rgba(255, 193, 7, 0.15));
+    color: #ff9800;
+    border: 1px solid rgba(255, 152, 0, 0.4);
+    box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
   }
 
   &.low {
-    background: rgba($hot-score-low, 0.15);
-    color: $hot-score-low;
-    border: 1px solid rgba($hot-score-low, 0.3);
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(69, 90, 100, 0.15));
+    color: #4caf50;
+    border: 1px solid rgba(76, 175, 80, 0.4);
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
   }
+}
 
-  .hot-icon {
-    font-size: 12px;
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
   }
 }
 
 .tool-header {
   display: flex;
-  gap: $spacing-md;
+  gap: $spacing-lg;
   margin-bottom: $spacing-lg;
   align-items: flex-start;
 }
 
 .tool-icon {
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   background: linear-gradient(135deg, $primary-color, #00ffcc);
-  border-radius: $border-radius-base;
+  border-radius: $border-radius-large;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #000;
+  font-size: 24px;
+  font-weight: 700;
   flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 255, 157, 0.3);
+  position: relative;
 
-  .el-icon {
-    font-size: 20px;
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    padding: 2px;
+    background: linear-gradient(135deg, $primary-color, #00ffcc);
+    z-index: -1;
+    opacity: 0.5;
+    filter: blur(8px);
   }
 }
 
@@ -378,12 +470,13 @@ const formatNumber = (num) => {
   h3 {
     margin: 0 0 $spacing-sm;
     font-size: $font-size-large;
-    font-weight: 600;
+    font-weight: 700;
     color: $text-color-primary;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     padding-right: $spacing-md;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 }
 
@@ -404,6 +497,7 @@ const formatNumber = (num) => {
     &:hover {
       color: lighten($primary-color, 10%);
       text-decoration: underline;
+      text-shadow: 0 0 8px rgba($primary-color, 0.3);
     }
 
     .external-link-icon {
@@ -419,13 +513,13 @@ const formatNumber = (num) => {
 
 .tool-description {
   margin-bottom: $spacing-lg;
-  min-height: 42px;
+  min-height: 48px;
 
   p {
     margin: 0;
     color: $text-color-regular;
     font-size: $font-size-base;
-    line-height: 1.5;
+    line-height: 1.6;
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
@@ -440,56 +534,124 @@ const formatNumber = (num) => {
   gap: $spacing-xs;
   margin-bottom: $spacing-lg;
   padding: $spacing-xs $spacing-sm;
-  background: linear-gradient(135deg, rgba($primary-color, 0.1), rgba($primary-color, 0.05));
-  border: 1px solid rgba($primary-color, 0.3);
+  background: linear-gradient(135deg, rgba($primary-color, 0.15), rgba($primary-color, 0.08));
+  border: 1px solid rgba($primary-color, 0.4);
   border-radius: $border-radius-base;
   color: $primary-color;
   font-size: $font-size-small;
   font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 255, 157, 0.15);
 }
 
 .tool-stats {
-  display: flex;
-  gap: $spacing-lg;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: $spacing-md;
   margin-bottom: $spacing-lg;
   padding: $spacing-md 0;
-  border-top: 1px solid $border-color-base;
-  border-bottom: 1px solid $border-color-base;
-  flex-wrap: wrap;
+  border-top: 1px solid rgba($border-color-base, 0.5);
+  border-bottom: 1px solid rgba($border-color-base, 0.5);
 }
 
 .stat-item {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: $spacing-sm;
-  color: $text-color-regular;
-  font-size: $font-size-small;
-  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
-
-  .el-icon {
-    color: $text-color-secondary;
-  }
-}
-
-.install-command {
+  justify-content: center;
+  gap: $spacing-xs;
+  padding: $spacing-sm;
   background: $background-color-light;
   border: 1px solid $border-color-base;
   border-radius: $border-radius-base;
-  padding: $spacing-sm $spacing-md;
+  transition: $transition-base;
+
+  &:hover {
+    background: $background-color-lighter;
+    border-color: rgba($primary-color, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 255, 157, 0.1);
+  }
+}
+
+.stat-icon {
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, rgba($primary-color, 0.1), rgba($primary-color, 0.05));
+  border-radius: $border-radius-base;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .el-icon {
+    font-size: 14px;
+    color: $primary-color;
+  }
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.stat-value {
+  font-size: $font-size-base;
+  font-weight: 700;
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  color: $text-color-primary;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 10px;
+  color: $text-color-secondary;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.install-command {
+  background: linear-gradient(135deg, rgba($background-color-darker, 0.8), rgba($background-color-base, 0.6));
+  border: 1px solid $border-color-base;
+  border-radius: $border-radius-base;
+  padding: $spacing-md $spacing-lg;
   margin-bottom: $spacing-lg;
   font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
   font-size: $font-size-small;
   color: $primary-color;
   cursor: pointer;
-  transition: $transition-fast;
+  transition: $transition-base;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba($primary-color, 0.1), transparent);
+    opacity: 0;
+    transition: opacity $transition-base;
+  }
 
   &:hover {
-    background: $background-color-lighter;
+    background: linear-gradient(135deg, rgba($background-color-darker, 0.9), rgba($background-color-base, 0.7));
     border-color: $primary-color;
-    box-shadow: 0 0 8px rgba(0, 255, 157, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 255, 157, 0.2);
+    transform: translateY(-2px);
+
+    &::before {
+      opacity: 1;
+    }
+  }
+
+  .command-icon {
+    color: $text-color-secondary;
+    font-weight: 600;
+    user-select: none;
   }
 
   .command-text {
@@ -500,9 +662,13 @@ const formatNumber = (num) => {
   }
 
   .copy-icon {
-    font-size: 14px;
+    font-size: 16px;
     flex-shrink: 0;
-    margin-left: $spacing-sm;
+    transition: transform $transition-fast;
+  }
+
+  &:hover .copy-icon {
+    transform: scale(1.1);
   }
 }
 
@@ -521,12 +687,18 @@ const formatNumber = (num) => {
   min-width: 0;
   overflow: hidden;
   flex-wrap: wrap;
+}
 
-  :deep(.el-tag) {
-    background: $background-color-light;
-    border-color: $border-color-base;
-    color: $text-color-regular;
-    flex-shrink: 0;
+.tool-tag {
+  background: linear-gradient(135deg, rgba($primary-color, 0.1), rgba($primary-color, 0.05)) !important;
+  border-color: rgba($primary-color, 0.3) !important;
+  color: $text-color-primary !important;
+  font-weight: 500;
+  transition: $transition-base !important;
+
+  &:hover {
+    background: rgba($primary-color, 0.15) !important;
+    border-color: rgba($primary-color, 0.5) !important;
   }
 }
 
@@ -544,12 +716,25 @@ const formatNumber = (num) => {
   flex-wrap: wrap;
   align-items: center;
 
-  .el-button {
-    padding: 4px 8px;
+  .action-btn {
+    padding: 6px 12px;
     font-size: $font-size-small;
+    font-weight: 500;
+    transition: all $transition-fast;
+
+    &.favorite-btn {
+      background: linear-gradient(135deg, rgba($primary-color, 0.1), rgba($primary-color, 0.05)) !important;
+      border-color: rgba($primary-color, 0.3) !important;
+
+      &:hover {
+        background: rgba($primary-color, 0.2) !important;
+        border-color: $primary-color !important;
+        box-shadow: 0 2px 8px rgba(0, 255, 157, 0.3);
+      }
+    }
 
     .el-icon {
-      margin-right: 2px;
+      margin-right: 4px;
     }
   }
 }
@@ -557,15 +742,13 @@ const formatNumber = (num) => {
 @media (max-width: 768px) {
   .tool-card {
     padding: $spacing-lg;
+    padding-top: 52px;
   }
 
   .tool-icon {
-    width: 40px;
-    height: 40px;
-
-    .el-icon {
-      font-size: 18px;
-    }
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
   }
 
   .tool-title h3 {
@@ -573,16 +756,40 @@ const formatNumber = (num) => {
   }
 
   .tool-stats {
-    gap: $spacing-md;
+    grid-template-columns: repeat(2, 1fr);
+    gap: $spacing-sm;
   }
 
   .stat-item {
+    padding: $spacing-xs;
+  }
+
+  .stat-icon {
+    width: 24px;
+    height: 24px;
+
+    .el-icon {
+      font-size: 12px;
+    }
+  }
+
+  .stat-value {
     font-size: 12px;
+  }
+
+  .stat-label {
+    font-size: 9px;
+  }
+
+  .install-command {
+    padding: $spacing-sm;
+    font-size: $font-size-small;
   }
 
   .tool-footer {
     flex-direction: column;
     align-items: stretch;
+    gap: $spacing-sm;
   }
 
   .tags {
@@ -593,6 +800,24 @@ const formatNumber = (num) => {
   .actions {
     width: 100%;
     justify-content: center;
+    flex-wrap: wrap;
+    gap: $spacing-xs;
+
+    .action-btn {
+      padding: 5px 10px;
+      font-size: 12px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .tool-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .stat-icon {
+    width: 22px;
+    height: 22px;
   }
 }
 </style>

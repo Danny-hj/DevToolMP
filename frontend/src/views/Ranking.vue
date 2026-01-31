@@ -157,6 +157,19 @@
         :title="error"
         :closable="false"
       />
+
+      <!-- 分页组件 -->
+      <div v-if="hasPagination && !loading" class="pagination-wrapper">
+        <el-pagination
+          v-model:current-page="currentPage"
+          :page-size="pagination.size"
+          :total="pagination.total"
+          :page-count="pagination.totalPages"
+          layout="total, prev, pager, next, jumper"
+          @current-change="handlePageChange"
+          background
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -184,14 +197,25 @@ const {
   loading,
   error,
   activeTab,
+  pagination,
   isEmpty,
   hasError,
+  hasPagination,
   fetchRankings,
-  switchTab
+  switchTab,
+  changePage
 } = useRankingStore()
 
+// 当前页码（从0开始）
+const currentPage = computed({
+  get: () => pagination.value.page + 1,
+  set: (val) => {
+    // Element Plus 分页组件从1开始，需要转换
+  }
+})
+
 const loadData = async () => {
-  await fetchRankings(activeTab.value)
+  await fetchRankings(activeTab.value, 0)
 }
 
 onMounted(() => {
@@ -220,6 +244,14 @@ const handleTabChange = (tab) => {
   // 更新 URL query 参数
   router.push({ path: '/ranking', query: { tab } })
   // 注意：不在这里调用 switchTab，让 URL 变化触发下面的 watch
+}
+
+// 处理页码变化
+const handlePageChange = (page) => {
+  // Element Plus 分页组件从1开始，需要转换为从0开始
+  changePage(page - 1)
+  // 滚动到顶部
+  window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 // 监听路由 query 参数变化（用于处理从首页跳转的情况）

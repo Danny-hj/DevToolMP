@@ -252,6 +252,55 @@
   }
 }
 
+.pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: $spacing-xl;
+  padding: $spacing-lg 0;
+
+  .el-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: $spacing-sm;
+
+    button {
+      border-radius: $border-radius-base;
+      transition: $transition-fast;
+
+      &:hover {
+        color: $primary-color;
+        background-color: rgba($primary-color, 0.1);
+      }
+    }
+
+    .el-pager li {
+      border-radius: $border-radius-base;
+      transition: $transition-fast;
+
+      &.is-active {
+        background: linear-gradient(135deg, $primary-color, #00ffcc);
+        color: #000;
+        font-weight: 600;
+      }
+
+      &:hover {
+        color: $primary-color;
+      }
+    }
+
+    .el-pagination__jump {
+      color: $text-color-regular;
+    }
+
+    .el-pagination__total {
+      color: $text-color-secondary;
+      font-weight: 500;
+    }
+  }
+}
+
 // 响应式设计
 @media (max-width: 768px) {
   .ranking-container {

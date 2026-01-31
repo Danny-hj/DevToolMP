@@ -57,6 +57,18 @@
         SELECT * FROM tools WHERE status = 'active' ORDER BY hot_score_alltime DESC LIMIT 20
     </select>
 
+    <select id="findByStatusOrderByHotScoreDailyDescWithPage" resultMap="BaseResultMap">
+        SELECT * FROM tools WHERE status = #{status} ORDER BY hot_score_daily DESC LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="findByStatusOrderByHotScoreWeeklyDescWithPage" resultMap="BaseResultMap">
+        SELECT * FROM tools WHERE status = #{status} ORDER BY hot_score_weekly DESC LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="findByStatusOrderByHotScoreAlltimeDescWithPage" resultMap="BaseResultMap">
+        SELECT * FROM tools WHERE status = #{status} ORDER BY hot_score_alltime DESC LIMIT #{limit} OFFSET #{offset}
+    </select>
+
     <select id="searchByKeyword" resultMap="BaseResultMap">
         SELECT * FROM tools
         WHERE status = 'active'

@@ -34,15 +34,15 @@ INSERT INTO tool_tags (tool_id, tag_name) VALUES
 (5, 'devtools'),
 (5, 'browser-extension');
 
--- 插入评价数据 (使用client_identifier)
-INSERT INTO ratings (tool_id, client_identifier, score, comment) VALUES
-(1, 'client_abc123', 5, '非常好用的开发工具，提高了开发效率！'),
-(1, 'client_def456', 4, '功能强大，但有时候会有卡顿'),
-(2, 'client_abc123', 4, '配置有点复杂，但是功能很全面'),
-(3, 'client_def456', 5, '测试框架的标杆，简单易用'),
-(4, 'client_abc123', 5, '速度超快，开发体验非常好！');
+-- 插入评价数据 (使用client_identifier和username)
+INSERT INTO ratings (tool_id, client_identifier, username, score, comment) VALUES
+(1, 'client_abc123', '开发者1', 5, '非常好用的开发工具，提高了开发效率！'),
+(1, 'client_def456', '开发者2', 4, '功能强大，但有时候会有卡顿'),
+(2, 'client_abc123', '开发者1', 4, '配置有点复杂，但是功能很全面'),
+(3, 'client_def456', '开发者2', 5, '测试框架的标杆，简单易用'),
+(4, 'client_abc123', '开发者1', 5, '速度超快，开发体验非常好！');
 
 -- 插入评价回复数据
-INSERT INTO comment_replies (rating_id, client_identifier, reply_content) VALUES
-(1, 'client_def456', '完全同意，React DevTools 是必备工具！'),
-(3, 'client_def456', '推荐查看官方文档，有很多配置示例');
+INSERT INTO comment_replies (rating_id, client_identifier, username, content) VALUES
+(1, 'client_def456', '开发者2', '完全同意，React DevTools 是必备工具！'),
+(3, 'client_def456', '开发者2', '推荐查看官方文档，有很多配置示例');

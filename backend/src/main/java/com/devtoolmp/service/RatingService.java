@@ -159,6 +159,14 @@ public class RatingService {
         dto.setLikes(0);
         dto.setCreatedAt(rating.getCreatedAt());
         dto.setUpdatedAt(rating.getUpdatedAt());
+
+        // 加载回复数据
+        List<CommentReply> replies = commentReplyMapper.findByRatingIdOrderByCreatedAtAsc(rating.getId());
+        List<CommentReplyDTO> replyDTOs = replies.stream()
+                .map(this::convertToReplyDTO)
+                .collect(Collectors.toList());
+        dto.setReplies(replyDTOs);
+
         return dto;
     }
 

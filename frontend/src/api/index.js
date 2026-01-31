@@ -3,8 +3,23 @@ import { ElMessage } from 'element-plus'
 
 const request = axios.create({
   baseURL: '/api',
-  timeout: 10000
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json;charset=UTF-8'
+  }
 })
+
+// 请求拦截器
+request.interceptors.request.use(
+  config => {
+    // 确保每个请求都使用UTF-8编码
+    config.headers['Content-Type'] = 'application/json;charset=UTF-8'
+    return config
+  },
+  error => {
+    return Promise.reject(error)
+  }
+)
 
 request.interceptors.response.use(
   response => {

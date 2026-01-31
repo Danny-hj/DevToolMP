@@ -123,6 +123,11 @@
           :tool-id="tool.id"
           @success="handleRatingSubmit"
         />
+        <rating-list
+          ref="ratingListRef"
+          :tool-id="tool.id"
+          @rating-updated="handleRatingUpdated"
+        />
       </div>
     </template>
   </div>
@@ -146,6 +151,7 @@ import { useToolsStore } from '@/stores/tools'
 import { useRatingStore } from '@/stores/rating'
 import RatingDisplay from '@/components/rating/RatingDisplay.vue'
 import RatingForm from '@/components/rating/RatingForm.vue'
+import RatingList from '@/components/rating/RatingList.vue'
 
 const props = defineProps({
   id: {
@@ -164,6 +170,7 @@ const ratingStore = useRatingStore()
 const tool = computed(() => toolsStore.currentTool)
 const loading = computed(() => toolsStore.loading)
 const ratingStatistics = ref(null)
+const ratingListRef = ref(null)
 
 const installCommand = computed(() => {
   if (tool.value.packageName) {
@@ -233,9 +240,18 @@ const handleRatingSubmit = async (data) => {
   try {
     await ratingStore.createRating(tool.value.id, data)
     await fetchRatingStatistics(tool.value.id)
+    // 刷新评价列表
+    if (ratingListRef.value) {
+      ratingListRef.value.refresh()
+    }
   } catch (error) {
     console.error('提交评价失败:', error)
   }
+}
+
+const handleRatingUpdated = async () => {
+  // 当有回复或删除操作时，刷新统计数据
+  await fetchRatingStatistics(tool.value.id)
 }
 
 const formatNumber = (num) => {

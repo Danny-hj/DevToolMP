@@ -23,6 +23,12 @@ public interface ToolMapper {
 
     List<Tool> findTop20ByStatusOrderByHotScoreAlltimeDesc();
 
+    List<Tool> findByStatusOrderByHotScoreDailyDescWithPage(@Param("status") String status, @Param("offset") int offset, @Param("limit") int limit);
+
+    List<Tool> findByStatusOrderByHotScoreWeeklyDescWithPage(@Param("status") String status, @Param("offset") int offset, @Param("limit") int limit);
+
+    List<Tool> findByStatusOrderByHotScoreAlltimeDescWithPage(@Param("status") String status, @Param("offset") int offset, @Param("limit") int limit);
+
     List<Tool> searchByKeyword(@Param("keyword") String keyword);
 
     List<Tool> findByStatusWithPage(@Param("status") String status, @Param("offset") int offset, @Param("limit") int limit);

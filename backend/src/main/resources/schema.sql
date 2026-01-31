@@ -83,6 +83,7 @@ CREATE TABLE IF NOT EXISTS ratings (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     tool_id BIGINT NOT NULL,
     client_identifier VARCHAR(255) NOT NULL,
+    username VARCHAR(255) DEFAULT NULL COMMENT '用户昵称',
     score INT NOT NULL CHECK (score >= 1 AND score <= 5),
     comment TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -97,12 +98,16 @@ CREATE TABLE IF NOT EXISTS ratings (
 CREATE TABLE IF NOT EXISTS comment_replies (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     rating_id BIGINT NOT NULL,
-    client_identifier VARCHAR(255) NOT NULL,
-    reply_content TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    client_identifier VARCHAR(500) NOT NULL,
+    username VARCHAR(255) DEFAULT NULL COMMENT '用户昵称',
+    reply_to_user_id BIGINT DEFAULT NULL COMMENT '回复给的用户ID',
+    reply_to_username VARCHAR(255) DEFAULT NULL COMMENT '回复给的用户名',
+    content TEXT NOT NULL COMMENT '回复内容',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     FOREIGN KEY (rating_id) REFERENCES ratings(id) ON DELETE CASCADE,
-    INDEX idx_rating (rating_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    INDEX idx_rating_id (rating_id),
+    INDEX idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='评价回复表';
 
 -- 评价点赞表
 CREATE TABLE IF NOT EXISTS rating_likes (

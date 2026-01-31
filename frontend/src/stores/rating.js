@@ -63,9 +63,9 @@ export const useRatingStore = defineStore('rating', () => {
     }
   }
 
-  const createReply = async (ratingId, content) => {
+  const createReply = async (ratingId, data) => {
     try {
-      const response = await request.post(`/ratings/${ratingId}/replies`, { content })
+      const response = await request.post(`/ratings/${ratingId}/replies`, data)
       return response
     } catch (error) {
       console.error('创建回复失败:', error)
