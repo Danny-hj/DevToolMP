@@ -1,6 +1,6 @@
 <template>
   <div class="tool-detail-page">
-    <el-skeleton v-if="loading" :rows="10" animated />
+    <el-skeleton v-if="loading" :rows="10" animated :loading="loading" />
     <template v-else-if="tool">
       <div class="tool-header">
           <div class="tool-icon">
@@ -9,9 +9,13 @@
         <div class="tool-info">
           <h1>{{ tool.name }}</h1>
           <p class="tool-repo">
-            <a :href="tool.githubUrl" target="_blank" rel="noopener">
+            <a v-if="tool.githubUrl" :href="tool.githubUrl" target="_blank" rel="noopener">
               {{ tool.githubOwner }}/{{ tool.githubRepo }}
             </a>
+            <span v-else-if="tool.githubOwner && tool.githubRepo">
+              {{ tool.githubOwner }}/{{ tool.githubRepo }}
+            </span>
+            <span v-else class="no-repo">未关联 GitHub 仓库</span>
           </p>
           <p class="tool-description">{{ tool.description }}</p>
           <div class="tool-tags">
@@ -64,36 +68,28 @@
         <h2>用户评价</h2>
         <rating-display :statistics="ratingStatistics" />
         <rating-form
-          v-if="user.token"
           :tool-id="tool.id"
           @success="handleRatingSubmit"
         />
-        <div v-else class="login-prompt">
-          <el-button type="primary" @click="handleLogin">登录后评价</el-button>
-        </div>
       </div>
     </template>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Tools, Download, CollectionTag } from '@element-plus/icons-vue'
 import { useToolsStore } from '@/stores/tools'
 import { useRatingStore } from '@/stores/rating'
-import { useUserStore } from '@/stores/user'
 import RatingDisplay from '@/components/rating/RatingDisplay.vue'
 import RatingForm from '@/components/rating/RatingForm.vue'
 
 const route = useRoute()
-const router = useRouter()
 const toolsStore = useToolsStore()
 const ratingStore = useRatingStore()
-const userStore = useUserStore()
 
-const user = computed(() => userStore)
 const tool = computed(() => toolsStore.currentTool)
 const loading = computed(() => toolsStore.loading)
 const ratingStatistics = ref(null)
@@ -114,7 +110,16 @@ const fetchRatingStatistics = async (toolId) => {
 }
 
 const handleInstall = () => {
-  const installCommand = `npx devtools add ${tool.value.githubOwner}/${tool.value.githubRepo}`
+  let installCommand
+  if (tool.value.packageName) {
+    installCommand = `npm install ${tool.value.packageName}`
+  } else if (tool.value.githubOwner && tool.value.githubRepo) {
+    installCommand = `npm install ${tool.value.githubOwner}/${tool.value.githubRepo}`
+  } else {
+    ElMessage.warning('该工具未提供安装命令，请查看项目文档')
+    return
+  }
+
   navigator.clipboard.writeText(installCommand)
   ElMessage.success('安装命令已复制到剪贴板')
   toolsStore.recordInstall(tool.value.id)
@@ -138,10 +143,6 @@ const handleRatingSubmit = async (data) => {
   }
 }
 
-const handleLogin = () => {
-  router.push('/login')
-}
-
 const formatNumber = (num) => {
   if (!num) return 0
   if (num >= 1000000) {
@@ -151,6 +152,16 @@ const formatNumber = (num) => {
   }
   return num.toString()
 }
+
+// 组件卸载时清理遮罩层
+onUnmounted(() => {
+  console.log('[ToolDetail] Component unmounted, cleaning up...')
+  // 确保组件卸载时清理所有可能存在的遮罩层
+  const overlays = document.querySelectorAll('.el-overlay')
+  overlays.forEach(overlay => {
+    overlay.remove()
+  })
+})
 </script>
 
 <style scoped>
@@ -205,6 +216,11 @@ const formatNumber = (num) => {
   text-decoration: underline;
 }
 
+.tool-repo .no-repo {
+  color: #909399;
+  font-style: italic;
+}
+
 .tool-description {
   margin: 0 0 16px;
   color: #b0b0b0;
@@ -255,13 +271,5 @@ const formatNumber = (num) => {
   margin: 0 0 16px;
   font-size: 24px;
   color: #e0e0e0;
-}
-
-.login-prompt {
-  text-align: center;
-  padding: 24px;
-  background-color: #2a2a2a;
-  border-radius: 8px;
-  margin-top: 16px;
 }
 </style>

@@ -17,52 +17,37 @@
       </div>
 
       <nav class="nav-links">
-        <router-link to="/" class="nav-link">
+        <router-link to="/" class="nav-link" @click="handleNavClick">
           <el-icon><HomeFilled /></el-icon>
           首页
         </router-link>
-        <router-link to="/tools" class="nav-link">
+        <router-link to="/tools" class="nav-link" @click="handleNavClick">
           <el-icon><Tools /></el-icon>
           工具列表
         </router-link>
-        <router-link to="/ranking" class="nav-link">
+        <router-link to="/ranking" class="nav-link" @click="handleNavClick">
           <el-icon><Trophy /></el-icon>
           排行榜
         </router-link>
       </nav>
 
       <div class="user-actions">
-        <el-button v-if="!token" type="primary" @click="handleLogin">
-          登录
-        </el-button>
-        <el-dropdown v-else @command="handleCommand">
-          <span class="user-name">
-            <el-icon><User /></el-icon>
-            用户
-          </span>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item command="profile">个人中心</el-dropdown-item>
-              <el-dropdown-item command="logout">退出登录</el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
+        <span class="welcome-text">
+          <el-icon><User /></el-icon>
+          欢迎访问 DevToolMP
+        </span>
       </div>
     </div>
   </header>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { HomeFilled, Tools, Trophy, User } from '@element-plus/icons-vue'
-import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
-const userStore = useUserStore()
 const searchKeyword = ref('')
-
-const token = computed(() => userStore.token)
 
 const handleSearch = () => {
   if (searchKeyword.value.trim()) {
@@ -73,20 +58,29 @@ const handleSearch = () => {
   }
 }
 
-const handleLogin = () => {
-  router.push('/login')
-}
+// 处理导航点击，确保移除所有遮罩层
+const handleNavClick = (event) => {
+  console.log('[AppHeader] Nav link clicked')
 
-const handleCommand = (command) => {
-  switch (command) {
-    case 'profile':
-      router.push('/profile')
-      break
-    case 'logout':
-      userStore.logout()
-      router.push('/')
-      break
-  }
+  // 移除所有遮罩层
+  const overlays = document.querySelectorAll('.el-overlay')
+  console.log('[AppHeader] Removing', overlays.length, 'overlays')
+  overlays.forEach(overlay => {
+    overlay.remove()
+  })
+
+  // 移除所有对话框
+  const dialogs = document.querySelectorAll('.el-dialog')
+  console.log('[AppHeader] Removing', dialogs.length, 'dialogs')
+  dialogs.forEach(dialog => {
+    dialog.remove()
+  })
+
+  // 清除body上的对话框类
+  document.body.classList.remove('el-popup-parent--hidden')
+  document.body.style.overflow = ''
+
+  console.log('[AppHeader] Cleanup completed, allowing navigation')
 }
 </script>
 
@@ -162,6 +156,9 @@ const handleCommand = (command) => {
   gap: $spacing-sm;
   padding: $spacing-sm $spacing-md;
   border-radius: $border-radius-base;
+  position: relative;
+  z-index: 1001; // 确保高于所有遮罩层
+  pointer-events: auto; // 确保始终可点击
 
   &:hover,
   &.router-link-active {
@@ -170,26 +167,26 @@ const handleCommand = (command) => {
   }
 }
 
+// 确保导航栏始终在最上层
+.nav-links {
+  position: relative;
+  z-index: 1001;
+}
+
 .user-actions {
   display: flex;
   align-items: center;
   gap: $spacing-md;
 }
 
-.user-name {
-  cursor: pointer;
+.welcome-text {
   display: flex;
   align-items: center;
   gap: $spacing-sm;
   color: $text-color-regular;
   padding: $spacing-sm $spacing-md;
   border-radius: $border-radius-base;
-  transition: $transition-fast;
-
-  &:hover {
-    color: $primary-color;
-    background: rgba(0, 255, 157, 0.1);
-  }
+  font-size: $font-size-base;
 }
 
 @media (max-width: 768px) {

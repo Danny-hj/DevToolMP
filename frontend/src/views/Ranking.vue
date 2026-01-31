@@ -162,7 +162,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, watch, computed, onActivated } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
   Trophy,
@@ -176,6 +177,7 @@ import {
 } from '@element-plus/icons-vue'
 import { useRankingStore } from '../stores/ranking'
 
+const route = useRoute()
 const {
   rankings,
   loading,
@@ -187,9 +189,20 @@ const {
   switchTab
 } = useRankingStore()
 
+const loadData = async () => {
+  await fetchRankings(activeTab.value)
+}
+
 onMounted(() => {
-  fetchRankings(activeTab.value)
+  loadData()
 })
+
+// 监听路由变化，确保每次进入页面都刷新数据
+watch(() => route.path, (newPath) => {
+  if (newPath === '/ranking') {
+    loadData()
+  }
+}, { immediate: false })
 
 const handleTabChange = (tab) => {
   switchTab(tab)

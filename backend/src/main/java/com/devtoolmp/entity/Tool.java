@@ -47,7 +47,8 @@ public class Tool {
     }
 
     public String getGitHubUrl() {
-        if (githubOwner != null && githubRepo != null) {
+        if (githubOwner != null && !githubOwner.trim().isEmpty()
+                && githubRepo != null && !githubRepo.trim().isEmpty()) {
             return "https://github.com/" + githubOwner + "/" + githubRepo;
         }
         return null;

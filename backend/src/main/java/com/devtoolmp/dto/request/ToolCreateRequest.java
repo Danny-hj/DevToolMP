@@ -2,6 +2,7 @@ package com.devtoolmp.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
+import java.util.List;
 
 @Data
 public class ToolCreateRequest {
@@ -17,4 +18,8 @@ public class ToolCreateRequest {
     private String githubRepo;
 
     private String version;
+
+    private List<String> tags;
+
+    private String status = "active";
 }

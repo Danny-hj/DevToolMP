@@ -21,8 +21,10 @@ export const useRankingStore = () => {
         ? '/tools/ranking/daily'
         : '/tools/ranking/alltime'
 
+      console.log('[Ranking] Fetching rankings from:', endpoint)
       const response = await request.get(endpoint)
-      rankings.value = response.data
+      console.log('[Ranking] Received data:', response)
+      rankings.value = response || []
       activeTab.value = type
     } catch (err) {
       error.value = err.message || 'Failed to fetch rankings'

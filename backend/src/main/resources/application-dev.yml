@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/devtoolmp?useSSL=false&serverTimezone=UTC&characterEncoding=utf8
+    url: jdbc:mysql://localhost:3306/devtoolmp?useSSL=false&serverTimezone=UTC&characterEncoding=utf8&allowPublicKeyRetrieval=true
     username: devtool
     password: devtool123
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -10,6 +10,19 @@ spring:
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password:
+      database: 0
+      timeout: 5000ms
+      jedis:
+        pool:
+          max-active: 8
+          max-wait: -1ms
+          max-idle: 8
+          min-idle: 0
   jpa:
     hibernate:
       ddl-auto: update

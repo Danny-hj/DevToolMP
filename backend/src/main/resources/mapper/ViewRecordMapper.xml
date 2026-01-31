@@ -6,7 +6,7 @@
     <resultMap id="BaseResultMap" type="com.devtoolmp.entity.ViewRecord">
         <id column="id" property="id"/>
         <result column="tool_id" property="toolId"/>
-        <result column="user_id" property="userId"/>
+        <result column="client_identifier" property="clientIdentifier"/>
         <result column="ip_address" property="ipAddress"/>
         <result column="user_agent" property="userAgent"/>
         <result column="created_at" property="createdAt"/>
@@ -23,8 +23,8 @@
     </select>
 
     <insert id="insert" parameterType="com.devtoolmp.entity.ViewRecord" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO view_records (tool_id, user_id, ip_address, user_agent, created_at)
-        VALUES (#{toolId}, #{userId}, #{ipAddress}, #{userAgent}, #{createdAt})
+        INSERT INTO view_records (tool_id, client_identifier, ip_address, user_agent, created_at)
+        VALUES (#{toolId}, #{clientIdentifier}, #{ipAddress}, #{userAgent}, #{createdAt})
     </insert>
 
     <delete id="deleteById">

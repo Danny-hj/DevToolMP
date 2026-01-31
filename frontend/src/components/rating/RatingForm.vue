@@ -6,6 +6,15 @@
       :rules="rules"
       label-width="80px"
     >
+      <el-form-item label="昵称" prop="username">
+        <el-input
+          v-model="form.username"
+          placeholder="请输入你的昵称（可选）"
+          maxlength="50"
+          show-word-limit
+        />
+      </el-form-item>
+
       <el-form-item label="评分" prop="score">
         <el-rate v-model="form.score" show-text />
       </el-form-item>
@@ -48,6 +57,7 @@ const formRef = ref(null)
 const loading = ref(false)
 
 const form = reactive({
+  username: '',
   score: 0,
   comment: ''
 })
@@ -69,6 +79,7 @@ const handleSubmit = async () => {
     loading.value = true
 
     emit('success', {
+      username: form.username || '匿名用户',
       score: form.score,
       comment: form.comment
     })

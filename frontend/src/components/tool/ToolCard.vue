@@ -17,7 +17,23 @@
       </div>
       <div class="tool-title">
         <h3>{{ tool.name }}</h3>
-        <p class="tool-repo">{{ tool.githubOwner }}/{{ tool.githubRepo }}</p>
+        <p class="tool-repo">
+          <a
+            v-if="tool.githubUrl"
+            :href="tool.githubUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            @click.stop
+            class="github-link"
+          >
+            {{ tool.githubOwner }}/{{ tool.githubRepo }}
+            <el-icon class="external-link-icon"><Link /></el-icon>
+          </a>
+          <span v-else-if="tool.githubOwner && tool.githubRepo">
+            {{ tool.githubOwner }}/{{ tool.githubRepo }}
+          </span>
+          <span v-else class="no-repo">未关联 GitHub 仓库</span>
+        </p>
       </div>
     </div>
 
@@ -64,6 +80,29 @@
         </span>
       </div>
       <div class="actions">
+        <!-- 同步GitHub按钮 -->
+        <el-button
+          v-if="showSyncButton"
+          :loading="syncing"
+          type="info"
+          size="small"
+          plain
+          @click.stop="handleSyncGitHub"
+        >
+          <el-icon><Refresh /></el-icon>
+          同步
+        </el-button>
+        <!-- 编辑按钮 -->
+        <el-button
+          v-if="showEditButton"
+          type="warning"
+          size="small"
+          plain
+          @click.stop="handleEdit"
+        >
+          <el-icon><Edit /></el-icon>
+          编辑
+        </el-button>
         <!-- 上架/下架按钮 -->
         <el-button
           v-if="showPublishButton"
@@ -73,6 +112,17 @@
         >
           <el-icon><component :is="tool.status === 'active' ? 'CircleClose' : 'CircleCheck'" /></el-icon>
           {{ tool.status === 'active' ? '下架' : '上架' }}
+        </el-button>
+        <!-- GitHub跳转按钮 -->
+        <el-button
+          v-if="tool.githubUrl"
+          type="primary"
+          size="small"
+          plain
+          @click.stop="openGitHub"
+        >
+          <el-icon><Link /></el-icon>
+          GitHub
         </el-button>
         <el-button
           type="primary"
@@ -89,9 +139,11 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Tools, Star, View, Collection, CollectionTag, Download, DocumentCopy, CircleCheck, CircleClose } from '@element-plus/icons-vue'
+import { Tools, Star, View, Collection, CollectionTag, Download, DocumentCopy,
+         CircleCheck, CircleClose, Link, Refresh, Edit } from '@element-plus/icons-vue'
+import { useToolsStore } from '@/stores/tools'
 
 const props = defineProps({
   tool: {
@@ -104,17 +156,31 @@ const props = defineProps({
   },
   showPublishButton: {
     type: Boolean,
-    default: false // 默认不显示上架按钮，可根据需求控制
+    default: false
+  },
+  showSyncButton: {
+    type: Boolean,
+    default: false
+  },
+  showEditButton: {
+    type: Boolean,
+    default: false
   }
 })
 
-const emit = defineEmits(['click', 'favorite', 'publish', 'unpublish'])
+const emit = defineEmits(['click', 'favorite', 'publish', 'unpublish', 'synced', 'edit'])
+
+const toolsStore = useToolsStore()
+const syncing = ref(false)
 
 const installCommand = computed(() => {
   if (props.tool.packageName) {
     return `npm install ${props.tool.packageName}`
   }
-  return `npm install ${props.tool.githubOwner}/${props.tool.githubRepo}`
+  if (props.tool.githubOwner && props.tool.githubRepo) {
+    return `npm install ${props.tool.githubOwner}/${props.tool.githubRepo}`
+  }
+  return '请查看项目文档了解安装方式'
 })
 
 const displayTags = computed(() => {
@@ -150,6 +216,29 @@ const handleTogglePublish = async () => {
     emit('unpublish', props.tool)
   } else {
     emit('publish', props.tool)
+  }
+}
+
+const handleSyncGitHub = async () => {
+  syncing.value = true
+  try {
+    await toolsStore.syncGitHubData(props.tool.id)
+    ElMessage.success('GitHub数据同步成功')
+    emit('synced', props.tool)
+  } catch (error) {
+    ElMessage.error('GitHub数据同步失败')
+  } finally {
+    syncing.value = false
+  }
+}
+
+const handleEdit = () => {
+  emit('edit', props.tool)
+}
+
+const openGitHub = () => {
+  if (props.tool.githubUrl) {
+    window.open(props.tool.githubUrl, '_blank', 'noopener,noreferrer')
   }
 }
 
@@ -287,6 +376,29 @@ const formatNumber = (num) => {
   font-size: $font-size-small;
   color: $text-color-secondary;
   font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+
+  .github-link {
+    color: $primary-color;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: $transition-fast;
+
+    &:hover {
+      color: lighten($primary-color, 10%);
+      text-decoration: underline;
+    }
+
+    .external-link-icon {
+      font-size: 12px;
+    }
+  }
+
+  .no-repo {
+    color: $text-color-placeholder;
+    font-style: italic;
+  }
 }
 
 .tool-description {
@@ -395,6 +507,7 @@ const formatNumber = (num) => {
   flex-shrink: 0;
   display: flex;
   gap: $spacing-sm;
+  flex-wrap: wrap;
 }
 
 @media (max-width: 768px) {

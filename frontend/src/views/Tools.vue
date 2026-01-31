@@ -3,10 +3,19 @@
     <div class="page-header">
       <h1>工具列表</h1>
       <div class="filters">
+        <el-button type="primary" @click="showAddDialog = true">
+          <el-icon><Plus /></el-icon>
+          添加工具
+        </el-button>
         <el-switch
           v-model="showPublishButtons"
           active-text="显示管理按钮"
           inactive-text="隐藏管理按钮"
+        />
+        <el-switch
+          v-model="showSyncButtons"
+          active-text="显示同步按钮"
+          inactive-text="隐藏同步按钮"
         />
         <el-select
           v-model="sortBy"
@@ -27,10 +36,13 @@
         :key="tool.id"
         :tool="tool"
         :show-publish-button="showPublishButtons"
+        :show-sync-button="showSyncButtons"
         @click="handleToolClick"
         @favorite="handleFavorite"
         @publish="handlePublish"
         @unpublish="handleUnpublish"
+        @synced="handleSynced"
+        @edit="handleEdit"
       />
     </div>
 
@@ -46,14 +58,23 @@
       @size-change="handleSizeChange"
     />
   </div>
+
+  <!-- 添加/编辑工具对话框 -->
+  <tool-form-dialog
+    v-model="showAddDialog"
+    :tool="editingTool"
+    @success="handleToolSuccess"
+  />
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { Plus } from '@element-plus/icons-vue'
 import { useToolsStore } from '@/stores/tools'
 import ToolCard from '@/components/tool/ToolCard.vue'
+import ToolFormDialog from '@/components/tool/ToolFormDialog.vue'
 
 const router = useRouter()
 const toolsStore = useToolsStore()
@@ -61,7 +82,10 @@ const toolsStore = useToolsStore()
 const currentPage = ref(1)
 const pageSize = ref(12)
 const sortBy = ref('latest')
-const showPublishButtons = ref(false) // 默认不显示管理按钮
+const showPublishButtons = ref(false)
+const showSyncButtons = ref(false)
+const showAddDialog = ref(false)
+const editingTool = ref(null)
 
 const tools = computed(() => toolsStore.tools)
 const loading = computed(() => toolsStore.loading)
@@ -124,6 +148,21 @@ const handleUnpublish = async (tool) => {
     ElMessage.error('下架失败')
     console.error('下架失败:', error)
   }
+}
+
+const handleSynced = (tool) => {
+  ElMessage.success(`${tool.name} 的GitHub数据已同步`)
+}
+
+const handleEdit = (tool) => {
+  editingTool.value = tool
+  showAddDialog.value = true
+}
+
+const handleToolSuccess = () => {
+  editingTool.value = null
+  // 刷新列表
+  fetchTools()
 }
 </script>
 

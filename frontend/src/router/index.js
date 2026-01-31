@@ -39,4 +39,32 @@ const router = createRouter({
   routes
 })
 
+// 路由守卫：确保每次路由切换时关闭所有对话框和遮罩层
+router.beforeEach((to, from, next) => {
+  console.log('[Router] Navigating from', from.path, 'to', to.path)
+
+  // 关闭所有Element Plus的对话框和遮罩层
+  const overlays = document.querySelectorAll('.el-overlay')
+  console.log('[Router] Found overlays:', overlays.length)
+  overlays.forEach(overlay => {
+    overlay.remove() // 使用 remove 而不是 display:none
+  })
+
+  // 移除可能存在的对话框body类
+  document.body.classList.remove('el-popup-parent--hidden')
+
+  // 检查并关闭所有可能的对话框
+  const dialogs = document.querySelectorAll('.el-dialog')
+  console.log('[Router] Found dialogs:', dialogs.length)
+  dialogs.forEach(dialog => {
+    dialog.remove()
+  })
+
+  next()
+})
+
+router.afterEach((to, from) => {
+  console.log('[Router] Navigation completed to', to.path)
+})
+
 export default router

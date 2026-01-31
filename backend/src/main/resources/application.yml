@@ -33,6 +33,14 @@ server:
   servlet:
     context-path: /api
 
+# GitHub API配置
+github:
+  api:
+    base-url: https://api.github.com
+    # 可选：配置GitHub Personal Access Token以提高API限制
+    # 在 https://github.com/settings/tokens 生成token
+    # token: your-github-token-here
+
 logging:
   level:
     com.devtoolmp: DEBUG

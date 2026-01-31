@@ -1,5 +1,6 @@
 package com.devtoolmp.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,7 +31,10 @@ public class ToolDetailDTO {
     private List<String> tags;
     private Double averageRating;
     private Integer totalRatings;
+
+    @JsonProperty("isFavorited")
     private boolean isFavorited;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

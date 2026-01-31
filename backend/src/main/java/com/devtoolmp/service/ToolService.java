@@ -45,8 +45,22 @@ public class ToolService {
         tool.setGithubOwner(request.getGithubOwner());
         tool.setGithubRepo(request.getGithubRepo());
         tool.setVersion(request.getVersion());
+        tool.setStatus(request.getStatus() != null ? request.getStatus() : "active");
         tool.prePersist();
         toolMapper.insert(tool);
+
+        // 保存标签
+        if (request.getTags() != null && !request.getTags().isEmpty()) {
+            for (String tagName : request.getTags()) {
+                if (tagName != null && !tagName.trim().isEmpty()) {
+                    ToolTag toolTag = new ToolTag();
+                    toolTag.setToolId(tool.getId());
+                    toolTag.setTagName(tagName.trim());
+                    toolTagMapper.insert(toolTag);
+                }
+            }
+        }
+
         return tool;
     }
 
