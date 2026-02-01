@@ -103,4 +103,33 @@ public class GitHubController {
         boolean isValid = gitHubService.isValidRepository(owner, repo);
         return ResponseEntity.ok(Map.of("valid", isValid));
     }
+
+    /**
+     * 验证仓库是否是 Agent Skill
+     */
+    @GetMapping("/repos/{owner}/{repo}/validate-agent-skill")
+    public ResponseEntity<Map<String, Object>> validateAgentSkill(
+            @PathVariable String owner,
+            @PathVariable String repo) {
+        Map<String, Object> result = gitHubService.validateAgentSkill(owner, repo);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * 自动发现并创建 Agent Skills 工具（手动触发）
+     */
+    @PostMapping("/agent-skills/auto-discover")
+    public ResponseEntity<Map<String, Object>> autoDiscoverAgentSkills() {
+        Map<String, Object> result = gitHubService.autoDiscoverAndCreateAgentSkills();
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * 搜索 Agent Skills 仓库
+     */
+    @GetMapping("/agent-skills/search")
+    public ResponseEntity<List<Map<String, Object>>> searchAgentSkills() {
+        List<Map<String, Object>> results = gitHubService.searchAgentSkillRepos();
+        return ResponseEntity.ok(results);
+    }
 }

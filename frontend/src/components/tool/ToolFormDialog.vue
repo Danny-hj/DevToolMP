@@ -208,8 +208,10 @@ const rules = {
 
 // 监听modelValue变化
 watch(() => props.modelValue, (val) => {
+  console.log('[ToolFormDialog] modelValue changed:', val)
   dialogVisible.value = val
   if (val) {
+    console.log('[ToolFormDialog] Dialog opening, tool:', props.tool)
     if (props.tool) {
       // 编辑模式：填充数据
       Object.assign(formData.value, {
@@ -234,6 +236,7 @@ watch(() => props.modelValue, (val) => {
 
 // 监听dialogVisible变化
 watch(dialogVisible, (val) => {
+  console.log('[ToolFormDialog] dialogVisible changed:', val)
   emit('update:modelValue', val)
   if (!val) {
     resetForm()

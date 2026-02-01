@@ -224,6 +224,19 @@ export const useToolsStore = defineStore('tools', () => {
     }
   }
 
+  const autoDiscoverAgentSkills = async () => {
+    try {
+      // 为同步操作设置更长的超时时间（2分钟）
+      const response = await request.post('/github/agent-skills/auto-discover', {}, {
+        timeout: 120000
+      })
+      return response
+    } catch (error) {
+      console.error('自动发现 Agent Skills 失败:', error)
+      throw error
+    }
+  }
+
   return {
     tools,
     currentTool,
@@ -244,6 +257,7 @@ export const useToolsStore = defineStore('tools', () => {
     fetchGitHubRepoInfo,
     validateGitHubRepo,
     fetchGitHubReadme,
-    fetchGitHubLatestRelease
+    fetchGitHubLatestRelease,
+    autoDiscoverAgentSkills
   }
 })

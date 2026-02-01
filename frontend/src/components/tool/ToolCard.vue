@@ -88,13 +88,6 @@
       </div>
     </div>
 
-    <!-- 安装命令 -->
-    <div class="install-command" @click.stop="copyInstallCommand">
-      <span class="command-icon">$</span>
-      <span class="command-text">{{ installCommand }}</span>
-      <el-icon class="copy-icon"><DocumentCopy /></el-icon>
-    </div>
-
     <div class="tool-footer">
       <div class="tags">
         <el-tag
@@ -110,64 +103,67 @@
         </span>
       </div>
       <div class="actions">
-        <!-- 同步GitHub按钮 -->
-        <el-button
-          v-if="showSyncButton"
-          :loading="syncing"
-          type="info"
-          size="small"
-          plain
-          @click.stop="handleSyncGitHub"
-          class="action-btn"
-        >
-          <el-icon><Refresh /></el-icon>
-          同步
-        </el-button>
-        <!-- 编辑按钮 -->
-        <el-button
-          v-if="showEditButton"
-          type="warning"
-          size="small"
-          plain
-          @click.stop="handleEdit"
-          class="action-btn"
-        >
-          <el-icon><Edit /></el-icon>
-          编辑
-        </el-button>
-        <!-- 上架/下架按钮 -->
-        <el-button
-          v-if="showPublishButton"
-          :type="tool.status === 'active' ? 'warning' : 'success'"
-          size="small"
-          @click.stop="handleTogglePublish"
-          class="action-btn"
-        >
-          <el-icon><component :is="tool.status === 'active' ? 'CircleClose' : 'CircleCheck'" /></el-icon>
-          {{ tool.status === 'active' ? '下架' : '上架' }}
-        </el-button>
-        <!-- GitHub跳转按钮 -->
-        <el-button
-          v-if="tool.githubUrl"
-          type="primary"
-          size="small"
-          plain
-          @click.stop="openGitHub"
-          class="action-btn"
-        >
-          <el-icon><Link /></el-icon>
-          GitHub
-        </el-button>
-        <el-button
-          type="primary"
-          size="small"
-          :plain="!tool.isFavorited"
-          @click.stop="handleFavorite"
-          class="action-btn favorite-btn"
-        >
-          <el-icon><CollectionTag /></el-icon>
-          {{ tool.isFavorited ? '已收藏' : '收藏' }}
-        </el-button>
+        <!-- 管理模式下的按钮 -->
+        <template v-if="adminMode">
+          <!-- 同步GitHub按钮 -->
+          <el-button
+            :loading="syncing"
+            type="info"
+            size="small"
+            plain
+            @click.stop="handleSyncGitHub"
+            class="action-btn"
+          >
+            <el-icon><Refresh /></el-icon>
+            同步
+          </el-button>
+          <!-- 编辑按钮 -->
+          <el-button
+            type="warning"
+            size="small"
+            plain
+            @click.stop="handleEdit"
+            class="action-btn"
+          >
+            <el-icon><Edit /></el-icon>
+            编辑
+          </el-button>
+          <!-- 上架/下架按钮 -->
+          <el-button
+            :type="tool.status === 'active' ? 'warning' : 'success'"
+            size="small"
+            @click.stop="handleTogglePublish"
+            class="action-btn"
+          >
+            <el-icon><component :is="tool.status === 'active' ? 'CircleClose' : 'CircleCheck'" /></el-icon>
+            {{ tool.status === 'active' ? '下架' : '上架' }}
+          </el-button>
+        </template>
+        <!-- 普通模式下的按钮 -->
+        <template v-else>
+          <!-- GitHub跳转按钮 -->
+          <el-button
+            v-if="tool.githubUrl"
+            type="primary"
+            size="small"
+            plain
+            @click.stop="openGitHub"
+            class="action-btn"
+          >
+            <el-icon><Link /></el-icon>
+            GitHub
+          </el-button>
+          <el-button
+            type="primary"
+            size="small"
+            :plain="!tool.isFavorited"
+            @click.stop="handleFavorite"
+            class="action-btn favorite-btn"
+          >
+            <el-icon><CollectionTag /></el-icon>
+            {{ tool.isFavorited ? '已收藏' : '收藏' }}
+          </el-button>
+        </template>
       </div>
     </div>
   </div>
@@ -176,8 +172,8 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Star, View, Collection, CollectionTag, Download, DocumentCopy,
-         CircleCheck, CircleClose, Link, Refresh, Edit, FolderOpened, Select, CircleCheckFilled } from '@element-plus/icons-vue'
+import { Star, View, Collection, CollectionTag, Download,
+         CircleCheck, CircleClose, Link, Refresh, Edit, FolderOpened, CircleCheckFilled } from '@element-plus/icons-vue'
 import { useToolsStore } from '@/stores/tools'
 
 const props = defineProps({
@@ -189,15 +185,7 @@ const props = defineProps({
     type: Number,
     default: null
   },
-  showPublishButton: {
-    type: Boolean,
-    default: false
-  },
-  showSyncButton: {
-    type: Boolean,
-    default: false
-  },
-  showEditButton: {
+  adminMode: {
     type: Boolean,
     default: false
   }
@@ -207,16 +195,6 @@ const emit = defineEmits(['click', 'favorite', 'publish', 'unpublish', 'synced',
 
 const toolsStore = useToolsStore()
 const syncing = ref(false)
-
-const installCommand = computed(() => {
-  if (props.tool.packageName) {
-    return `npm install ${props.tool.packageName}`
-  }
-  if (props.tool.githubOwner && props.tool.githubRepo) {
-    return `npm install ${props.tool.githubOwner}/${props.tool.githubRepo}`
-  }
-  return '请查看项目文档了解安装方式'
-})
 
 const displayTags = computed(() => {
   if (!props.tool.tags) return []
@@ -278,15 +256,6 @@ const handleEdit = () => {
 const openGitHub = () => {
   if (props.tool.githubUrl) {
     window.open(props.tool.githubUrl, '_blank', 'noopener,noreferrer')
-  }
-}
-
-const copyInstallCommand = async () => {
-  try {
-    await navigator.clipboard.writeText(installCommand.value)
-    ElMessage.success('安装命令已复制到剪贴板')
-  } catch (err) {
-    ElMessage.error('复制失败,请手动复制')
   }
 }
 
@@ -609,67 +578,6 @@ const formatNumber = (num) => {
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-}
-
-.install-command {
-  background: linear-gradient(135deg, rgba($background-color-darker, 0.8), rgba($background-color-base, 0.6));
-  border: 1px solid $border-color-base;
-  border-radius: $border-radius-base;
-  padding: $spacing-md $spacing-lg;
-  margin-bottom: $spacing-lg;
-  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
-  font-size: $font-size-small;
-  color: $primary-color;
-  cursor: pointer;
-  transition: $transition-base;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, transparent, rgba($primary-color, 0.1), transparent);
-    opacity: 0;
-    transition: opacity $transition-base;
-  }
-
-  &:hover {
-    background: linear-gradient(135deg, rgba($background-color-darker, 0.9), rgba($background-color-base, 0.7));
-    border-color: $primary-color;
-    box-shadow: 0 4px 12px rgba(0, 255, 157, 0.2);
-    transform: translateY(-2px);
-
-    &::before {
-      opacity: 1;
-    }
-  }
-
-  .command-icon {
-    color: $text-color-secondary;
-    font-weight: 600;
-    user-select: none;
-  }
-
-  .command-text {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .copy-icon {
-    font-size: 16px;
-    flex-shrink: 0;
-    transition: transform $transition-fast;
-  }
-
-  &:hover .copy-icon {
-    transform: scale(1.1);
-  }
 }
 
 .tool-footer {

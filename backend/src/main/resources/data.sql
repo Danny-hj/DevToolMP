@@ -2,47 +2,5 @@
 
 -- 插入分类数据
 INSERT INTO categories (name, description, icon, sort_order) VALUES
-('开发工具', '各类开发工具和 IDE 插件', 'code', 1),
-('构建工具', '构建、打包和部署工具', 'hammer', 2),
-('测试工具', '测试框架和测试工具', 'bug', 3),
-('文档工具', '文档生成和文档工具', 'document', 4),
-('其他', '其他工具', 'apps', 5);
-
--- 插入工具数据
-INSERT INTO tools (name, description, category_id, github_owner, github_repo, version, stars, forks, open_issues, watchers, view_count, favorite_count, install_count, status) VALUES
-('React DevTools', 'React 开发者工具浏览器扩展', 1, 'facebook', 'react', '18.2.0', 180000, 35000, 500, 12000, 5000, 800, 2000, 'active'),
-('Webpack', '现代 JavaScript 应用程序的模块打包器', 2, 'webpack', 'webpack', '5.89.0', 63000, 8500, 200, 3500, 3000, 600, 1500, 'active'),
-('Jest', 'JavaScript 测试框架', 3, 'facebook', 'jest', '29.7.0', 42000, 5500, 300, 2800, 2500, 500, 1200, 'active'),
-('Vite', '下一代前端构建工具', 2, 'vitejs', 'vite', '5.0.0', 60000, 4000, 150, 2000, 4000, 700, 1800, 'active'),
-('Vue DevTools', 'Vue.js 开发者工具', 1, 'vuejs', 'devtools', '6.5.0', 25000, 3000, 100, 800, 2000, 400, 1000, 'active');
-
--- 插入标签数据
-INSERT INTO tool_tags (tool_id, tag_name) VALUES
-(1, 'react'),
-(1, 'browser-extension'),
-(1, 'devtools'),
-(2, 'webpack'),
-(2, 'bundler'),
-(2, 'build-tools'),
-(3, 'jest'),
-(3, 'testing'),
-(3, 'unit-test'),
-(4, 'vite'),
-(4, 'build-tool'),
-(4, 'esbuild'),
-(5, 'vue'),
-(5, 'devtools'),
-(5, 'browser-extension');
-
--- 插入评价数据 (使用client_identifier和username)
-INSERT INTO ratings (tool_id, client_identifier, username, score, comment) VALUES
-(1, 'client_abc123', '开发者1', 5, '非常好用的开发工具，提高了开发效率！'),
-(1, 'client_def456', '开发者2', 4, '功能强大，但有时候会有卡顿'),
-(2, 'client_abc123', '开发者1', 4, '配置有点复杂，但是功能很全面'),
-(3, 'client_def456', '开发者2', 5, '测试框架的标杆，简单易用'),
-(4, 'client_abc123', '开发者1', 5, '速度超快，开发体验非常好！');
-
--- 插入评价回复数据
-INSERT INTO comment_replies (rating_id, client_identifier, username, content) VALUES
-(1, 'client_def456', '开发者2', '完全同意，React DevTools 是必备工具！'),
-(3, 'client_def456', '开发者2', '推荐查看官方文档，有很多配置示例');
+('MCP', 'Agent MCP工具', 'mcp', 1),
+('Skill', 'Agent skill工具', 'skill', 2),

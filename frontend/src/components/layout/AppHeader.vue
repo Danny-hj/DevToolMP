@@ -32,6 +32,14 @@
       </nav>
 
       <div class="user-actions">
+        <el-button
+          :type="adminMode ? 'primary' : 'default'"
+          @click="toggleAdminMode"
+          class="admin-mode-btn"
+        >
+          <el-icon><Setting /></el-icon>
+          {{ adminMode ? '管理模式' : '管理模式' }}
+        </el-button>
         <span class="welcome-text">
           <el-icon><User /></el-icon>
           欢迎访问 DevToolMP
@@ -42,12 +50,20 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { HomeFilled, Tools, Trophy, User } from '@element-plus/icons-vue'
+import { HomeFilled, Tools, Trophy, User, Setting } from '@element-plus/icons-vue'
+import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
+const userStore = useUserStore()
 const searchKeyword = ref('')
+
+const adminMode = computed(() => userStore.adminMode)
+
+const toggleAdminMode = () => {
+  userStore.toggleAdminMode()
+}
 
 const handleSearch = () => {
   if (searchKeyword.value.trim()) {
@@ -152,6 +168,20 @@ const handleSearch = () => {
   display: flex;
   align-items: center;
   gap: $spacing-md;
+}
+
+.admin-mode-btn {
+  font-size: $font-size-small;
+
+  &.el-button--primary {
+    background: linear-gradient(135deg, $primary-color, #00ffcc);
+    border-color: $primary-color;
+
+    &:hover {
+      background: linear-gradient(135deg, $primary-hover, #00ccaa);
+      border-color: $primary-hover;
+    }
+  }
 }
 
 .welcome-text {

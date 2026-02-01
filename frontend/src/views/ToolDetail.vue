@@ -23,17 +23,6 @@
           </div>
         </div>
 
-        <!-- Install Command Section -->
-        <div class="install-section">
-          <div class="install-label">Install with npm</div>
-          <div class="install-command" @click="handleInstall">
-            <span class="command-prefix">$</span>
-            <span class="command-text">{{ installCommand }}</span>
-            <el-icon class="copy-icon"><DocumentCopy /></el-icon>
-          </div>
-          <div class="install-hint">Click to copy</div>
-        </div>
-
         <!-- Actions -->
         <div class="header-actions">
           <el-button
@@ -59,7 +48,7 @@
       <!-- Description -->
       <div class="detail-section">
         <h2 class="section-title">About</h2>
-        <p class="tool-description">{{ tool.description }}</p>
+        <div class="tool-description markdown-content" v-html="renderedDescription"></div>
         <div v-if="tool.tags && tool.tags.length" class="tool-tags">
           <el-tag
             v-for="tag in tool.tags"
@@ -142,11 +131,12 @@ import {
   Download,
   CollectionTag,
   Link,
-  DocumentCopy,
   Star,
   View,
   Collection
 } from '@element-plus/icons-vue'
+import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 import { useToolsStore } from '@/stores/tools'
 import { useRatingStore } from '@/stores/rating'
 import RatingDisplay from '@/components/rating/RatingDisplay.vue'
@@ -172,14 +162,34 @@ const loading = computed(() => toolsStore.loading)
 const ratingStatistics = ref(null)
 const ratingListRef = ref(null)
 
-const installCommand = computed(() => {
-  if (tool.value.packageName) {
-    return `npm install ${tool.value.packageName}`
+// Markdown 渲染描述
+const renderedDescription = computed(() => {
+  if (!tool.value?.description) return ''
+
+  try {
+    // 配置 marked 选项
+    marked.setOptions({
+      breaks: true,
+      gfm: true,
+    })
+
+    // 转换 markdown 为 HTML
+    const rawHtml = marked.parse(tool.value.description)
+
+    // 净化 HTML，移除危险标签但保留基本格式
+    const cleanHtml = DOMPurify.sanitize(rawHtml, {
+      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'code', 'pre', 'blockquote', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'a', 'table', 'thead', 'tbody', 'tr', 'th', 'td'],
+      ALLOWED_ATTR: ['href', 'title', 'target', 'rel', 'class', 'id'],
+      ALLOW_DATA_ATTR: false,
+      ALLOW_UNKNOWN_PROTOCOLS: false
+    })
+
+    return cleanHtml
+  } catch (error) {
+    console.error('Markdown 渲染失败:', error)
+    // 降级为纯文本显示
+    return tool.value.description
   }
-  if (tool.value.githubOwner && tool.value.githubRepo) {
-    return `npm install ${tool.value.githubOwner}/${tool.value.githubRepo}`
-  }
-  return '请查看项目文档了解安装方式'
 })
 
 const fetchRatingStatistics = async (toolId) => {
@@ -209,17 +219,6 @@ watch(() => props.id, (newId, oldId) => {
     loadData(newNumericId)
   }
 })
-
-const handleInstall = () => {
-  if (installCommand.value.includes('请查看')) {
-    ElMessage.warning('该工具未提供安装命令，请查看项目文档')
-    return
-  }
-
-  navigator.clipboard.writeText(installCommand.value)
-  ElMessage.success('安装命令已复制到剪贴板')
-  toolsStore.recordInstall(tool.value.id)
-}
 
 const handleFavorite = async () => {
   try {
@@ -354,70 +353,6 @@ onUnmounted(() => {
   font-size: $font-size-small;
 }
 
-.install-section {
-  background: $background-color-light;
-  border: 1px solid $border-color-base;
-  border-radius: $border-radius-large;
-  padding: $spacing-xl;
-  margin-bottom: $spacing-xl;
-}
-
-.install-label {
-  font-size: $font-size-small;
-  color: $text-color-secondary;
-  margin-bottom: $spacing-sm;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.install-command {
-  background: $background-color-darker;
-  border: 1px solid $border-color-base;
-  border-radius: $border-radius-base;
-  padding: $spacing-lg $spacing-xl;
-  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
-  font-size: $font-size-large;
-  color: $primary-color;
-  cursor: pointer;
-  transition: $transition-base;
-  display: flex;
-  align-items: center;
-  gap: $spacing-md;
-  margin-bottom: $spacing-sm;
-
-  &:hover {
-    background: $background-color-base;
-    border-color: $primary-color;
-    box-shadow: 0 0 20px rgba(0, 255, 157, 0.2);
-    transform: translateY(-2px);
-  }
-}
-
-.command-prefix {
-  color: $text-color-secondary;
-  user-select: none;
-}
-
-.command-text {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.copy-icon {
-  font-size: 18px;
-  color: $text-color-secondary;
-  flex-shrink: 0;
-}
-
-.install-hint {
-  font-size: $font-size-small;
-  color: $text-color-placeholder;
-  text-align: center;
-}
-
 .header-actions {
   display: flex;
   gap: $spacing-md;
@@ -448,6 +383,196 @@ onUnmounted(() => {
   font-size: $font-size-large;
   color: $text-color-regular;
   line-height: 1.6;
+}
+
+.markdown-content {
+  word-wrap: break-word;
+  line-height: 1.8;
+
+  h1, h2, h3, h4, h5, h6 {
+    margin-top: $spacing-xl;
+    margin-bottom: $spacing-md;
+    font-weight: 600;
+    line-height: 1.4;
+    color: $text-color-primary;
+
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+
+  h1 {
+    font-size: 32px;
+    border-bottom: 2px solid $border-color-base;
+    padding-bottom: $spacing-sm;
+  }
+
+  h2 {
+    font-size: 28px;
+    border-bottom: 1px solid $border-color-base;
+    padding-bottom: $spacing-xs;
+  }
+
+  h3 {
+    font-size: 24px;
+  }
+
+  h4 {
+    font-size: 20px;
+  }
+
+  h5 {
+    font-size: 18px;
+  }
+
+  h6 {
+    font-size: 16px;
+    color: $text-color-secondary;
+  }
+
+  p {
+    margin: $spacing-md 0;
+
+    &:first-child {
+      margin-top: 0;
+    }
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  a {
+    color: $primary-color;
+    text-decoration: none;
+    transition: $transition-fast;
+
+    &:hover {
+      color: $primary-hover;
+      text-decoration: underline;
+    }
+  }
+
+  strong, b {
+    font-weight: 600;
+    color: $text-color-primary;
+  }
+
+  em, i {
+    font-style: italic;
+  }
+
+  code {
+    background: $background-color-light;
+    border: 1px solid $border-color-base;
+    border-radius: $border-radius-small;
+    padding: 2px 6px;
+    font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+    font-size: $font-size-small;
+    color: $primary-color;
+  }
+
+  pre {
+    background: $background-color-darker;
+    border: 1px solid $border-color-base;
+    border-radius: $border-radius-base;
+    padding: $spacing-lg;
+    margin: $spacing-lg 0;
+    overflow-x: auto;
+
+    code {
+      background: transparent;
+      border: none;
+      padding: 0;
+      font-size: $font-size-base;
+      line-height: 1.6;
+      color: $text-color-regular;
+    }
+  }
+
+  blockquote {
+    margin: $spacing-lg 0;
+    padding: $spacing-md $spacing-lg;
+    border-left: 4px solid $primary-color;
+    background: $background-color-light;
+    color: $text-color-secondary;
+    font-style: italic;
+
+    p {
+      margin: 0;
+    }
+  }
+
+  ul, ol {
+    margin: $spacing-md 0;
+    padding-left: $spacing-xl;
+
+    li {
+      margin: $spacing-xs 0;
+
+      > ul, > ol {
+        margin: $spacing-xs 0;
+      }
+    }
+  }
+
+  ul {
+    list-style-type: disc;
+
+    ul {
+      list-style-type: circle;
+
+      ul {
+        list-style-type: square;
+      }
+    }
+  }
+
+  ol {
+    list-style-type: decimal;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: $spacing-lg 0;
+    font-size: $font-size-base;
+
+    th, td {
+      border: 1px solid $border-color-base;
+      padding: $spacing-md;
+      text-align: left;
+    }
+
+    th {
+      background: $background-color-light;
+      font-weight: 600;
+      color: $text-color-primary;
+    }
+
+    tr {
+      &:nth-child(even) {
+        background: $background-color-lighter;
+      }
+
+      &:hover {
+        background: $background-color-light;
+      }
+    }
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+    border-radius: $border-radius-base;
+    margin: $spacing-lg 0;
+  }
+
+  hr {
+    border: none;
+    border-top: 2px solid $border-color-base;
+    margin: $spacing-xxl 0;
+  }
 }
 
 .tool-tags {

@@ -1,36 +1,16 @@
 <template>
   <div class="tools-page">
     <div class="page-header">
-      <h1>工具列表</h1>
+      <h1>工具市场</h1>
       <div class="filters">
-        <el-button type="primary" @click="showAddDialog = true">
+        <el-button type="primary" @click="handleAddTool">
           <el-icon><Plus /></el-icon>
           添加工具
         </el-button>
-        <el-select
-          v-model="selectedCategory"
-          placeholder="全部分类"
-          clearable
-          @change="handleCategoryChange"
-          style="width: 150px"
-        >
-          <el-option
-            v-for="category in categories"
-            :key="category.id"
-            :label="category.name"
-            :value="category.id"
-          />
-        </el-select>
-        <el-switch
-          v-model="showPublishButtons"
-          active-text="管理"
-          inactive-text="管理"
-        />
-        <el-switch
-          v-model="showSyncButtons"
-          active-text="同步"
-          inactive-text="同步"
-        />
+        <el-button type="success" @click="handleSyncAgentSkills" :loading="syncingSkills">
+          <el-icon><Refresh /></el-icon>
+          同步 Skills
+        </el-button>
         <el-select
           v-model="sortBy"
           placeholder="排序"
@@ -43,15 +23,41 @@
       </div>
     </div>
 
+    <!-- 分类 Tab -->
+    <el-tabs v-model="activeTab" class="category-tabs" @tab-change="handleTabChange">
+      <el-tab-pane label="全部" name="all">
+        <template #label>
+          <span class="tab-label">
+            <span>全部</span>
+            <span class="tab-count">{{ tools.length }}</span>
+          </span>
+        </template>
+      </el-tab-pane>
+      <el-tab-pane
+        v-for="category in categories"
+        :key="category.id"
+        :name="String(category.id)"
+      >
+        <template #label>
+          <span class="tab-label">
+            <span>{{ category.name }}</span>
+            <span class="tab-count">{{ getCategoryCount(category.id) }}</span>
+          </span>
+        </template>
+      </el-tab-pane>
+    </el-tabs>
+
     <div class="tools-grid">
       <el-skeleton v-if="loading" :rows="6" animated />
+      <div v-else-if="filteredTools.length === 0" class="empty-state">
+        <el-empty description="暂无工具" />
+      </div>
       <tool-card
         v-else
         v-for="tool in filteredTools"
         :key="tool.id"
         :tool="tool"
-        :show-publish-button="showPublishButtons"
-        :show-sync-button="showSyncButtons"
+        :admin-mode="adminMode"
         @click="handleToolClick"
         @favorite="handleFavorite"
         @publish="handlePublish"
@@ -85,23 +91,27 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus, Refresh } from '@element-plus/icons-vue'
 import { useToolsStore } from '@/stores/tools'
+import { useUserStore } from '@/stores/user'
 import ToolCard from '@/components/tool/ToolCard.vue'
 import ToolFormDialog from '@/components/tool/ToolFormDialog.vue'
 
 const router = useRouter()
 const toolsStore = useToolsStore()
+const userStore = useUserStore()
 
 const currentPage = ref(1)
 const pageSize = ref(12)
 const sortBy = ref('latest')
-const selectedCategory = ref(null)
-const showPublishButtons = ref(false)
-const showSyncButtons = ref(false)
+const activeTab = ref('all')
 const showAddDialog = ref(false)
 const editingTool = ref(null)
+const syncingSkills = ref(false)
+
+// 管理模式
+const adminMode = computed(() => userStore.adminMode)
 
 const tools = computed(() => toolsStore.tools)
 const loading = computed(() => toolsStore.loading)
@@ -118,15 +128,21 @@ const categories = computed(() => {
       })
     }
   })
-  return Array.from(categoryMap.values()).sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'))
+  return Array.from(categoryMap.values()).sort((a, b) => a.id - b.id)
 })
 
-// 根据分类筛选工具
+// 获取某个分类的工具数量
+const getCategoryCount = (categoryId) => {
+  return tools.value.filter(tool => tool.categoryId === categoryId).length
+}
+
+// 根据 Tab 筛选工具
 const filteredTools = computed(() => {
-  if (!selectedCategory.value) {
+  if (activeTab.value === 'all') {
     return tools.value
   }
-  return tools.value.filter(tool => tool.categoryId === selectedCategory.value)
+  const categoryId = parseInt(activeTab.value)
+  return tools.value.filter(tool => tool.categoryId === categoryId)
 })
 
 onMounted(() => {
@@ -156,7 +172,8 @@ const handleSort = () => {
   fetchTools()
 }
 
-const handleCategoryChange = () => {
+const handleTabChange = (tabName) => {
+  activeTab.value = tabName
   currentPage.value = 1
 }
 
@@ -205,6 +222,73 @@ const handleToolSuccess = () => {
   editingTool.value = null
   // 刷新列表
   fetchTools()
+}
+
+const handleSyncAgentSkills = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '将从 GitHub 搜索并同步 Agent Skills 仓库到工具市场。\n\n此操作可能需要 30-60 秒，请耐心等待。',
+      '确认同步',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'info'
+      }
+    )
+
+    syncingSkills.value = true
+
+    // 显示进度提示
+    const loadingMessage = ElMessage({
+      message: '正在搜索并同步 Agent Skills，请稍候...',
+      type: 'info',
+      duration: 0,
+      showClose: false
+    })
+
+    try {
+      const result = await toolsStore.autoDiscoverAgentSkills()
+
+      // 关闭加载提示
+      loadingMessage.close()
+
+      // 显示详细的同步结果
+      const message = `同步完成！\n\n总计: ${result.total || 0} 个仓库\n新增: ${result.created || 0} 个工具\n更新: ${result.updated || 0} 个工具\n跳过: ${result.skipped || 0} 个${result.errors > 0 ? `\n\n失败: ${result.errors} 个` : ''}`
+
+      await ElMessageBox.alert(message, '同步结果', {
+        confirmButtonText: '确定',
+        type: result.errors > 0 ? 'warning' : 'success',
+        dangerouslyUseHTMLString: false
+      })
+
+      // 刷新列表
+      fetchTools()
+    } catch (innerError) {
+      loadingMessage.close()
+      throw innerError
+    }
+  } catch (error) {
+    if (error === 'cancel') {
+      // 用户取消操作
+      return
+    }
+
+    // 详细的错误处理
+    let errorMessage = '同步失败，请稍后重试'
+
+    if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+      errorMessage = '同步超时，GitHub API 响应较慢，请稍后重试'
+    } else if (error.response) {
+      errorMessage = `服务器错误: ${error.response.status} - ${error.response.data?.message || '未知错误'}`
+    } else if (error.message) {
+      errorMessage = `同步失败: ${error.message}`
+    }
+
+    ElMessage.error(errorMessage)
+    console.error('同步 Agent Skills 失败:', error)
+  } finally {
+    syncingSkills.value = false
+  }
 }
 </script>
 
@@ -272,11 +356,79 @@ const handleToolSuccess = () => {
   }
 }
 
+.category-tabs {
+  margin-bottom: 24px;
+  background: var(--el-bg-color);
+  border-radius: $border-radius-base;
+  padding: 8px;
+
+  :deep(.el-tabs__header) {
+    margin: 0;
+    border-bottom: 1px solid var(--el-border-color-light);
+  }
+
+  :deep(.el-tabs__nav-wrap::after) {
+    display: none;
+  }
+
+  :deep(.el-tabs__item) {
+    padding: 0 20px;
+    height: 48px;
+    line-height: 48px;
+    font-size: $font-size-base;
+    color: var(--el-text-color-regular);
+    transition: $transition-fast;
+
+    &:hover {
+      color: var(--el-color-primary);
+    }
+
+    &.is-active {
+      color: var(--el-color-primary);
+      font-weight: 600;
+    }
+  }
+
+  :deep(.el-tabs__active-bar) {
+    background-color: var(--el-color-primary);
+    height: 3px;
+  }
+}
+
+.tab-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .tab-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 20px;
+    padding: 0 6px;
+    background: var(--el-fill-color-light);
+    border-radius: $border-radius-base;
+    font-size: $font-size-small;
+    color: var(--el-text-color-secondary);
+    font-weight: 500;
+  }
+}
+
 .tools-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 20px;
   margin-bottom: 32px;
+  min-height: 300px;
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
 }
 
 @media (max-width: 768px) {
@@ -284,11 +436,31 @@ const handleToolSuccess = () => {
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 16px;
   }
+
+  .category-tabs {
+    :deep(.el-tabs__item) {
+      padding: 0 16px;
+      font-size: $font-size-small;
+    }
+  }
 }
 
 @media (max-width: 480px) {
   .tools-grid {
     grid-template-columns: 1fr;
+  }
+
+  .category-tabs {
+    :deep(.el-tabs__nav) {
+      display: flex;
+      flex-wrap: wrap;
+    }
+
+    :deep(.el-tabs__item) {
+      flex: 0 0 auto;
+      padding: 0 12px;
+      font-size: $font-size-small;
+    }
   }
 }
 
