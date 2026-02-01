@@ -97,11 +97,12 @@ DevToolMP（DevTool Market Platform）是一个开发者工具市场平台，旨
 #### 2.2.1 表现层 (Controller)
 - **职责**: 接收HTTP请求，参数验证，调用服务层，返回响应
 - **主要组件**:
-  - `ToolController`: 工具管理相关接口
-  - `RatingController`: 评价管理相关接口
-  - `RankingController`: 排行榜相关接口
-  - `SearchController`: 搜索功能接口
-  - `GitHubController`: GitHub集成接口
+  - `ToolController`: 工具管理相关接口（CRUD、浏览、收藏、发布等）
+  - `RatingController`: 评价管理相关接口（创建评价、回复、点赞）
+  - `RankingController`: 排行榜相关接口（日榜、周榜、总榜）
+  - `SearchController`: 搜索功能接口（关键词搜索）
+  - `GitHubController`: GitHub集成接口（数据同步）
+  - `CategoryController`: 分类管理接口（分类CRUD）
 
 #### 2.2.2 业务逻辑层 (Service)
 - **职责**: 实现核心业务逻辑，事务管理，缓存管理
@@ -114,17 +115,40 @@ DevToolMP（DevTool Market Platform）是一个开发者工具市场平台，旨
 #### 2.2.3 数据访问层 (Mapper)
 - **职责**: 数据库操作，SQL执行，结果映射
 - **主要组件**:
-  - `ToolMapper`: 工具数据操作
-  - `RatingMapper`: 评价数据操作
+  - `ToolMapper`: 工具数据操作（查询、搜索、分页）
+  - `RatingMapper`: 评价数据操作（CRUD、统计、平均分）
   - `CategoryMapper`: 分类数据操作
-  - `FavoriteMapper`, `ViewRecordMapper`, `ToolTagMapper` 等
+  - `CommentReplyMapper`: 评价回复数据操作
+  - `RatingLikeMapper`: 评价点赞数据操作
+  - `FavoriteMapper`: 收藏数据操作
+  - `ViewRecordMapper`: 浏览记录操作
+  - `ToolTagMapper`: 标签数据操作
 
 #### 2.2.4 实体层 (Entity/DTO)
 - **Entity**: 数据库实体映射
-  - `Tool`, `Rating`, `Category`, `Favorite`, `ViewRecord`, `ToolTag`, `CommentReply`, `RatingLike`
+  - `Tool`: 工具实体（主表）
+  - `Category`: 分类实体
+  - `Rating`: 评价实体
+  - `CommentReply`: 评价回复实体
+  - `Favorite`: 收藏实体
+  - `ViewRecord`: 浏览记录实体
+  - `ToolTag`: 工具标签关联实体
+  - `RatingLike`: 评价点赞实体
 - **DTO**: 数据传输对象
-  - 请求DTO: `ToolCreateRequest`, `ToolUpdateRequest`, `RatingCreateRequest`, `CommentReplyRequest`
-  - 响应DTO: `ToolDTO`, `ToolDetailDTO`, `RatingDTO`, `PageResponse`, `ApiResponse`
+  - 请求DTO:
+    - `ToolCreateRequest`: 创建工具请求
+    - `ToolUpdateRequest`: 更新工具请求
+    - `RatingCreateRequest`: 创建评价请求
+    - `CommentReplyRequest`: 回复评价请求
+  - 响应DTO:
+    - `ToolDTO`: 工具基本信息
+    - `ToolDetailDTO`: 工具完整详情
+    - `ToolRankingDTO`: 排行榜工具信息
+    - `RatingDTO`: 评价信息
+    - `RatingStatisticsDTO`: 评价统计信息
+    - `CommentReplyDTO`: 评价回复信息
+    - `PageResponse<T>`: 分页响应封装
+    - `ApiResponse<T>`: 统一API响应格式
 
 ---
 
@@ -165,48 +189,129 @@ DevToolMP（DevTool Market Platform）是一个开发者工具市场平台，旨
 
 ### 3.2 数据库表设计
 
-#### tools (工具表)
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | BIGINT | 主键 |
-| name | VARCHAR(255) | 工具名称 |
-| description | TEXT | 描述 |
-| category_id | BIGINT | 分类ID |
-| github_owner | VARCHAR(255) | GitHub所有者 |
-| github_repo | VARCHAR(255) | GitHub仓库 |
-| version | VARCHAR(50) | 版本号 |
-| stars | INT | GitHub星标数 |
-| forks | INT | GitHub分支数 |
-| open_issues | INT | GitHub问题数 |
-| watchers | INT | GitHub关注者 |
-| view_count | INT | 浏览次数 |
-| favorite_count | INT | 收藏次数 |
-| install_count | INT | 安装次数 |
-| hot_score_daily | DECIMAL | 日热度分数 |
-| hot_score_weekly | DECIMAL | 周热度分数 |
-| hot_score_alltime | DECIMAL | 总热度分数 |
-| status | VARCHAR(20) | 状态 (active/inactive) |
-| created_at | DATETIME | 创建时间 |
-| updated_at | DATETIME | 更新时间 |
-
-#### ratings (评价表)
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | BIGINT | 主键 |
-| tool_id | BIGINT | 工具ID |
-| client_identifier | VARCHAR(255) | 客户端标识 |
-| score | INT | 评分 (1-5) |
-| comment | TEXT | 评价内容 |
-| created_at | DATETIME | 创建时间 |
-| updated_at | DATETIME | 更新时间 |
+**重要说明**:
+- 所有表结构定义在 `backend/src/main/resources/schema.sql`
+- 所有预置数据在 `backend/src/main/resources/data.sql`
+- 遵循项目规范：不使用其他SQL文件或代码进行字段预置
 
 #### categories (分类表)
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| id | BIGINT | 主键 |
+| id | BIGINT | 主键，自增 |
 | name | VARCHAR(100) | 分类名称 |
-| description | TEXT | 描述 |
-| created_at | DATETIME | 创建时间 |
+| description | TEXT | 分类描述 |
+| icon | VARCHAR(50) | 图标名称 |
+| sort_order | INT | 排序顺序 |
+| created_at | TIMESTAMP | 创建时间 |
+
+#### tools (工具表)
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | BIGINT | 主键，自增 |
+| name | VARCHAR(255) | 工具名称 |
+| description | TEXT | 工具描述 |
+| category_id | BIGINT | 分类ID（外键） |
+| github_owner | VARCHAR(255) | GitHub仓库所有者 |
+| github_repo | VARCHAR(255) | GitHub仓库名称 |
+| version | VARCHAR(50) | 版本号 |
+| stars | INT | GitHub星标数 |
+| forks | INT | GitHub分支数 |
+| open_issues | INT | GitHub问题数 |
+| watchers | INT | GitHub关注者数 |
+| view_count | INT | 浏览次数 |
+| favorite_count | INT | 收藏次数 |
+| install_count | INT | 安装次数 |
+| view_count_yesterday | INT | 昨日浏览次数 |
+| favorite_count_yesterday | INT | 昨日收藏次数 |
+| install_count_yesterday | INT | 昨日安装次数 |
+| hot_score_daily | DECIMAL(10,2) | 日热度分数 |
+| hot_score_weekly | DECIMAL(10,2) | 周热度分数 |
+| hot_score_alltime | DECIMAL(10,2) | 总热度分数 |
+| status | VARCHAR(20) | 状态（active/inactive） |
+| created_at | TIMESTAMP | 创建时间 |
+| updated_at | TIMESTAMP | 更新时间 |
+
+**索引**:
+- idx_status: 状态字段索引
+- idx_category: 分类ID索引
+- idx_hot_daily: 日热度降序索引
+- idx_hot_weekly: 周热度降序索引
+- idx_hot_alltime: 总热度降序索引
+
+#### tool_tags (工具标签表)
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | BIGINT | 主键，自增 |
+| tool_id | BIGINT | 工具ID（外键） |
+| tag_name | VARCHAR(50) | 标签名称 |
+| created_at | TIMESTAMP | 创建时间 |
+
+**索引**:
+- idx_tool_tag: (tool_id, tag_name)组合索引
+- idx_tag: tag_name索引
+
+#### ratings (评价表)
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | BIGINT | 主键，自增 |
+| tool_id | BIGINT | 工具ID（外键） |
+| client_identifier | VARCHAR(255) | 客户端标识 |
+| username | VARCHAR(255) | 用户昵称（可选） |
+| score | INT | 评分（1-5） |
+| comment | TEXT | 评价内容 |
+| created_at | TIMESTAMP | 创建时间 |
+| updated_at | TIMESTAMP | 更新时间 |
+
+**约束**:
+- CHECK: score BETWEEN 1 AND 5
+- UNIQUE: (tool_id, client_identifier) 唯一约束
+
+#### comment_replies (评价回复表)
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | BIGINT | 主键，自增 |
+| rating_id | BIGINT | 评价ID（外键） |
+| client_identifier | VARCHAR(500) | 客户端标识 |
+| username | VARCHAR(255) | 用户昵称（可选） |
+| reply_to_user_id | BIGINT | 回复给的用户ID（可选） |
+| reply_to_username | VARCHAR(255) | 回复给的用户名（可选） |
+| content | TEXT | 回复内容 |
+| created_at | TIMESTAMP | 创建时间 |
+
+#### favorites (收藏表)
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | BIGINT | 主键，自增 |
+| tool_id | BIGINT | 工具ID（外键） |
+| client_identifier | VARCHAR(255) | 客户端标识 |
+| created_at | TIMESTAMP | 创建时间 |
+
+**约束**:
+- UNIQUE: (tool_id, client_identifier) 唯一约束
+
+#### view_records (浏览记录表)
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | BIGINT | 主键，自增 |
+| tool_id | BIGINT | 工具ID（外键） |
+| client_identifier | VARCHAR(255) | 客户端标识 |
+| ip_address | VARCHAR(50) | IP地址 |
+| user_agent | TEXT | 用户代理 |
+| created_at | TIMESTAMP | 创建时间 |
+
+**索引**:
+- idx_tool_date: (tool_id, created_at)组合索引
+
+#### rating_likes (评价点赞表)
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | BIGINT | 主键，自增 |
+| rating_id | BIGINT | 评价ID（外键） |
+| client_identifier | VARCHAR(255) | 客户端标识 |
+| created_at | TIMESTAMP | 创建时间 |
+
+**约束**:
+- UNIQUE: (rating_id, client_identifier) 唯一约束
 
 ---
 
@@ -368,10 +473,10 @@ frontend/src/
 ```
 
 ### 9.2 状态管理 (Pinia Stores)
-- `tools`: 工具列表和详情状态
-- `rating`: 评价相关状态
-- `ranking`: 排行榜状态
-- `user`: 用户标识状态
+- `stores/tools.js`: 工具列表和详情状态管理
+- `stores/rating.js`: 评价相关状态管理
+- `stores/ranking.js`: 排行榜状态管理
+- `stores/user.js`: 用户标识状态管理
 
 ### 9.3 路由设计
 - `/`: 首页
@@ -442,11 +547,18 @@ frontend → backend → mysql
 - MySQL可切换为主从复制
 
 ### 13.2 功能扩展点
-- 用户认证系统 (OAuth2)
-- 工具提交审核流程
-- 工具安装统计与分析
-- 通知系统 (邮件/推送)
-- 工具比较功能
+- 🔐 用户认证系统 (OAuth2、JWT)
+- ✅ 工具提交审核流程
+- 📊 工具安装统计与深度分析
+- 🔔 通知系统 (邮件/Web推送)
+- ⚖️ 工具对比功能
+- 💬 工具使用问答/讨论区
+- 📰 工具推荐算法
+- 🎯 个性化首页
+- 📱 移动端适配
+- 🌍 国际化支持
+- 📈 数据可视化仪表板
+- 🔍 高级搜索（Elasticsearch集成）
 
 ---
 

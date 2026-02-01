@@ -1137,7 +1137,13 @@ export default router
 
 ## 4. 数据库实现
 
-### 4.1 初始化SQL
+### 4.1 SQL文件组织
+**重要**: 项目遵循以下规范管理数据库：
+- **表结构**: 所有表定义在 `backend/src/main/resources/schema.sql`
+- **初始数据**: 所有预置数据在 `backend/src/main/resources/data.sql`
+- 不使用其他SQL文件或Java代码进行字段预置
+
+### 4.2 表结构示例
 
 ```sql
 -- 创建数据库
@@ -1261,6 +1267,13 @@ CREATE INDEX idx_view_records_tool ON view_records(tool_id);
 ### 5.1 Docker Compose配置
 
 **开发环境** (`docker-compose.yml`):
+
+主要特性：
+- ✅ 使用schema.sql和data.sql自动初始化数据库
+- ✅ 配置健康检查确保服务可用性
+- ✅ 使用自定义网络进行服务隔离
+- ✅ 数据持久化卷配置
+- ✅ 环境变量配置
 ```yaml
 version: '3.8'
 
@@ -1371,6 +1384,18 @@ CMD ["nginx", "-g", "daemon off;"]
 ### 6.1 后端配置
 
 **application.yml** (主配置):
+- Spring Boot应用配置
+- Redis连接配置（使用Jedis客户端）
+- MyBatis配置（驼峰命名转换、SQL日志）
+- Jackson序列化配置（忽略null值）
+- GitHub API配置（base-url、可选token）
+- 日志配置（DEBUG级别）
+
+**application-dev.yml** (开发环境):
+- MySQL数据源配置（localhost:3306）
+
+**application-prod.yml** (生产环境):
+- 生产环境特定的配置覆盖
 ```yaml
 spring:
   application:

@@ -3,6 +3,9 @@
     v-model="dialogVisible"
     :title="isEdit ? '编辑工具' : '添加工具'"
     width="600px"
+    :close-on-click-modal="false"
+    :close-on-press-escape="true"
+    destroy-on-close
     @close="handleClose"
   >
     <el-form
@@ -134,7 +137,7 @@
 </template>
 
 <script setup>
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh, SuccessFilled, CircleCloseFilled, InfoFilled } from '@element-plus/icons-vue'
 import { useToolsStore } from '@/stores/tools'
@@ -221,11 +224,13 @@ watch(() => props.modelValue, (val) => {
       })
       githubRepoValid.value = true
     } else {
-      // 新增模式：重置表单
-      resetForm()
+      // 新增模式：重置表单（延迟执行，确保DOM已渲染）
+      nextTick(() => {
+        resetForm()
+      })
     }
   }
-})
+}, { immediate: true })
 
 // 监听dialogVisible变化
 watch(dialogVisible, (val) => {
@@ -248,7 +253,10 @@ const resetForm = () => {
     status: 'active'
   }
   githubRepoValid.value = false
-  formRef.value?.clearValidate()
+  // 使用 nextTick 确保表单已渲染
+  nextTick(() => {
+    formRef.value?.clearValidate()
+  })
 }
 
 // 关闭对话框

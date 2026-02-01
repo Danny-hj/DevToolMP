@@ -30,10 +30,18 @@
 
 ### docker-compose.yml
 开发环境配置，包含：
-- MySQL 8.0
-- Redis 7 (Alpine)
-- 后端服务 (可本地运行或Docker)
-- 前端服务 (可本地运行或Docker)
+- MySQL 8.0（自动挂载schema.sql和data.sql进行初始化）
+- Redis 7 Alpine（开启AOF持久化）
+- 后端服务（可本地运行或Docker）
+- 前端服务（可本地运行或Docker）
+
+**主要特性**：
+- ✅ 健康检查配置（确保服务可用性）
+- ✅ 自定义网络（devtoolmp-network）
+- ✅ 数据持久化卷（mysql-data、redis-data）
+- ✅ 服务依赖管理（depends_on + healthcheck）
+- ✅ 环境变量配置
+- ✅ 重启策略（unless-stopped）
 
 ### Dockerfile
 
@@ -140,29 +148,80 @@ cd frontend && npm run dev
 
 ## 数据库初始化
 
-数据库在首次启动时自动执行：
-- `schema.sql`: 创建表结构
-- `data.sql`: 插入示例数据
+### 自动初始化
+MySQL容器首次启动时，会自动执行挂载的SQL文件：
+- `backend/src/main/resources/schema.sql`: 创建所有表结构
+- `backend/src/main/resources/data.sql`: 插入示例数据
 
-如需重新初始化：
+Docker Compose配置：
+```yaml
+volumes:
+  - mysql-data:/var/lib/mysql
+  - ./backend/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+  - ./backend/src/main/resources/data.sql:/docker-entrypoint-initdb.d/02-data.sql
+```
+
+### 重新初始化数据库
 ```bash
+# 停止并删除容器和数据卷
 docker-compose down -v
+
+# 重新启动（会重新执行SQL文件）
 docker-compose up -d mysql redis
 ```
 
 ## 健康检查
 
-所有服务都配置了健康检查：
+### MySQL健康检查
+```yaml
+healthcheck:
+  test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+  timeout: 20s
+  retries: 10
+  interval: 10s
+  start_period: 30s
+```
 
+### Redis健康检查
+```yaml
+healthcheck:
+  test: ["CMD", "redis-cli", "ping"]
+  interval: 10s
+  timeout: 3s
+  retries: 5
+  start_period: 10s
+```
+
+### Backend健康检查
+```yaml
+healthcheck:
+  test: ["CMD", "curl", "-f", "http://localhost:8080/api/tools"]
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 60s
+```
+
+### Frontend健康检查
+```yaml
+healthcheck:
+  test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5173"]
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 30s
+```
+
+### 手动检查
 ```bash
-# 查看健康状态
+# 查看所有服务健康状态
 docker-compose ps
 
-# 手动检查
-curl http://localhost:8080/api/tools          # 后端API
-curl http://localhost:5173                    # 前端页面
-docker exec devtoolmp-mysql mysqladmin ping   # MySQL
-docker exec devtoolmp-redis redis-cli ping    # Redis
+# 手动检查各个服务
+curl http://localhost:8080/api/tools              # 后端API
+curl http://localhost:5173                        # 前端页面
+docker exec devtoolmp-mysql mysqladmin ping       # MySQL
+docker exec devtoolmp-redis redis-cli ping        # Redis
 ```
 
 ## 日志查看
@@ -182,45 +241,136 @@ docker-compose logs -f backend
 ## 故障排除
 
 ### 端口冲突
-如果端口被占用，修改 `docker-compose.yml` 中的端口映射：
-```yaml
+**症状**: 端口已被占用，容器无法启动
+
+**解决方案**:
+```bash
+# 查看端口占用
+lsof -i :3306  # MySQL
+lsof -i :6379  # Redis
+lsof -i :8080  # Backend
+lsof -i :5173  # Frontend
+
+# 修改docker-compose.yml中的端口映射
 ports:
-  - "8081:8080"  # 改为8081
+  - "3307:3306"  # MySQL改为3307
+  - "6380:6379"  # Redis改为6380
+  - "8081:8080"  # Backend改为8081
+  - "5174:5173"  # Frontend改为5174
 ```
 
 ### 数据库连接失败
-1. 检查 MySQL 是否健康：
+**症状**: Backend无法连接到MySQL
+
+**排查步骤**:
+1. 检查MySQL容器健康状态：
    ```bash
    docker-compose ps
    ```
-2. 查看日志：
+
+2. 查看MySQL日志：
    ```bash
    docker-compose logs mysql
    ```
-3. 等待健康检查完成（约30秒）
+
+3. 等待健康检查完成（约30秒）：
+   ```bash
+   # 观察健康状态变化
+   watch -n 2 'docker-compose ps'
+   ```
+
+4. 测试数据库连接：
+   ```bash
+   docker exec -it devtoolmp-mysql mysql -udevtool -pdevtool123 devtoolmp
+   ```
 
 ### 后端启动失败
-1. 检查环境变量配置
-2. 确认 MySQL 和 Redis 已就绪
-3. 查看后端日志
+**症状**: Backend容器启动后立即退出
+
+**排查步骤**:
+1. 检查环境变量配置：
+   ```bash
+   docker-compose config
+   ```
+
+2. 确认MySQL和Redis已就绪：
+   ```bash
+   docker-compose ps
+   ```
+
+3. 查看后端详细日志：
+   ```bash
+   docker-compose logs backend
+   ```
+
+4. 进入容器调试：
+   ```bash
+   docker exec -it devtoolmp-backend sh
+   ```
 
 ### 前端无法访问后端
-1. 确认后端已启动
-2. 检查 `vite.config.js` 中的代理配置
-3. 确认 `VITE_API_BASE_URL` 环境变量
+**症状**: 前端页面报错，无法调用API
+
+**排查步骤**:
+1. 确认后端已启动：
+   ```bash
+   curl http://localhost:8080/api/tools
+   ```
+
+2. 检查Vite代理配置（`frontend/vite.config.js`）：
+   ```javascript
+   server: {
+     proxy: {
+       '/api': {
+         target: 'http://localhost:8080',
+         changeOrigin: true
+       }
+     }
+   }
+   ```
+
+3. 确认环境变量：
+   ```bash
+   docker-compose exec frontend env | grep API
+   ```
+
+### 数据未正确初始化
+**症状**: 数据库为空，缺少示例数据
+
+**解决方案**:
+```bash
+# 完全删除容器和数据卷
+docker-compose down -v
+
+# 重新启动（会重新执行SQL文件）
+docker-compose up -d mysql redis
+
+# 等待初始化完成
+docker-compose logs -f mysql
+```
 
 ## 生产环境部署
 
-使用 `docker-compose.prod.yml`：
+### 使用生产配置
 ```bash
+# 构建并启动生产环境
 docker-compose -f docker-compose.prod.yml up -d --build
+
+# 查看日志
+docker-compose -f docker-compose.prod.yml logs -f
+
+# 停止服务
+docker-compose -f docker-compose.prod.yml down
 ```
 
-生产环境配置包括：
-- 前端使用 Nginx 提供静态文件服务
-- 后端多实例部署
-- Redis 持久化配置
-- 数据库备份配置
+### 生产环境特性
+生产环境配置（`docker-compose.prod.yml`）包括：
+- 🌐 **前端优化**: 使用Nginx提供静态文件服务，支持Gzip压缩
+- 🔧 **后端优化**: JVM参数调优，G1GC垃圾回收器
+- 💾 **数据持久化**: Redis开启AOF持久化，MySQL数据卷持久化
+- 📊 **监控配置**: 健康检查和重启策略
+- 🔒 **安全配置**: 生产级环境变量配置
+- 📈 **性能优化**: 连接池调优、资源限制
 
 ## 数据备份
 
