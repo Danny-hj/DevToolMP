@@ -307,7 +307,7 @@ public class GitHubService {
      */
     public List<Map<String, Object>> searchAgentSkillRepos() {
         List<Map<String, Object>> allResults = new ArrayList<>();
-        String[] topics = {"agent-skill", "claude-skill", "skill"};
+        String[] topics = {"agent-skill", "claude-skill", "skill", "skills"};
 
         for (String topic : topics) {
             try {
