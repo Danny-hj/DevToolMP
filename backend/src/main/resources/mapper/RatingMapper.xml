@@ -15,41 +15,41 @@
     </resultMap>
 
     <select id="findById" resultMap="BaseResultMap">
-        SELECT * FROM ratings WHERE id = #{id}
+        SELECT * FROM toolmk_ratings WHERE id = #{id}
     </select>
 
     <select id="findByToolIdAndUserId" resultMap="BaseResultMap">
-        SELECT * FROM ratings WHERE tool_id = #{toolId} AND user_id = #{userId}
+        SELECT * FROM toolmk_ratings WHERE tool_id = #{toolId} AND user_id = #{userId}
     </select>
 
     <select id="findByToolId" resultMap="BaseResultMap">
-        SELECT * FROM ratings WHERE tool_id = #{toolId}
+        SELECT * FROM toolmk_ratings WHERE tool_id = #{toolId}
         LIMIT #{limit} OFFSET #{offset}
     </select>
 
     <select id="countByToolId" resultType="int">
-        SELECT COUNT(*) FROM ratings WHERE tool_id = #{toolId}
+        SELECT COUNT(*) FROM toolmk_ratings WHERE tool_id = #{toolId}
     </select>
 
     <select id="getAverageScoreByToolId" resultType="java.lang.Double">
-        SELECT AVG(score) FROM ratings WHERE tool_id = #{toolId}
+        SELECT AVG(score) FROM toolmk_ratings WHERE tool_id = #{toolId}
     </select>
 
     <select id="countByToolIdAndScore" resultType="java.lang.Long">
-        SELECT COUNT(*) FROM ratings WHERE tool_id = #{toolId} AND score = #{score}
+        SELECT COUNT(*) FROM toolmk_ratings WHERE tool_id = #{toolId} AND score = #{score}
     </select>
 
     <select id="getScoreDistribution" resultType="java.util.Map">
-        SELECT score, COUNT(*) as count FROM ratings WHERE tool_id = #{toolId} GROUP BY score
+        SELECT score, COUNT(*) as count FROM toolmk_ratings WHERE tool_id = #{toolId} GROUP BY score
     </select>
 
     <insert id="insert" parameterType="com.devtoolmp.entity.Rating" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO ratings (tool_id, user_id, username, score, comment, create_time, update_time)
+        INSERT INTO toolmk_ratings (tool_id, user_id, username, score, comment, create_time, update_time)
         VALUES (#{toolId}, #{userId}, #{username}, #{score}, #{comment}, #{createTime}, #{updateTime})
     </insert>
 
     <update id="update" parameterType="com.devtoolmp.entity.Rating">
-        UPDATE ratings
+        UPDATE toolmk_ratings
         SET score = #{score},
             comment = #{comment},
             update_time = #{updateTime}
@@ -57,7 +57,7 @@
     </update>
 
     <delete id="deleteById">
-        DELETE FROM ratings WHERE id = #{id}
+        DELETE FROM toolmk_ratings WHERE id = #{id}
     </delete>
 
 </mapper>

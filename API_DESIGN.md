@@ -401,23 +401,23 @@ POST /webapi/toolmarket/v1/codehub/agent-skills/auto-discover
 
 | 表名 | 说明 | 主要字段 |
 |------|------|----------|
-| categories | 工具分类 | id, name, description, sort_order |
-| codehub | 代码仓库 | id, owner, repo, version, stars, forks |
-| tools | 工具信息 | id, name, description, category_id, codehub_id |
-| tool_tags | 工具标签 | id, tool_id, tag_name |
-| favorites | 收藏记录 | id, tool_id, user_id |
-| view_records | 浏览记录 | id, tool_id, user_id, create_time |
-| install_records | 安装记录 | id, tool_id, user_id, create_time |
-| ratings | 用户评价 | id, tool_id, user_id, score, comment |
-| comment_replies | 评价回复 | id, rating_id, user_id, content |
-| rating_likes | 评价点赞 | id, rating_id, user_id |
+| toolmk_categories | 工具分类 | id, name, description, sort_order |
+| toolmk_codehub | 代码仓库 | id, owner, repo, version, stars, forks |
+| toolmk_tools | 工具信息 | id, name, description, category_id, codehub_id |
+| toolmk_tool_tags | 工具标签 | id, tool_id, tag_name |
+| toolmk_favorites | 收藏记录 | id, tool_id, user_id |
+| toolmk_view_records | 浏览记录 | id, tool_id, user_id, create_time |
+| toolmk_install_records | 安装记录 | id, tool_id, user_id, create_time |
+| toolmk_ratings | 用户评价 | id, tool_id, user_id, score, comment |
+| toolmk_comment_replies | 评价回复 | id, rating_id, user_id, content |
+| toolmk_rating_likes | 评价点赞 | id, rating_id, user_id |
 
 ### 5.3 表结构详情
 
-#### 5.3.1 分类表 (categories)
+#### 5.3.1 分类表 (toolmk_categories)
 
 ```sql
-CREATE TABLE categories (
+CREATE TABLE toolmk_categories (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(100) NOT NULL,
     description TEXT,
@@ -434,10 +434,10 @@ CREATE TABLE categories (
 | sort_order | INT | 排序值 | DEFAULT 0 |
 | create_time | TIMESTAMP | 创建时间 | DEFAULT CURRENT_TIMESTAMP |
 
-#### 5.3.2 代码仓库表 (codehub)
+#### 5.3.2 代码仓库表 (toolmk_codehub)
 
 ```sql
-CREATE TABLE codehub (
+CREATE TABLE toolmk_codehub (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     owner VARCHAR(255) NOT NULL,
     repo VARCHAR(255) NOT NULL,
@@ -462,10 +462,10 @@ CREATE TABLE codehub (
 - `open_issues`: 开放Issue数量
 - `watchers`: 观察者数量
 
-#### 5.3.3 工具表 (tools)
+#### 5.3.3 工具表 (toolmk_tools)
 
 ```sql
-CREATE TABLE tools (
+CREATE TABLE toolmk_tools (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(255) NOT NULL,
     description TEXT,
@@ -474,8 +474,8 @@ CREATE TABLE tools (
     status VARCHAR(20) DEFAULT 'active',
     create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
-    FOREIGN KEY (codehub_id) REFERENCES codehub(id) ON DELETE SET NULL,
+    FOREIGN KEY (category_id) REFERENCES toolmk_categories(id) ON DELETE SET NULL,
+    FOREIGN KEY (codehub_id) REFERENCES toolmk_codehub(id) ON DELETE SET NULL,
     INDEX idx_status (status),
     INDEX idx_category (category_id),
     INDEX idx_codehub (codehub_id)
@@ -486,51 +486,51 @@ CREATE TABLE tools (
 - `active`: 上架
 - `inactive`: 下架
 
-#### 5.3.4 浏览记录表 (view_records)
+#### 5.3.4 浏览记录表 (toolmk_view_records)
 
 ```sql
-CREATE TABLE view_records (
+CREATE TABLE toolmk_view_records (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     tool_id BIGINT NOT NULL,
     user_id VARCHAR(255),
     create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (tool_id) REFERENCES tools(id) ON DELETE CASCADE,
+    FOREIGN KEY (tool_id) REFERENCES toolmk_tools(id) ON DELETE CASCADE,
     INDEX idx_tool_time (tool_id, create_time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 ```
 
-#### 5.3.5 收藏表 (favorites)
+#### 5.3.5 收藏表 (toolmk_favorites)
 
 ```sql
-CREATE TABLE favorites (
+CREATE TABLE toolmk_favorites (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     tool_id BIGINT NOT NULL,
     user_id VARCHAR(255) NOT NULL,
     create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (tool_id) REFERENCES tools(id) ON DELETE CASCADE,
+    FOREIGN KEY (tool_id) REFERENCES toolmk_tools(id) ON DELETE CASCADE,
     UNIQUE KEY uk_tool_user (tool_id, user_id),
     INDEX idx_tool (tool_id),
     INDEX idx_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 ```
 
-#### 5.3.6 安装记录表 (install_records)
+#### 5.3.6 安装记录表 (toolmk_install_records)
 
 ```sql
-CREATE TABLE install_records (
+CREATE TABLE toolmk_install_records (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     tool_id BIGINT NOT NULL,
     user_id VARCHAR(255),
     create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (tool_id) REFERENCES tools(id) ON DELETE CASCADE,
+    FOREIGN KEY (tool_id) REFERENCES toolmk_tools(id) ON DELETE CASCADE,
     INDEX idx_tool_time (tool_id, create_time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8_general_ci;
 ```
 
-#### 5.3.7 评价表 (ratings)
+#### 5.3.7 评价表 (toolmk_ratings)
 
 ```sql
-CREATE TABLE ratings (
+CREATE TABLE toolmk_ratings (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     tool_id BIGINT NOT NULL,
     user_id VARCHAR(255) NOT NULL,
@@ -539,17 +539,17 @@ CREATE TABLE ratings (
     comment TEXT,
     create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (tool_id) REFERENCES tools(id) ON DELETE CASCADE,
+    FOREIGN KEY (tool_id) REFERENCES toolmk_tools(id) ON DELETE CASCADE,
     UNIQUE KEY uk_tool_user (tool_id, user_id),
     INDEX idx_tool (tool_id),
     INDEX idx_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 ```
 
-#### 5.3.8 评价回复表 (comment_replies)
+#### 5.3.8 评价回复表 (toolmk_comment_replies)
 
 ```sql
-CREATE TABLE comment_replies (
+CREATE TABLE toolmk_comment_replies (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     rating_id BIGINT NOT NULL,
     user_id VARCHAR(500) NOT NULL,
@@ -558,21 +558,21 @@ CREATE TABLE comment_replies (
     reply_to_username VARCHAR(255) DEFAULT NULL,
     content TEXT NOT NULL,
     create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (rating_id) REFERENCES ratings(id) ON DELETE CASCADE,
+    FOREIGN KEY (rating_id) REFERENCES toolmk_ratings(id) ON DELETE CASCADE,
     INDEX idx_rating_id (rating_id),
     INDEX idx_create_time (create_time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 ```
 
-#### 5.3.9 评价点赞表 (rating_likes)
+#### 5.3.9 评价点赞表 (toolmk_rating_likes)
 
 ```sql
-CREATE TABLE rating_likes (
+CREATE TABLE toolmk_rating_likes (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     rating_id BIGINT NOT NULL,
     user_id VARCHAR(255) NOT NULL,
     create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (rating_id) REFERENCES ratings(id) ON DELETE CASCADE,
+    FOREIGN KEY (rating_id) REFERENCES toolmk_ratings(id) ON DELETE CASCADE,
     UNIQUE KEY uk_rating_user (rating_id, user_id),
     INDEX idx_rating (rating_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -775,3 +775,4 @@ API 路径格式: `/webapi/toolmarket/v1/{resource}`
 
 **变更记录**:
 - 2026-02-02: 初始版本，记录 v1.0 架构和 API
+- 2026-02-02: 更新所有数据表名，添加 "toolmk_" 前缀

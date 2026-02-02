@@ -11,46 +11,46 @@
     </resultMap>
 
     <select id="findById" resultMap="BaseResultMap">
-        SELECT * FROM favorites WHERE id = #{id}
+        SELECT * FROM toolmk_favorites WHERE id = #{id}
     </select>
 
     <select id="findByUserIdAndToolId" resultMap="BaseResultMap">
-        SELECT * FROM favorites WHERE user_id = #{userId} AND tool_id = #{toolId}
+        SELECT * FROM toolmk_favorites WHERE user_id = #{userId} AND tool_id = #{toolId}
     </select>
 
     <select id="findByUserId" resultMap="BaseResultMap">
-        SELECT * FROM favorites WHERE user_id = #{userId}
+        SELECT * FROM toolmk_favorites WHERE user_id = #{userId}
         LIMIT #{limit} OFFSET #{offset}
     </select>
 
     <select id="countByUserId" resultType="int">
-        SELECT COUNT(*) FROM favorites WHERE user_id = #{userId}
+        SELECT COUNT(*) FROM toolmk_favorites WHERE user_id = #{userId}
     </select>
 
     <insert id="insert" parameterType="com.devtoolmp.entity.Favorite" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO favorites (user_id, tool_id, create_time)
+        INSERT INTO toolmk_favorites (user_id, tool_id, create_time)
         VALUES (#{userId}, #{toolId}, #{createTime})
     </insert>
 
     <delete id="deleteById">
-        DELETE FROM favorites WHERE id = #{id}
+        DELETE FROM toolmk_favorites WHERE id = #{id}
     </delete>
 
     <delete id="deleteByUserIdAndToolId">
-        DELETE FROM favorites WHERE user_id = #{userId} AND tool_id = #{toolId}
+        DELETE FROM toolmk_favorites WHERE user_id = #{userId} AND tool_id = #{toolId}
     </delete>
 
     <select id="existsByUserIdAndToolId" resultType="boolean">
-        SELECT COUNT(*) > 0 FROM favorites WHERE user_id = #{userId} AND tool_id = #{toolId}
+        SELECT COUNT(*) > 0 FROM toolmk_favorites WHERE user_id = #{userId} AND tool_id = #{toolId}
     </select>
 
     <!-- 统计相关方法 -->
     <select id="countByToolId" resultType="int">
-        SELECT COUNT(*) FROM favorites WHERE tool_id = #{toolId}
+        SELECT COUNT(*) FROM toolmk_favorites WHERE tool_id = #{toolId}
     </select>
 
     <select id="countByToolIdAndCreatedAtBetween" resultType="int">
-        SELECT COUNT(*) FROM favorites
+        SELECT COUNT(*) FROM toolmk_favorites
         WHERE tool_id = #{toolId}
         AND create_time BETWEEN #{start} AND #{end}
     </select>

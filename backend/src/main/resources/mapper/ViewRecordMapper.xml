@@ -11,31 +11,31 @@
     </resultMap>
 
     <select id="findById" resultMap="BaseResultMap">
-        SELECT * FROM view_records WHERE id = #{id}
+        SELECT * FROM toolmk_view_records WHERE id = #{id}
     </select>
 
     <select id="findByToolIdAndCreatedAtBetween" resultMap="BaseResultMap">
-        SELECT * FROM view_records
+        SELECT * FROM toolmk_view_records
         WHERE tool_id = #{toolId}
         AND create_time BETWEEN #{start} AND #{end}
     </select>
 
     <insert id="insert" parameterType="com.devtoolmp.entity.ViewRecord" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO view_records (tool_id, user_id, create_time)
+        INSERT INTO toolmk_view_records (tool_id, user_id, create_time)
         VALUES (#{toolId}, #{userId}, #{createTime})
     </insert>
 
     <delete id="deleteById">
-        DELETE FROM view_records WHERE id = #{id}
+        DELETE FROM toolmk_view_records WHERE id = #{id}
     </delete>
 
     <!-- 统计相关方法 -->
     <select id="countByToolId" resultType="int">
-        SELECT COUNT(*) FROM view_records WHERE tool_id = #{toolId}
+        SELECT COUNT(*) FROM toolmk_view_records WHERE tool_id = #{toolId}
     </select>
 
     <select id="countByToolIdAndCreatedAtBetween" resultType="int">
-        SELECT COUNT(*) FROM view_records
+        SELECT COUNT(*) FROM toolmk_view_records
         WHERE tool_id = #{toolId}
         AND create_time BETWEEN #{start} AND #{end}
     </select>

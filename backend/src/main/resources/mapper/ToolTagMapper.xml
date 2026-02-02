@@ -11,28 +11,28 @@
     </resultMap>
 
     <select id="findById" resultMap="BaseResultMap">
-        SELECT * FROM tool_tags WHERE id = #{id}
+        SELECT * FROM toolmk_tool_tags WHERE id = #{id}
     </select>
 
     <select id="findByToolId" resultMap="BaseResultMap">
-        SELECT * FROM tool_tags WHERE tool_id = #{toolId}
+        SELECT * FROM toolmk_tool_tags WHERE tool_id = #{toolId}
     </select>
 
     <select id="findDistinctTagNames" resultType="string">
-        SELECT DISTINCT tag_name FROM tool_tags
+        SELECT DISTINCT tag_name FROM toolmk_tool_tags
     </select>
 
     <insert id="insert" parameterType="com.devtoolmp.entity.ToolTag" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO tool_tags (tool_id, tag_name, create_time)
+        INSERT INTO toolmk_tool_tags (tool_id, tag_name, create_time)
         VALUES (#{toolId}, #{tagName}, #{createTime})
     </insert>
 
     <delete id="deleteById">
-        DELETE FROM tool_tags WHERE id = #{id}
+        DELETE FROM toolmk_tool_tags WHERE id = #{id}
     </delete>
 
     <delete id="deleteByToolId">
-        DELETE FROM tool_tags WHERE tool_id = #{toolId}
+        DELETE FROM toolmk_tool_tags WHERE tool_id = #{toolId}
     </delete>
 
 </mapper>

@@ -11,32 +11,32 @@
     </resultMap>
 
     <select id="findById" resultMap="BaseResultMap">
-        SELECT * FROM rating_likes WHERE id = #{id}
+        SELECT * FROM toolmk_rating_likes WHERE id = #{id}
     </select>
 
     <select id="findByRatingIdAndUserId" resultMap="BaseResultMap">
-        SELECT * FROM rating_likes WHERE rating_id = #{ratingId} AND user_id = #{userId}
+        SELECT * FROM toolmk_rating_likes WHERE rating_id = #{ratingId} AND user_id = #{userId}
     </select>
 
     <select id="findByRatingId" resultMap="BaseResultMap">
-        SELECT * FROM rating_likes WHERE rating_id = #{ratingId}
+        SELECT * FROM toolmk_rating_likes WHERE rating_id = #{ratingId}
     </select>
 
     <insert id="insert" parameterType="com.devtoolmp.entity.RatingLike" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO rating_likes (rating_id, user_id, create_time)
+        INSERT INTO toolmk_rating_likes (rating_id, user_id, create_time)
         VALUES (#{ratingId}, #{userId}, #{createTime})
     </insert>
 
     <delete id="deleteById">
-        DELETE FROM rating_likes WHERE id = #{id}
+        DELETE FROM toolmk_rating_likes WHERE id = #{id}
     </delete>
 
     <delete id="deleteByRatingIdAndUserId">
-        DELETE FROM rating_likes WHERE rating_id = #{ratingId} AND user_id = #{userId}
+        DELETE FROM toolmk_rating_likes WHERE rating_id = #{ratingId} AND user_id = #{userId}
     </delete>
 
     <select id="existsByRatingIdAndUserId" resultType="boolean">
-        SELECT COUNT(*) > 0 FROM rating_likes WHERE rating_id = #{ratingId} AND user_id = #{userId}
+        SELECT COUNT(*) > 0 FROM toolmk_rating_likes WHERE rating_id = #{ratingId} AND user_id = #{userId}
     </select>
 
 </mapper>

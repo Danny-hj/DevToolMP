@@ -17,24 +17,24 @@
     </resultMap>
 
     <select id="findById" resultMap="BaseResultMap">
-        SELECT * FROM codehub WHERE id = #{id}
+        SELECT * FROM toolmk_codehub WHERE id = #{id}
     </select>
 
     <select id="findByOwnerAndRepo" resultMap="BaseResultMap">
-        SELECT * FROM codehub WHERE owner = #{owner} AND repo = #{repo}
+        SELECT * FROM toolmk_codehub WHERE owner = #{owner} AND repo = #{repo}
     </select>
 
     <select id="findAll" resultMap="BaseResultMap">
-        SELECT * FROM codehub ORDER BY stars DESC
+        SELECT * FROM toolmk_codehub ORDER BY stars DESC
     </select>
 
     <insert id="insert" parameterType="com.devtoolmp.entity.Codehub" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO codehub (owner, repo, version, stars, forks, open_issues, watchers, create_time, update_time)
+        INSERT INTO toolmk_codehub (owner, repo, version, stars, forks, open_issues, watchers, create_time, update_time)
         VALUES (#{owner}, #{repo}, #{version}, #{stars}, #{forks}, #{openIssues}, #{watchers}, #{createTime}, #{updateTime})
     </insert>
 
     <update id="update" parameterType="com.devtoolmp.entity.Codehub">
-        UPDATE codehub
+        UPDATE toolmk_codehub
         SET owner = #{owner},
             repo = #{repo},
             version = #{version},
@@ -47,11 +47,11 @@
     </update>
 
     <delete id="deleteById">
-        DELETE FROM codehub WHERE id = #{id}
+        DELETE FROM toolmk_codehub WHERE id = #{id}
     </delete>
 
     <select id="countAll" resultType="int">
-        SELECT COUNT(*) FROM codehub
+        SELECT COUNT(*) FROM toolmk_codehub
     </select>
 
 </mapper>

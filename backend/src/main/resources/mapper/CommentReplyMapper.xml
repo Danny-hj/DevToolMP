@@ -15,24 +15,24 @@
     </resultMap>
 
     <select id="findById" resultMap="BaseResultMap">
-        SELECT * FROM comment_replies WHERE id = #{id}
+        SELECT * FROM toolmk_comment_replies WHERE id = #{id}
     </select>
 
     <select id="findByRatingIdOrderByCreatedAtAsc" resultMap="BaseResultMap">
-        SELECT * FROM comment_replies WHERE rating_id = #{ratingId} ORDER BY create_time ASC
+        SELECT * FROM toolmk_comment_replies WHERE rating_id = #{ratingId} ORDER BY create_time ASC
     </select>
 
     <insert id="insert" parameterType="com.devtoolmp.entity.CommentReply" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO comment_replies (rating_id, user_id, username, reply_to_user_id, reply_to_username, content, create_time)
+        INSERT INTO toolmk_comment_replies (rating_id, user_id, username, reply_to_user_id, reply_to_username, content, create_time)
         VALUES (#{ratingId}, #{userId}, #{username}, #{replyToUserId}, #{replyToUsername}, #{content}, #{createTime})
     </insert>
 
     <delete id="deleteById">
-        DELETE FROM comment_replies WHERE id = #{id}
+        DELETE FROM toolmk_comment_replies WHERE id = #{id}
     </delete>
 
     <delete id="deleteByRatingId">
-        DELETE FROM comment_replies WHERE rating_id = #{ratingId}
+        DELETE FROM toolmk_comment_replies WHERE rating_id = #{ratingId}
     </delete>
 
 </mapper>

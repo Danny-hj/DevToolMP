@@ -15,51 +15,51 @@
     </resultMap>
 
     <select id="findById" resultMap="BaseResultMap">
-        SELECT * FROM tools WHERE id = #{id}
+        SELECT * FROM toolmk_tools WHERE id = #{id}
     </select>
 
     <select id="findByCodehubId" resultMap="BaseResultMap">
-        SELECT * FROM tools WHERE codehub_id = #{codehubId}
+        SELECT * FROM toolmk_tools WHERE codehub_id = #{codehubId}
     </select>
 
     <select id="findByCategoryId" resultMap="BaseResultMap">
-        SELECT * FROM tools WHERE category_id = #{categoryId}
+        SELECT * FROM toolmk_tools WHERE category_id = #{categoryId}
     </select>
 
     <select id="findByStatus" resultMap="BaseResultMap">
-        SELECT * FROM tools WHERE status = #{status}
+        SELECT * FROM toolmk_tools WHERE status = #{status}
     </select>
 
     <select id="searchByKeyword" resultMap="BaseResultMap">
-        SELECT * FROM tools
+        SELECT * FROM toolmk_tools
         WHERE status = 'active'
         AND (name LIKE CONCAT('%', #{keyword}, '%') OR description LIKE CONCAT('%', #{keyword}, '%'))
     </select>
 
     <select id="findByStatusWithPage" resultMap="BaseResultMap">
-        SELECT * FROM tools
+        SELECT * FROM toolmk_tools
         WHERE status = #{status}
         ORDER BY create_time DESC
         LIMIT #{limit} OFFSET #{offset}
     </select>
 
     <select id="countByStatus" resultType="int">
-        SELECT COUNT(*) FROM tools WHERE status = #{status}
+        SELECT COUNT(*) FROM toolmk_tools WHERE status = #{status}
     </select>
 
     <select id="countSearchByKeyword" resultType="int">
-        SELECT COUNT(*) FROM tools
+        SELECT COUNT(*) FROM toolmk_tools
         WHERE status = 'active'
         AND (name LIKE CONCAT('%', #{keyword}, '%') OR description LIKE CONCAT('%', #{keyword}, '%'))
     </select>
 
     <insert id="insert" parameterType="com.devtoolmp.entity.Tool" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO tools (name, description, category_id, codehub_id, status, create_time, update_time)
+        INSERT INTO toolmk_tools (name, description, category_id, codehub_id, status, create_time, update_time)
         VALUES (#{name}, #{description}, #{categoryId}, #{codehubId}, #{status}, #{createTime}, #{updateTime})
     </insert>
 
     <update id="update" parameterType="com.devtoolmp.entity.Tool">
-        UPDATE tools
+        UPDATE toolmk_tools
         SET name = #{name},
             description = #{description},
             category_id = #{categoryId},
@@ -70,15 +70,15 @@
     </update>
 
     <delete id="deleteById">
-        DELETE FROM tools WHERE id = #{id}
+        DELETE FROM toolmk_tools WHERE id = #{id}
     </delete>
 
     <select id="countAll" resultType="int">
-        SELECT COUNT(*) FROM tools
+        SELECT COUNT(*) FROM toolmk_tools
     </select>
 
     <select id="findAll" resultMap="BaseResultMap">
-        SELECT * FROM tools WHERE status = 'active'
+        SELECT * FROM toolmk_tools WHERE status = 'active'
     </select>
 
 </mapper>

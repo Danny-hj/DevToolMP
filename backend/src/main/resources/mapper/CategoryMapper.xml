@@ -12,28 +12,28 @@
     </resultMap>
 
     <select id="findById" resultMap="BaseResultMap">
-        SELECT * FROM categories WHERE id = #{id}
+        SELECT * FROM toolmk_categories WHERE id = #{id}
     </select>
 
     <select id="findByName" resultMap="BaseResultMap">
-        SELECT * FROM categories WHERE name = #{name}
+        SELECT * FROM toolmk_categories WHERE name = #{name}
     </select>
 
     <select id="findAll" resultMap="BaseResultMap">
-        SELECT * FROM categories
+        SELECT * FROM toolmk_categories
     </select>
 
     <select id="findAllByOrderBySortOrderAsc" resultMap="BaseResultMap">
-        SELECT * FROM categories ORDER BY sort_order ASC
+        SELECT * FROM toolmk_categories ORDER BY sort_order ASC
     </select>
 
     <insert id="insert" parameterType="com.devtoolmp.entity.Category" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO categories (name, description, sort_order, create_time)
+        INSERT INTO toolmk_categories (name, description, sort_order, create_time)
         VALUES (#{name}, #{description}, #{sortOrder}, #{createTime})
     </insert>
 
     <update id="update" parameterType="com.devtoolmp.entity.Category">
-        UPDATE categories
+        UPDATE toolmk_categories
         SET name = #{name},
             description = #{description},
             sort_order = #{sortOrder}
@@ -41,11 +41,11 @@
     </update>
 
     <delete id="deleteById">
-        DELETE FROM categories WHERE id = #{id}
+        DELETE FROM toolmk_categories WHERE id = #{id}
     </delete>
 
     <select id="countAll" resultType="int">
-        SELECT COUNT(*) FROM categories
+        SELECT COUNT(*) FROM toolmk_categories
     </select>
 
 </mapper>
