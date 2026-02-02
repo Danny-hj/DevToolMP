@@ -15,7 +15,7 @@ import java.util.Map;
  * 代码仓库集成控制器
  */
 @RestController
-@RequestMapping("/codehub")
+@RequestMapping("/webapi/toolmarket/v1/codehub")
 public class CodehubController {
 
     @Autowired

@@ -2,7 +2,7 @@ import axios from 'axios'
 import { ElMessage } from 'element-plus'
 
 const request = axios.create({
-  baseURL: '/api',
+  baseURL: '/webapi/toolmarket/v1',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json;charset=UTF-8'

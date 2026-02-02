@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/tools/ranking")
+@RequestMapping("/webapi/toolmarket/v1/tools/ranking")
 public class RankingController {
 
     @Autowired

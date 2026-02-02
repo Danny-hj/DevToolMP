@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/ratings")
+@RequestMapping("/webapi/toolmarket/v1/ratings")
 public class RatingController {
 
     @Autowired
