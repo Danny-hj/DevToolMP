@@ -7,7 +7,6 @@ import com.devtoolmp.dto.response.ToolDetailDTO;
 import com.devtoolmp.dto.response.PageResponse;
 import com.devtoolmp.entity.Tool;
 import com.devtoolmp.service.ToolService;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.BindingResult;
@@ -39,11 +38,8 @@ public class ToolController {
     }
 
     @GetMapping("/{id}/detail")
-    public ResponseEntity<ToolDetailDTO> getToolDetail(
-            @PathVariable Long id,
-            HttpServletRequest request) {
+    public ResponseEntity<ToolDetailDTO> getToolDetail(@PathVariable Long id) {
         String userId = "Danny";
-
         ToolDetailDTO toolDetail = toolService.getToolDetailById(id, userId);
         return ResponseEntity.ok(toolDetail);
     }
@@ -84,41 +80,29 @@ public class ToolController {
     }
 
     @PostMapping("/{id}/view")
-    public ResponseEntity<Void> recordView(
-            @PathVariable Long id,
-            HttpServletRequest request) {
+    public ResponseEntity<Void> recordView(@PathVariable Long id) {
         String userId = "Danny";
-
         toolService.recordView(id, userId);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{id}/favorite")
-    public ResponseEntity<Boolean> toggleFavorite(
-            @PathVariable Long id,
-            HttpServletRequest request) {
+    public ResponseEntity<Boolean> toggleFavorite(@PathVariable Long id) {
         String userId = "Danny";
-
         boolean isFavorited = toolService.toggleFavorite(id, userId);
         return ResponseEntity.ok(isFavorited);
     }
 
     @GetMapping("/{id}/favorite/check")
-    public ResponseEntity<Boolean> checkFavorite(
-            @PathVariable Long id,
-            HttpServletRequest request) {
+    public ResponseEntity<Boolean> checkFavorite(@PathVariable Long id) {
         String userId = "Danny";
-
         boolean isFavorited = toolService.isFavorited(id, userId);
         return ResponseEntity.ok(isFavorited);
     }
 
     @PostMapping("/{id}/install")
-    public ResponseEntity<Void> recordInstall(
-            @PathVariable Long id,
-            HttpServletRequest request) {
+    public ResponseEntity<Void> recordInstall(@PathVariable Long id) {
         String userId = "Danny";
-
         toolService.recordInstall(id, userId);
         return ResponseEntity.ok().build();
     }

@@ -7,7 +7,6 @@ import com.devtoolmp.dto.response.CommentReplyDTO;
 import com.devtoolmp.dto.response.RatingStatisticsDTO;
 import com.devtoolmp.dto.response.PageResponse;
 import com.devtoolmp.service.RatingService;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -52,10 +51,9 @@ public class RatingController {
     @PostMapping("/tool/{toolId}")
     public ResponseEntity<RatingDTO> createRating(
             @PathVariable Long toolId,
-            @RequestBody RatingCreateRequest request,
-            HttpServletRequest httpRequest) {
+            @RequestBody RatingCreateRequest request) {
         String userId = "Danny";
-        String username = request.getUsername() != null ? request.getUsername() : "匿名用户";
+        String username = "匿名用户";
 
         RatingDTO rating = ratingService.createRating(toolId, userId, username, request.getScore(), request.getComment());
         return ResponseEntity.status(HttpStatus.CREATED).body(rating);
@@ -64,20 +62,15 @@ public class RatingController {
     @PutMapping("/{ratingId}")
     public ResponseEntity<RatingDTO> updateRating(
             @PathVariable Long ratingId,
-            @RequestBody RatingCreateRequest request,
-            HttpServletRequest httpRequest) {
+            @RequestBody RatingCreateRequest request) {
         String userId = "Danny";
-
         RatingDTO rating = ratingService.updateRating(ratingId, userId, request.getScore(), request.getComment());
         return ResponseEntity.ok(rating);
     }
 
     @DeleteMapping("/{ratingId}")
-    public ResponseEntity<Void> deleteRating(
-            @PathVariable Long ratingId,
-            HttpServletRequest httpRequest) {
+    public ResponseEntity<Void> deleteRating(@PathVariable Long ratingId) {
         String userId = "Danny";
-
         ratingService.deleteRating(ratingId, userId);
         return ResponseEntity.noContent().build();
     }
@@ -85,21 +78,17 @@ public class RatingController {
     @PostMapping("/{ratingId}/replies")
     public ResponseEntity<CommentReplyDTO> createReply(
             @PathVariable Long ratingId,
-            @RequestBody CommentReplyRequest request,
-            HttpServletRequest httpRequest) {
+            @RequestBody CommentReplyRequest request) {
         String userId = "Danny";
-        String username = request.getUsername() != null ? request.getUsername() : "匿名用户";
+        String username = "匿名用户";
 
         CommentReplyDTO reply = ratingService.createReply(ratingId, userId, username, request.getContent());
         return ResponseEntity.status(HttpStatus.CREATED).body(reply);
     }
 
     @DeleteMapping("/replies/{replyId}")
-    public ResponseEntity<Void> deleteReply(
-            @PathVariable Long replyId,
-            HttpServletRequest httpRequest) {
+    public ResponseEntity<Void> deleteReply(@PathVariable Long replyId) {
         String userId = "Danny";
-
         ratingService.deleteReply(replyId, userId);
         return ResponseEntity.noContent().build();
     }
