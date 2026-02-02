@@ -9,8 +9,16 @@
         <div class="footer-section">
           <h4>链接</h4>
           <ul>
-            <li><router-link to="/">首页</router-link></li>
-            <li><router-link to="/tools">工具列表</router-link></li>
+            <li>
+              <router-link to="/">
+                首页
+              </router-link>
+            </li>
+            <li>
+              <router-link to="/tools">
+                工具列表
+              </router-link>
+            </li>
           </ul>
         </div>
         <div class="footer-section">

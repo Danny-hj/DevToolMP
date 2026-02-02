@@ -3,29 +3,49 @@
     <div class="page-header">
       <h1>工具市场</h1>
       <div class="filters">
-        <el-button type="primary" @click="handleAddTool">
+        <el-button
+          type="primary"
+          @click="handleAddTool"
+        >
           <el-icon><Plus /></el-icon>
           添加工具
         </el-button>
-        <el-button type="success" @click="handleSyncAgentSkills" :loading="syncingSkills">
+        <el-button
+          type="success"
+          :loading="syncingSkills"
+          @click="handleSyncAgentSkills"
+        >
           <el-icon><Refresh /></el-icon>
           同步 Skills
         </el-button>
         <el-select
           v-model="sortBy"
           placeholder="排序"
-          @change="handleSort"
           style="width: 100px"
+          @change="handleSort"
         >
-          <el-option label="最新" value="latest" />
-          <el-option label="最热" value="hot" />
+          <el-option
+            label="最新"
+            value="latest"
+          />
+          <el-option
+            label="最热"
+            value="hot"
+          />
         </el-select>
       </div>
     </div>
 
     <!-- 分类 Tab -->
-    <el-tabs v-model="activeTab" class="category-tabs" @tab-change="handleTabChange">
-      <el-tab-pane label="全部" name="all">
+    <el-tabs
+      v-model="activeTab"
+      class="category-tabs"
+      @tab-change="handleTabChange"
+    >
+      <el-tab-pane
+        label="全部"
+        name="all"
+      >
         <template #label>
           <span class="tab-label">
             <span>全部</span>
@@ -48,13 +68,20 @@
     </el-tabs>
 
     <div class="tools-grid">
-      <el-skeleton v-if="loading" :rows="6" animated />
-      <div v-else-if="filteredTools.length === 0" class="empty-state">
+      <el-skeleton
+        v-if="loading"
+        :rows="6"
+        animated
+      />
+      <div
+        v-else-if="filteredTools.length === 0"
+        class="empty-state"
+      >
         <el-empty description="暂无工具" />
       </div>
       <tool-card
-        v-else
         v-for="tool in filteredTools"
+        v-else
         :key="tool.id"
         :tool="tool"
         :hot-score="tool.hotScoreDaily"
@@ -70,9 +97,9 @@
 
     <el-pagination
       v-if="total > 0"
-      class="pagination"
       v-model:current-page="currentPage"
       v-model:page-size="pageSize"
+      class="pagination"
       :total="total"
       :page-sizes="[24, 48, 60, 100]"
       layout="total, sizes, prev, pager, next, jumper"

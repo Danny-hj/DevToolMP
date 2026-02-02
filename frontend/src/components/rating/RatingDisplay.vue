@@ -1,5 +1,8 @@
 <template>
-  <div v-if="statistics" class="rating-display">
+  <div
+    v-if="statistics"
+    class="rating-display"
+  >
     <div class="rating-summary">
       <div class="average-rating">
         <span class="score">{{ (statistics.averageScore || 0).toFixed(1) }}</span>
@@ -14,7 +17,11 @@
     </div>
 
     <div class="rating-distribution">
-      <div v-for="i in 5" :key="i" class="distribution-item">
+      <div
+        v-for="i in 5"
+        :key="i"
+        class="distribution-item"
+      >
         <span class="label">{{ 6 - i }} 星</span>
         <el-progress
           :percentage="getPercentage(6 - i)"
@@ -26,8 +33,14 @@
       </div>
     </div>
   </div>
-  <div v-else class="rating-display">
-    <el-skeleton :rows="3" animated />
+  <div
+    v-else
+    class="rating-display"
+  >
+    <el-skeleton
+      :rows="3"
+      animated
+    />
   </div>
 </template>
 

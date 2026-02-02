@@ -1,13 +1,23 @@
 <template>
-  <div class="tool-card" @click="handleClick">
+  <div
+    class="tool-card"
+    @click="handleClick"
+  >
     <!-- 状态徽章 -->
-    <div class="status-badge" :class="statusClass">
+    <div
+      class="status-badge"
+      :class="statusClass"
+    >
       <el-icon><component :is="statusIcon" /></el-icon>
       <span>{{ statusText }}</span>
     </div>
 
     <!-- 热度分数徽章 -->
-    <div v-if="hotScore" class="hot-score-badge" :class="hotScoreClass">
+    <div
+      v-if="hotScore"
+      class="hot-score-badge"
+      :class="hotScoreClass"
+    >
       <span class="hot-icon">🔥</span>
       <span class="hot-value">{{ hotScore.toFixed(0) }}</span>
     </div>
@@ -24,8 +34,8 @@
             :href="tool.codehubUrl"
             target="_blank"
             rel="noopener noreferrer"
-            @click.stop
             class="codehub-link"
+            @click.stop
           >
             {{ tool.codehubOwner }}/{{ tool.codehubRepo }}
             <el-icon class="external-link-icon"><Link /></el-icon>
@@ -33,7 +43,10 @@
           <span v-else-if="tool.codehubOwner && tool.codehubRepo">
             {{ tool.codehubOwner }}/{{ tool.codehubRepo }}
           </span>
-          <span v-else class="no-repo">未关联 Codehub 仓库</span>
+          <span
+            v-else
+            class="no-repo"
+          >未关联 Codehub 仓库</span>
         </p>
       </div>
     </div>
@@ -43,14 +56,20 @@
     </div>
 
     <!-- 分类标签 -->
-    <div v-if="tool.categoryName" class="tool-category">
+    <div
+      v-if="tool.categoryName"
+      class="tool-category"
+    >
       <el-icon><FolderOpened /></el-icon>
       <span>{{ tool.categoryName }}</span>
     </div>
 
     <!-- 统计数据 -->
     <div class="tool-stats">
-      <div class="stat-item" title="Codehub Stars">
+      <div
+        class="stat-item"
+        title="Codehub Stars"
+      >
         <div class="stat-icon">
           <el-icon><Star /></el-icon>
         </div>
@@ -59,7 +78,10 @@
           <span class="stat-label">Stars</span>
         </div>
       </div>
-      <div class="stat-item" title="Codehub Forks">
+      <div
+        class="stat-item"
+        title="Codehub Forks"
+      >
         <div class="stat-icon">
           <el-icon><Operation /></el-icon>
         </div>
@@ -68,7 +90,10 @@
           <span class="stat-label">Forks</span>
         </div>
       </div>
-      <div class="stat-item" title="浏览量">
+      <div
+        class="stat-item"
+        title="浏览量"
+      >
         <div class="stat-icon">
           <el-icon><View /></el-icon>
         </div>
@@ -77,7 +102,10 @@
           <span class="stat-label">浏览</span>
         </div>
       </div>
-      <div class="stat-item" title="收藏数">
+      <div
+        class="stat-item"
+        title="收藏数"
+      >
         <div class="stat-icon">
           <el-icon><Collection /></el-icon>
         </div>
@@ -86,7 +114,10 @@
           <span class="stat-label">收藏</span>
         </div>
       </div>
-      <div class="stat-item" title="Open Issues">
+      <div
+        class="stat-item"
+        title="Open Issues"
+      >
         <div class="stat-icon">
           <el-icon><Warning /></el-icon>
         </div>
@@ -95,7 +126,10 @@
           <span class="stat-label">Issues</span>
         </div>
       </div>
-      <div class="stat-item" title="安装量">
+      <div
+        class="stat-item"
+        title="安装量"
+      >
         <div class="stat-icon">
           <el-icon><Download /></el-icon>
         </div>
@@ -116,7 +150,10 @@
         >
           {{ tag }}
         </el-tag>
-        <span v-if="tool.tags && tool.tags.length > 3" class="more-tags">
+        <span
+          v-if="tool.tags && tool.tags.length > 3"
+          class="more-tags"
+        >
           +{{ tool.tags.length - 3 }}
         </span>
       </div>
@@ -129,8 +166,8 @@
             type="info"
             size="small"
             plain
-            @click.stop="handleSyncCodehub"
             class="action-btn"
+            @click.stop="handleSyncCodehub"
           >
             <el-icon><Refresh /></el-icon>
             同步
@@ -140,8 +177,8 @@
             type="warning"
             size="small"
             plain
-            @click.stop="handleEdit"
             class="action-btn"
+            @click.stop="handleEdit"
           >
             <el-icon><Edit /></el-icon>
             编辑
@@ -150,8 +187,8 @@
           <el-button
             :type="tool.status === 'active' ? 'warning' : 'success'"
             size="small"
-            @click.stop="handleTogglePublish"
             class="action-btn"
+            @click.stop="handleTogglePublish"
           >
             <el-icon><component :is="tool.status === 'active' ? 'CircleClose' : 'CircleCheck'" /></el-icon>
             {{ tool.status === 'active' ? '下架' : '上架' }}
@@ -165,8 +202,8 @@
             type="primary"
             size="small"
             plain
-            @click.stop="openCodehub"
             class="action-btn"
+            @click.stop="openCodehub"
           >
             <el-icon><Link /></el-icon>
             Codehub
@@ -175,8 +212,8 @@
             type="primary"
             size="small"
             :plain="!tool.isFavorited"
-            @click.stop="handleFavorite"
             class="action-btn favorite-btn"
+            @click.stop="handleFavorite"
           >
             <el-icon><CollectionTag /></el-icon>
             {{ tool.isFavorited ? '已收藏' : '收藏' }}
@@ -191,7 +228,7 @@
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Star, View, Collection, CollectionTag, Download,
-         CircleCheck, CircleClose, Link, Refresh, Edit, FolderOpened, CircleCheckFilled,
+         Link, Refresh, Edit, FolderOpened,
          Operation, Warning } from '@element-plus/icons-vue'
 import { useToolsStore } from '@/stores/tools'
 
@@ -261,7 +298,7 @@ const handleSyncCodehub = async () => {
     await toolsStore.syncCodehubData(props.tool.id)
     ElMessage.success('Codehub数据同步成功')
     emit('synced', props.tool)
-  } catch (error) {
+  } catch {
     ElMessage.error('Codehub数据同步失败')
   } finally {
     syncing.value = false

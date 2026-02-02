@@ -6,7 +6,10 @@
       :rules="rules"
       label-width="80px"
     >
-      <el-form-item label="昵称" prop="username">
+      <el-form-item
+        label="昵称"
+        prop="username"
+      >
         <el-input
           v-model="form.username"
           placeholder="请输入你的昵称（可选）"
@@ -15,11 +18,20 @@
         />
       </el-form-item>
 
-      <el-form-item label="评分" prop="score">
-        <el-rate v-model="form.score" show-text />
+      <el-form-item
+        label="评分"
+        prop="score"
+      >
+        <el-rate
+          v-model="form.score"
+          show-text
+        />
       </el-form-item>
 
-      <el-form-item label="评论" prop="comment">
+      <el-form-item
+        label="评论"
+        prop="comment"
+      >
         <el-input
           v-model="form.comment"
           type="textarea"
@@ -31,10 +43,16 @@
       </el-form-item>
 
       <el-form-item>
-        <el-button type="primary" :loading="loading" @click="handleSubmit">
+        <el-button
+          type="primary"
+          :loading="loading"
+          @click="handleSubmit"
+        >
           提交评价
         </el-button>
-        <el-button @click="handleCancel">取消</el-button>
+        <el-button @click="handleCancel">
+          取消
+        </el-button>
       </el-form-item>
     </el-form>
   </div>
@@ -44,7 +62,7 @@
 import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 
-const props = defineProps({
+defineProps({
   toolId: {
     type: Number,
     required: true

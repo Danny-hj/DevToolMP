@@ -3,7 +3,10 @@
     <!-- ASCII 艺术标题 -->
     <div class="ranking-header">
       <h1 class="title">
-        <pre class="ascii-art">
+        <pre
+          v-pre
+          class="ascii-art"
+        >
   ____                 _       _____                _         _____ _
  / ___|_ __ _   _ ___| |_    |  ___|__  _ __   ___| |__     |  ___| | _____  __
 | |   | '__| | | / __| __|   | |_ / _ \| '_ \ / __| '_ \    | |_  | |/ _ \ \/ /
@@ -13,31 +16,48 @@
         </pre>
         <span class="title-text">排行榜</span>
       </h1>
-      <p class="subtitle">发现最受欢迎的开发工具</p>
+      <p class="subtitle">
+        发现最受欢迎的开发工具
+      </p>
     </div>
 
     <!-- 标签页 -->
     <div class="ranking-tabs">
-      <el-tabs v-model="activeTab" @tab-change="handleTabChange">
-        <el-tab-pane label="全部总榜" name="alltime">
+      <el-tabs
+        v-model="activeTab"
+        @tab-change="handleTabChange"
+      >
+        <el-tab-pane
+          label="全部总榜"
+          name="alltime"
+        >
           <span class="tab-label">
             <el-icon><Trophy /></el-icon>
             全部总榜
           </span>
         </el-tab-pane>
-        <el-tab-pane label="周榜" name="weekly">
+        <el-tab-pane
+          label="周榜"
+          name="weekly"
+        >
           <span class="tab-label">
             <el-icon><Calendar /></el-icon>
             周榜
           </span>
         </el-tab-pane>
-        <el-tab-pane label="日榜" name="daily">
+        <el-tab-pane
+          label="日榜"
+          name="daily"
+        >
           <span class="tab-label">
             <el-icon><Sunny /></el-icon>
             日榜
           </span>
         </el-tab-pane>
-        <el-tab-pane label="趋势榜" name="trending">
+        <el-tab-pane
+          label="趋势榜"
+          name="trending"
+        >
           <span class="tab-label">
             <el-icon><TrendCharts /></el-icon>
             趋势榜
@@ -47,12 +67,25 @@
     </div>
 
     <!-- 排行榜内容 -->
-    <div v-loading="loading" class="ranking-content">
+    <div
+      v-loading="loading"
+      class="ranking-content"
+    >
       <!-- 表格展示 -->
-      <div v-if="!isEmpty && !loading" class="ranking-table-wrapper">
-        <el-table :data="rankings" class="ranking-table">
+      <div
+        v-if="!isEmpty && !loading"
+        class="ranking-table-wrapper"
+      >
+        <el-table
+          :data="rankings"
+          class="ranking-table"
+        >
           <!-- 排名 -->
-          <el-table-column label="排名" width="80" align="center">
+          <el-table-column
+            label="排名"
+            width="80"
+            align="center"
+          >
             <template #default="{ $index }">
               <span
                 class="rank-number"
@@ -64,24 +97,36 @@
           </el-table-column>
 
           <!-- 工具信息 -->
-          <el-table-column label="工具名称" min-width="300">
+          <el-table-column
+            label="工具名称"
+            min-width="300"
+          >
             <template #default="{ row }">
               <div class="tool-name-cell">
                 <div class="tool-icon">
                   {{ row.name.charAt(0).toUpperCase() }}
                 </div>
                 <div class="tool-info">
-                  <router-link :to="`/tools/${row.id}`" class="name">
+                  <router-link
+                    :to="`/tools/${row.id}`"
+                    class="name"
+                  >
                     {{ row.name }}
                   </router-link>
-                  <p class="description">{{ row.description }}</p>
+                  <p class="description">
+                    {{ row.description }}
+                  </p>
                 </div>
               </div>
             </template>
           </el-table-column>
 
           <!-- 热度分数 -->
-          <el-table-column label="热度分数" width="140" align="center">
+          <el-table-column
+            label="热度分数"
+            width="140"
+            align="center"
+          >
             <template #default="{ row }">
               <div
                 class="hot-score-badge"
@@ -94,28 +139,44 @@
           </el-table-column>
 
           <!-- 安装量 -->
-          <el-table-column label="安装量" width="120" align="right">
+          <el-table-column
+            label="安装量"
+            width="120"
+            align="right"
+          >
             <template #default="{ row }">
               <span class="stat-number">{{ formatNumber(row.installCount) }}</span>
             </template>
           </el-table-column>
 
           <!-- 收藏数 -->
-          <el-table-column label="收藏数" width="120" align="right">
+          <el-table-column
+            label="收藏数"
+            width="120"
+            align="right"
+          >
             <template #default="{ row }">
               <span class="stat-number">{{ formatNumber(row.favoriteCount) }}</span>
             </template>
           </el-table-column>
 
           <!-- 浏览数 -->
-          <el-table-column label="浏览数" width="120" align="right">
+          <el-table-column
+            label="浏览数"
+            width="120"
+            align="right"
+          >
             <template #default="{ row }">
               <span class="stat-number">{{ formatNumber(row.viewCount) }}</span>
             </template>
           </el-table-column>
 
           <!-- 变化 -->
-          <el-table-column label="变化" width="100" align="center">
+          <el-table-column
+            label="变化"
+            width="100"
+            align="center"
+          >
             <template #default="{ row }">
               <div
                 class="change-indicator"
@@ -130,14 +191,20 @@
           </el-table-column>
 
           <!-- 操作 -->
-          <el-table-column label="操作" width="120" align="center">
+          <el-table-column
+            label="操作"
+            width="120"
+            align="center"
+          >
             <template #default="{ row }">
               <div
                 class="install-command"
                 @click="copyInstallCommand(row)"
               >
                 <span>安装</span>
-                <el-icon class="copy-icon"><DocumentCopy /></el-icon>
+                <el-icon class="copy-icon">
+                  <DocumentCopy />
+                </el-icon>
               </div>
             </template>
           </el-table-column>
@@ -145,9 +212,16 @@
       </div>
 
       <!-- 空状态 -->
-      <div v-if="isEmpty && !loading" class="empty-state">
-        <div class="icon">📊</div>
-        <p class="text">暂无排行榜数据</p>
+      <div
+        v-if="isEmpty && !loading"
+        class="empty-state"
+      >
+        <div class="icon">
+          📊
+        </div>
+        <p class="text">
+          暂无排行榜数据
+        </p>
       </div>
 
       <!-- 错误状态 -->
@@ -159,15 +233,18 @@
       />
 
       <!-- 分页组件 -->
-      <div v-if="hasPagination && !loading" class="pagination-wrapper">
+      <div
+        v-if="hasPagination && !loading"
+        class="pagination-wrapper"
+      >
         <el-pagination
           v-model:current-page="currentPage"
           :page-size="pagination.size"
           :total="pagination.total"
           :page-count="pagination.totalPages"
           layout="total, prev, pager, next, jumper"
-          @current-change="handlePageChange"
           background
+          @current-change="handlePageChange"
         />
       </div>
     </div>
@@ -175,7 +252,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue'
+import { onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
@@ -209,8 +286,8 @@ const {
 // 当前页码（从0开始）
 const currentPage = computed({
   get: () => pagination.value.page + 1,
-  set: (val) => {
-    // Element Plus 分页组件从1开始，需要转换
+  set: () => {
+    // Element Plus 分页组件从1开始，但这里不实际使用
   }
 })
 
@@ -304,7 +381,7 @@ const copyInstallCommand = async (tool) => {
   try {
     await navigator.clipboard.writeText(command)
     ElMessage.success('安装命令已复制到剪贴板')
-  } catch (err) {
+  } catch {
     ElMessage.error('复制失败,请手动复制')
   }
 }

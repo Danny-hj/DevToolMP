@@ -1,14 +1,26 @@
 <template>
   <div class="rating-list">
-    <div v-if="loading && ratings.length === 0" class="loading-container">
-      <el-skeleton :rows="3" animated />
+    <div
+      v-if="loading && ratings.length === 0"
+      class="loading-container"
+    >
+      <el-skeleton
+        :rows="3"
+        animated
+      />
     </div>
 
-    <div v-else-if="ratings.length === 0" class="empty-state">
+    <div
+      v-else-if="ratings.length === 0"
+      class="empty-state"
+    >
       <el-empty description="暂无评价，快来发表第一条评价吧！" />
     </div>
 
-    <div v-else class="rating-items">
+    <div
+      v-else
+      class="rating-items"
+    >
       <div
         v-for="rating in ratings"
         :key="rating.id"
@@ -17,12 +29,19 @@
         <!-- 用户信息 -->
         <div class="rating-header">
           <div class="user-info">
-            <el-avatar :size="40" class="user-avatar">
+            <el-avatar
+              :size="40"
+              class="user-avatar"
+            >
               {{ rating.username ? rating.username.charAt(0).toUpperCase() : 'A' }}
             </el-avatar>
             <div class="user-details">
-              <div class="username">{{ rating.username || '匿名用户' }}</div>
-              <div class="rating-date">{{ formatDate(rating.createdAt) }}</div>
+              <div class="username">
+                {{ rating.username || '匿名用户' }}
+              </div>
+              <div class="rating-date">
+                {{ formatDate(rating.createdAt) }}
+              </div>
             </div>
           </div>
           <div class="rating-score">
@@ -37,13 +56,17 @@
 
         <!-- 评价内容 -->
         <div class="rating-content">
-          <p class="comment-text">{{ rating.comment }}</p>
+          <p class="comment-text">
+            {{ rating.comment }}
+          </p>
         </div>
 
         <!-- 评价操作 -->
         <div class="rating-actions">
           <div class="action-item">
-            <el-icon class="action-icon"><ChatLineRound /></el-icon>
+            <el-icon class="action-icon">
+              <ChatLineRound />
+            </el-icon>
             <span>{{ rating.likes || 0 }} 有用</span>
           </div>
           <el-button
@@ -57,7 +80,10 @@
         </div>
 
         <!-- 回复列表 -->
-        <div v-if="rating.replies && rating.replies.length > 0" class="replies-section">
+        <div
+          v-if="rating.replies && rating.replies.length > 0"
+          class="replies-section"
+        >
           <div
             v-for="reply in rating.replies"
             :key="reply.id"
@@ -65,17 +91,25 @@
           >
             <div class="reply-header">
               <span class="reply-username">{{ reply.username || '匿名用户' }}</span>
-              <span v-if="reply.replyToUsername" class="reply-to">
+              <span
+                v-if="reply.replyToUsername"
+                class="reply-to"
+              >
                 回复 {{ reply.replyToUsername }}
               </span>
               <span class="reply-date">{{ formatDate(reply.createdAt) }}</span>
             </div>
-            <div class="reply-content">{{ reply.content }}</div>
+            <div class="reply-content">
+              {{ reply.content }}
+            </div>
           </div>
         </div>
 
         <!-- 回复输入框 -->
-        <div v-if="replyingTo === rating.id" class="reply-input-section">
+        <div
+          v-if="replyingTo === rating.id"
+          class="reply-input-section"
+        >
           <el-input
             v-model="replyContent"
             type="textarea"
@@ -85,8 +119,17 @@
             show-word-limit
           />
           <div class="reply-actions">
-            <el-button size="small" @click="cancelReply">取消</el-button>
-            <el-button size="small" type="primary" @click="submitReply(rating.id)">
+            <el-button
+              size="small"
+              @click="cancelReply"
+            >
+              取消
+            </el-button>
+            <el-button
+              size="small"
+              type="primary"
+              @click="submitReply(rating.id)"
+            >
               发送
             </el-button>
           </div>
@@ -94,7 +137,10 @@
       </div>
 
       <!-- 分页 -->
-      <div v-if="total > pageSize" class="pagination-container">
+      <div
+        v-if="total > pageSize"
+        class="pagination-container"
+      >
         <el-pagination
           v-model:current-page="currentPage"
           :page-size="pageSize"

@@ -1,24 +1,45 @@
 <template>
   <div class="tool-detail-page">
-    <el-skeleton v-if="loading" :rows="10" animated :loading="loading" />
+    <el-skeleton
+      v-if="loading"
+      :rows="10"
+      animated
+      :loading="loading"
+    />
     <template v-else-if="tool">
       <!-- Header Section -->
       <div class="detail-header">
         <div class="header-main">
           <div class="tool-icon">
-            <el-icon size="40"><Tools /></el-icon>
+            <el-icon size="40">
+              <Tools />
+            </el-icon>
           </div>
           <div class="header-info">
-            <h1 class="tool-name">{{ tool.name }}</h1>
+            <h1 class="tool-name">
+              {{ tool.name }}
+            </h1>
             <div class="tool-meta">
-              <a v-if="tool.codehubUrl" :href="tool.codehubUrl" target="_blank" rel="noopener" class="repo-link">
+              <a
+                v-if="tool.codehubUrl"
+                :href="tool.codehubUrl"
+                target="_blank"
+                rel="noopener"
+                class="repo-link"
+              >
                 <el-icon><Link /></el-icon>
                 {{ tool.codehubOwner }}/{{ tool.codehubRepo }}
               </a>
-              <span v-else-if="tool.codehubOwner && tool.codehubRepo" class="repo-text">
+              <span
+                v-else-if="tool.codehubOwner && tool.codehubRepo"
+                class="repo-text"
+              >
                 {{ tool.codehubOwner }}/{{ tool.codehubRepo }}
               </span>
-              <span v-else class="no-repo">未关联 Codehub 仓库</span>
+              <span
+                v-else
+                class="no-repo"
+              >未关联 Codehub 仓库</span>
             </div>
           </div>
         </div>
@@ -27,8 +48,8 @@
         <div class="header-actions">
           <el-button
             :type="tool.isFavorited ? 'primary' : 'default'"
-            @click="handleFavorite"
             class="action-btn"
+            @click="handleFavorite"
           >
             <el-icon><CollectionTag /></el-icon>
             {{ tool.isFavorited ? '已收藏' : '收藏' }}
@@ -36,8 +57,8 @@
           <el-button
             v-if="tool.codehubUrl"
             type="default"
-            @click="openCodehub"
             class="action-btn"
+            @click="openCodehub"
           >
             <el-icon><Link /></el-icon>
             Codehub
@@ -47,9 +68,17 @@
 
       <!-- Description -->
       <div class="detail-section">
-        <h2 class="section-title">About</h2>
-        <div class="tool-description markdown-content" v-html="renderedDescription"></div>
-        <div v-if="tool.tags && tool.tags.length" class="tool-tags">
+        <h2 class="section-title">
+          About
+        </h2>
+        <div
+          class="tool-description markdown-content"
+          v-html="renderedDescription"
+        />
+        <div
+          v-if="tool.tags && tool.tags.length"
+          class="tool-tags"
+        >
           <el-tag
             v-for="tag in tool.tags"
             :key="tag"
@@ -63,15 +92,21 @@
 
       <!-- Stats Section -->
       <div class="detail-section">
-        <h2 class="section-title">Statistics</h2>
+        <h2 class="section-title">
+          Statistics
+        </h2>
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-icon">
               <el-icon><Star /></el-icon>
             </div>
             <div class="stat-info">
-              <div class="stat-value">{{ formatNumber(tool.stars) }}</div>
-              <div class="stat-label">Codehub Stars</div>
+              <div class="stat-value">
+                {{ formatNumber(tool.stars) }}
+              </div>
+              <div class="stat-label">
+                Codehub Stars
+              </div>
             </div>
           </div>
           <div class="stat-card">
@@ -79,8 +114,12 @@
               <el-icon><View /></el-icon>
             </div>
             <div class="stat-info">
-              <div class="stat-value">{{ formatNumber(tool.viewCount) }}</div>
-              <div class="stat-label">浏览量</div>
+              <div class="stat-value">
+                {{ formatNumber(tool.viewCount) }}
+              </div>
+              <div class="stat-label">
+                浏览量
+              </div>
             </div>
           </div>
           <div class="stat-card">
@@ -88,8 +127,12 @@
               <el-icon><Collection /></el-icon>
             </div>
             <div class="stat-info">
-              <div class="stat-value">{{ formatNumber(tool.favoriteCount) }}</div>
-              <div class="stat-label">收藏数</div>
+              <div class="stat-value">
+                {{ formatNumber(tool.favoriteCount) }}
+              </div>
+              <div class="stat-label">
+                收藏数
+              </div>
             </div>
           </div>
           <div class="stat-card">
@@ -97,8 +140,12 @@
               <el-icon><Download /></el-icon>
             </div>
             <div class="stat-info">
-              <div class="stat-value">{{ formatNumber(tool.installCount) }}</div>
-              <div class="stat-label">安装量</div>
+              <div class="stat-value">
+                {{ formatNumber(tool.installCount) }}
+              </div>
+              <div class="stat-label">
+                安装量
+              </div>
             </div>
           </div>
           <div class="stat-card">
@@ -106,8 +153,12 @@
               <el-icon><Star /></el-icon>
             </div>
             <div class="stat-info">
-              <div class="stat-value">{{ formatNumber(tool.forks) }}</div>
-              <div class="stat-label">Codehub Forks</div>
+              <div class="stat-value">
+                {{ formatNumber(tool.forks) }}
+              </div>
+              <div class="stat-label">
+                Codehub Forks
+              </div>
             </div>
           </div>
           <div class="stat-card">
@@ -115,8 +166,12 @@
               <el-icon><Warning /></el-icon>
             </div>
             <div class="stat-info">
-              <div class="stat-value">{{ formatNumber(tool.openIssues) }}</div>
-              <div class="stat-label">Open Issues</div>
+              <div class="stat-value">
+                {{ formatNumber(tool.openIssues) }}
+              </div>
+              <div class="stat-label">
+                Open Issues
+              </div>
             </div>
           </div>
           <div class="stat-card">
@@ -124,8 +179,12 @@
               <el-icon><View /></el-icon>
             </div>
             <div class="stat-info">
-              <div class="stat-value">{{ formatNumber(tool.watchers) }}</div>
-              <div class="stat-label">Watchers</div>
+              <div class="stat-value">
+                {{ formatNumber(tool.watchers) }}
+              </div>
+              <div class="stat-label">
+                Watchers
+              </div>
             </div>
           </div>
         </div>
@@ -133,15 +192,21 @@
 
       <!-- 昨日统计 -->
       <div class="detail-section">
-        <h2 class="section-title">昨日统计</h2>
+        <h2 class="section-title">
+          昨日统计
+        </h2>
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-icon">
               <el-icon><View /></el-icon>
             </div>
             <div class="stat-info">
-              <div class="stat-value">{{ formatNumber(tool.viewCountYesterday) }}</div>
-              <div class="stat-label">昨日浏览</div>
+              <div class="stat-value">
+                {{ formatNumber(tool.viewCountYesterday) }}
+              </div>
+              <div class="stat-label">
+                昨日浏览
+              </div>
             </div>
           </div>
           <div class="stat-card">
@@ -149,8 +214,12 @@
               <el-icon><Collection /></el-icon>
             </div>
             <div class="stat-info">
-              <div class="stat-value">{{ formatNumber(tool.favoriteCountYesterday) }}</div>
-              <div class="stat-label">昨日收藏</div>
+              <div class="stat-value">
+                {{ formatNumber(tool.favoriteCountYesterday) }}
+              </div>
+              <div class="stat-label">
+                昨日收藏
+              </div>
             </div>
           </div>
           <div class="stat-card">
@@ -158,8 +227,12 @@
               <el-icon><Download /></el-icon>
             </div>
             <div class="stat-info">
-              <div class="stat-value">{{ formatNumber(tool.installCountYesterday) }}</div>
-              <div class="stat-label">昨日安装</div>
+              <div class="stat-value">
+                {{ formatNumber(tool.installCountYesterday) }}
+              </div>
+              <div class="stat-label">
+                昨日安装
+              </div>
             </div>
           </div>
         </div>
@@ -167,15 +240,21 @@
 
       <!-- 热度分数 -->
       <div class="detail-section">
-        <h2 class="section-title">热度分数</h2>
+        <h2 class="section-title">
+          热度分数
+        </h2>
         <div class="stats-grid">
           <div class="stat-card hot-score">
             <div class="stat-icon hot-icon">
               🔥
             </div>
             <div class="stat-info">
-              <div class="stat-value">{{ tool.hotScoreDaily ? tool.hotScoreDaily.toFixed(2) : '0.00' }}</div>
-              <div class="stat-label">日热度</div>
+              <div class="stat-value">
+                {{ tool.hotScoreDaily ? tool.hotScoreDaily.toFixed(2) : '0.00' }}
+              </div>
+              <div class="stat-label">
+                日热度
+              </div>
             </div>
           </div>
           <div class="stat-card hot-score">
@@ -183,8 +262,12 @@
               🔥
             </div>
             <div class="stat-info">
-              <div class="stat-value">{{ tool.hotScoreWeekly ? tool.hotScoreWeekly.toFixed(2) : '0.00' }}</div>
-              <div class="stat-label">周热度</div>
+              <div class="stat-value">
+                {{ tool.hotScoreWeekly ? tool.hotScoreWeekly.toFixed(2) : '0.00' }}
+              </div>
+              <div class="stat-label">
+                周热度
+              </div>
             </div>
           </div>
           <div class="stat-card hot-score">
@@ -192,8 +275,12 @@
               🔥
             </div>
             <div class="stat-info">
-              <div class="stat-value">{{ tool.hotScoreAlltime ? tool.hotScoreAlltime.toFixed(2) : '0.00' }}</div>
-              <div class="stat-label">总热度</div>
+              <div class="stat-value">
+                {{ tool.hotScoreAlltime ? tool.hotScoreAlltime.toFixed(2) : '0.00' }}
+              </div>
+              <div class="stat-label">
+                总热度
+              </div>
             </div>
           </div>
         </div>
@@ -201,7 +288,9 @@
 
       <!-- 基本信息 -->
       <div class="detail-section">
-        <h2 class="section-title">基本信息</h2>
+        <h2 class="section-title">
+          基本信息
+        </h2>
         <div class="info-list">
           <div class="info-item">
             <span class="info-label">工具名称</span>
@@ -234,7 +323,9 @@
 
       <!-- Rating Section -->
       <div class="detail-section">
-        <h2 class="section-title">用户评价</h2>
+        <h2 class="section-title">
+          用户评价
+        </h2>
         <rating-display :statistics="ratingStatistics" />
         <rating-form
           :tool-id="tool.id"
@@ -252,7 +343,6 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
   Tools,
@@ -282,7 +372,6 @@ const props = defineProps({
 // 将 id 转换为数字（因为路由参数是字符串）
 const toolId = computed(() => Number(props.id))
 
-const route = useRoute()
 const toolsStore = useToolsStore()
 const ratingStore = useRatingStore()
 

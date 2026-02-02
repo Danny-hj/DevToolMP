@@ -5,9 +5,16 @@
       <p>找到 {{ total }} 个结果</p>
     </div>
 
-    <el-skeleton v-if="loading" :rows="6" animated />
+    <el-skeleton
+      v-if="loading"
+      :rows="6"
+      animated
+    />
     <template v-else>
-      <div v-if="tools.length > 0" class="tools-grid">
+      <div
+        v-if="tools.length > 0"
+        class="tools-grid"
+      >
         <tool-card
           v-for="tool in tools"
           :key="tool.id"
@@ -16,17 +23,25 @@
           @favorite="handleFavorite"
         />
       </div>
-      <div v-else class="empty-state">
-        <el-icon size="64" color="#909399"><Search /></el-icon>
+      <div
+        v-else
+        class="empty-state"
+      >
+        <el-icon
+          size="64"
+          color="#909399"
+        >
+          <Search />
+        </el-icon>
         <p>没有找到相关工具</p>
       </div>
     </template>
 
     <el-pagination
       v-if="total > 0"
-      class="pagination"
       v-model:current-page="currentPage"
       v-model:page-size="pageSize"
+      class="pagination"
       :total="total"
       :page-sizes="[12, 24, 48]"
       layout="total, sizes, prev, pager, next, jumper"

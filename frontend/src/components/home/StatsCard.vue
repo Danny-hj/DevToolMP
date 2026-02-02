@@ -1,5 +1,8 @@
 <template>
-  <el-card class="stats-card" :body-style="{ padding: '0' }">
+  <el-card
+    class="stats-card"
+    :body-style="{ padding: '0' }"
+  >
     <div class="stats-content">
       <div class="stat-icon">
         <slot name="icon">
@@ -10,10 +13,18 @@
       </div>
       <div class="stat-info">
         <div class="stat-value">
-          <AnimatedNumber :value="value" :duration="duration" />
-          <span v-if="unit" class="stat-unit">{{ unit }}</span>
+          <AnimatedNumber
+            :value="value"
+            :duration="duration"
+          />
+          <span
+            v-if="unit"
+            class="stat-unit"
+          >{{ unit }}</span>
         </div>
-        <div class="stat-label">{{ label }}</div>
+        <div class="stat-label">
+          {{ label }}
+        </div>
       </div>
     </div>
   </el-card>

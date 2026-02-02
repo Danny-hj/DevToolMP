@@ -15,7 +15,10 @@
       label-width="120px"
       @submit.prevent="handleSubmit"
     >
-      <el-form-item label="工具名称" prop="name">
+      <el-form-item
+        label="工具名称"
+        prop="name"
+      >
         <el-input
           v-model="formData.name"
           placeholder="请输入工具名称"
@@ -24,7 +27,10 @@
         />
       </el-form-item>
 
-      <el-form-item label="工具描述" prop="description">
+      <el-form-item
+        label="工具描述"
+        prop="description"
+      >
         <el-input
           v-model="formData.description"
           type="textarea"
@@ -35,7 +41,10 @@
         />
       </el-form-item>
 
-      <el-form-item label="分类" prop="categoryId">
+      <el-form-item
+        label="分类"
+        prop="categoryId"
+      >
         <el-select
           v-model="formData.categoryId"
           placeholder="请选择分类"
@@ -50,47 +59,77 @@
         </el-select>
       </el-form-item>
 
-      <el-form-item label="Codehub所有者" prop="codehubOwner">
+      <el-form-item
+        label="Codehub所有者"
+        prop="codehubOwner"
+      >
         <el-input
           v-model="formData.codehubOwner"
           placeholder="例如: vuejs（可选）"
           @blur="validateGithubRepo"
         >
           <template #append>
-            <el-button @click="fetchGithubRepo" :loading="fetching" :disabled="!formData.codehubOwner || !formData.codehubRepo">
+            <el-button
+              :loading="fetching"
+              :disabled="!formData.codehubOwner || !formData.codehubRepo"
+              @click="fetchGithubRepo"
+            >
               <el-icon><Refresh /></el-icon>
             </el-button>
           </template>
         </el-input>
       </el-form-item>
 
-      <el-form-item label="Codehub仓库" prop="codehubRepo">
+      <el-form-item
+        label="Codehub仓库"
+        prop="codehubRepo"
+      >
         <el-input
           v-model="formData.codehubRepo"
           placeholder="例如: vue（可选）"
           @blur="validateGithubRepo"
         >
           <template #append>
-            <el-button @click="fetchGithubRepo" :loading="fetching" :disabled="!formData.codehubOwner || !formData.codehubRepo">
+            <el-button
+              :loading="fetching"
+              :disabled="!formData.codehubOwner || !formData.codehubRepo"
+              @click="fetchGithubRepo"
+            >
               <el-icon><Refresh /></el-icon>
             </el-button>
           </template>
         </el-input>
-        <div v-if="codehubRepoValid" class="repo-status">
-          <el-icon color="#67C23A"><SuccessFilled /></el-icon>
+        <div
+          v-if="codehubRepoValid"
+          class="repo-status"
+        >
+          <el-icon color="#67C23A">
+            <SuccessFilled />
+          </el-icon>
           <span>仓库有效</span>
         </div>
-        <div v-else-if="formData.codehubOwner && formData.codehubRepo" class="repo-status invalid">
-          <el-icon color="#F56C6C"><CircleCloseFilled /></el-icon>
+        <div
+          v-else-if="formData.codehubOwner && formData.codehubRepo"
+          class="repo-status invalid"
+        >
+          <el-icon color="#F56C6C">
+            <CircleCloseFilled />
+          </el-icon>
           <span>仓库无效或不存在</span>
         </div>
-        <div v-if="!formData.codehubOwner || !formData.codehubRepo" class="repo-hint">
+        <div
+          v-if="!formData.codehubOwner || !formData.codehubRepo"
+          class="repo-hint"
+        >
           <el-icon><InfoFilled /></el-icon>
           <span>如果不填写 Codehub 信息，工具将无法同步 Codehub 数据和显示仓库链接</span>
         </div>
       </el-form-item>
 
-      <el-form-item label="版本号" prop="version">
+      <el-form-item
+        label="版本号"
+        prop="version"
+      >
         <el-input
           v-model="formData.version"
           placeholder="例如: 1.0.0"
@@ -107,28 +146,46 @@
           placeholder="请输入标签，按回车添加"
           style="width: 100%"
         >
-        <el-option
-          v-for="tag in commonTags"
-          :key="tag"
-          :label="tag"
-          :value="tag"
-        />
+          <el-option
+            v-for="tag in commonTags"
+            :key="tag"
+            :label="tag"
+            :value="tag"
+          />
         </el-select>
       </el-form-item>
 
-      <el-form-item v-if="isEdit" label="状态" prop="status">
+      <el-form-item
+        v-if="isEdit"
+        label="状态"
+        prop="status"
+      >
         <el-radio-group v-model="formData.status">
-          <el-radio label="active">已上架</el-radio>
-          <el-radio label="inactive">已下架</el-radio>
+          <el-radio label="active">
+            已上架
+          </el-radio>
+          <el-radio label="inactive">
+            已下架
+          </el-radio>
         </el-radio-group>
       </el-form-item>
 
       <el-form-item>
-        <el-button type="primary" native-type="submit" :loading="submitting">
+        <el-button
+          type="primary"
+          native-type="submit"
+          :loading="submitting"
+        >
           {{ isEdit ? '保存' : '创建' }}
         </el-button>
-        <el-button @click="handleClose">取消</el-button>
-        <el-button v-if="!isEdit && formData.codehubOwner && formData.codehubRepo" type="info" @click="fillFromGithub">
+        <el-button @click="handleClose">
+          取消
+        </el-button>
+        <el-button
+          v-if="!isEdit && formData.codehubOwner && formData.codehubRepo"
+          type="info"
+          @click="fillFromGithub"
+        >
           从Codehub获取信息
         </el-button>
       </el-form-item>
@@ -284,7 +341,7 @@ const validateGithubRepo = async () => {
       formData.value.codehubRepo
     )
     codehubRepoValid.value = isValid
-  } catch (error) {
+  } catch {
     codehubRepoValid.value = false
   }
 }
@@ -317,7 +374,7 @@ const fetchGithubRepo = async () => {
       codehubRepoValid.value = false
       ElMessage.error('无法获取Codehub仓库信息，请检查仓库地址是否正确')
     }
-  } catch (error) {
+  } catch {
     codehubRepoValid.value = false
     ElMessage.error('获取Codehub仓库信息失败')
   } finally {
@@ -344,7 +401,7 @@ const fillFromGithub = async () => {
       formData.value.version = 'latest'
       ElMessage.success('已从Codehub填充信息')
     }
-  } catch (error) {
+  } catch {
     ElMessage.error('填充信息失败')
   }
 }
@@ -378,7 +435,7 @@ const handleSubmit = async () => {
 
     emit('success')
     handleClose()
-  } catch (error) {
+  } catch {
     ElMessage.error(isEdit.value ? '更新失败' : '创建失败')
   } finally {
     submitting.value = false

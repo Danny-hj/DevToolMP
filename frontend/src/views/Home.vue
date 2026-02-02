@@ -4,7 +4,10 @@
     <div class="hero-section">
       <div class="hero-content">
         <!-- ASCII 艺术标题 -->
-        <pre class="ascii-art">
+        <pre
+          v-pre
+          class="ascii-art"
+        >
   ____                 _       _____                _         _____ _
  / ___|_ __ _   _ ___| |_    |  ___|__  _ __   ___| |__     |  ___| | _____  __
 | |   | '__| | | / __| __|   | |_ / _ \| '_ \ / __| '_ \    | |_  | |/ _ \ \/ /
@@ -13,25 +16,47 @@
             |___/
         </pre>
 
-        <h1 class="hero-title">开发工具市场</h1>
-        <p class="hero-subtitle">发现、安装和管理最好的开发工具</p>
+        <h1 class="hero-title">
+          开发工具市场
+        </h1>
+        <p class="hero-subtitle">
+          发现、安装和管理最好的开发工具
+        </p>
 
         <!-- 一键安装命令展示 -->
-        <div class="install-command-hero" @click="copyInstallCommand">
+        <div
+          class="install-command-hero"
+          @click="copyInstallCommand"
+        >
           <span class="command-prefix">$</span>
           <span class="command-text">npm install -g devtoolmp</span>
-          <el-icon class="copy-icon"><DocumentCopy /></el-icon>
+          <el-icon class="copy-icon">
+            <DocumentCopy />
+          </el-icon>
         </div>
 
         <div class="hero-actions">
-          <router-link to="/tools" class="action-link">
-            <el-button type="primary" size="large" round>
+          <router-link
+            to="/tools"
+            class="action-link"
+          >
+            <el-button
+              type="primary"
+              size="large"
+              round
+            >
               <el-icon><Tools /></el-icon>
               浏览工具
             </el-button>
           </router-link>
-          <router-link to="/ranking" class="action-link">
-            <el-button size="large" round>
+          <router-link
+            to="/ranking"
+            class="action-link"
+          >
+            <el-button
+              size="large"
+              round
+            >
               <el-icon><Trophy /></el-icon>
               查看排行榜
             </el-button>
@@ -77,15 +102,28 @@
           <el-icon><TrendCharts /></el-icon>
           热门排行
         </h2>
-        <router-link to="/ranking" class="view-all-link">
+        <router-link
+          to="/ranking"
+          class="view-all-link"
+        >
           查看完整排行榜
           <el-icon><ArrowRight /></el-icon>
         </router-link>
       </div>
 
-      <el-row :gutter="20" class="ranking-tabs-row">
-        <el-col :xs="24" :sm="12" :md="6">
-          <div class="ranking-tab-card" @click="goToRanking('alltime')">
+      <el-row
+        :gutter="20"
+        class="ranking-tabs-row"
+      >
+        <el-col
+          :xs="24"
+          :sm="12"
+          :md="6"
+        >
+          <div
+            class="ranking-tab-card"
+            @click="goToRanking('alltime')"
+          >
             <div class="tab-icon">
               <el-icon><Trophy /></el-icon>
             </div>
@@ -95,8 +133,15 @@
             </div>
           </div>
         </el-col>
-        <el-col :xs="24" :sm="12" :md="6">
-          <div class="ranking-tab-card" @click="goToRanking('weekly')">
+        <el-col
+          :xs="24"
+          :sm="12"
+          :md="6"
+        >
+          <div
+            class="ranking-tab-card"
+            @click="goToRanking('weekly')"
+          >
             <div class="tab-icon">
               <el-icon><Calendar /></el-icon>
             </div>
@@ -106,8 +151,15 @@
             </div>
           </div>
         </el-col>
-        <el-col :xs="24" :sm="12" :md="6">
-          <div class="ranking-tab-card" @click="goToRanking('daily')">
+        <el-col
+          :xs="24"
+          :sm="12"
+          :md="6"
+        >
+          <div
+            class="ranking-tab-card"
+            @click="goToRanking('daily')"
+          >
             <div class="tab-icon">
               <el-icon><Sunny /></el-icon>
             </div>
@@ -117,8 +169,15 @@
             </div>
           </div>
         </el-col>
-        <el-col :xs="24" :sm="12" :md="6">
-          <div class="ranking-tab-card" @click="goToRanking('trending')">
+        <el-col
+          :xs="24"
+          :sm="12"
+          :md="6"
+        >
+          <div
+            class="ranking-tab-card"
+            @click="goToRanking('trending')"
+          >
             <div class="tab-icon">
               <el-icon><TrendCharts /></el-icon>
             </div>
@@ -138,17 +197,24 @@
           <el-icon><Star /></el-icon>
           热门工具
         </h2>
-        <router-link to="/tools" class="view-all-link">
+        <router-link
+          to="/tools"
+          class="view-all-link"
+        >
           查看全部
           <el-icon><ArrowRight /></el-icon>
         </router-link>
       </div>
 
       <div class="tools-grid">
-        <el-skeleton v-if="loading" :rows="2" animated />
+        <el-skeleton
+          v-if="loading"
+          :rows="2"
+          animated
+        />
         <tool-card
-          v-else
           v-for="tool in popularTools"
+          v-else
           :key="`${tool.id}-${refreshKey}`"
           :tool="tool"
           :hot-score="tool.hotScoreAlltime"
@@ -165,17 +231,24 @@
           <el-icon><Clock /></el-icon>
           最新工具
         </h2>
-        <router-link to="/tools" class="view-all-link">
+        <router-link
+          to="/tools"
+          class="view-all-link"
+        >
           查看全部
           <el-icon><ArrowRight /></el-icon>
         </router-link>
       </div>
 
       <div class="tools-grid">
-        <el-skeleton v-if="loading" :rows="2" animated />
+        <el-skeleton
+          v-if="loading"
+          :rows="2"
+          animated
+        />
         <tool-card
-          v-else
           v-for="tool in latestTools"
+          v-else
           :key="`${tool.id}-${refreshKey}`"
           :tool="tool"
           @click="handleToolClick"
@@ -304,7 +377,7 @@ const copyInstallCommand = async () => {
   try {
     await navigator.clipboard.writeText('npm install -g devtoolmp')
     ElMessage.success('安装命令已复制到剪贴板')
-  } catch (err) {
+  } catch {
     ElMessage.error('复制失败,请手动复制')
   }
 }

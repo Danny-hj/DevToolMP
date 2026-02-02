@@ -32,7 +32,6 @@ const formatNumber = (num) => {
 
 const animate = (start, end, duration) => {
   const range = end - start
-  const increment = range / (duration / 16) // 60 FPS
   let current = start
   const startTime = performance.now()
 

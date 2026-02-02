@@ -17,15 +17,24 @@
       </div>
 
       <nav class="nav-links">
-        <router-link to="/" class="nav-link">
+        <router-link
+          to="/"
+          class="nav-link"
+        >
           <el-icon><HomeFilled /></el-icon>
           首页
         </router-link>
-        <router-link to="/tools" class="nav-link">
+        <router-link
+          to="/tools"
+          class="nav-link"
+        >
           <el-icon><Tools /></el-icon>
           工具列表
         </router-link>
-        <router-link to="/ranking" class="nav-link">
+        <router-link
+          to="/ranking"
+          class="nav-link"
+        >
           <el-icon><Trophy /></el-icon>
           排行榜
         </router-link>
@@ -34,8 +43,8 @@
       <div class="user-actions">
         <el-button
           :type="adminMode ? 'primary' : 'default'"
-          @click="toggleAdminMode"
           class="admin-mode-btn"
+          @click="toggleAdminMode"
         >
           <el-icon><Setting /></el-icon>
           {{ adminMode ? '管理模式' : '管理模式' }}
