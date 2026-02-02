@@ -11,7 +11,7 @@ public interface RatingMapper {
 
     Rating findById(@Param("id") Long id);
 
-    Rating findByToolIdAndClientIdentifier(@Param("toolId") Long toolId, @Param("clientIdentifier") String clientIdentifier);
+    Rating findByToolIdAndUserId(@Param("toolId") Long toolId, @Param("userId") String userId);
 
     List<Rating> findByToolId(@Param("toolId") Long toolId, @Param("offset") int offset, @Param("limit") int limit);
 

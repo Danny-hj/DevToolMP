@@ -54,10 +54,10 @@ public class RatingController {
             @PathVariable Long toolId,
             @RequestBody RatingCreateRequest request,
             HttpServletRequest httpRequest) {
-        String clientIdentifier = getClientIdentifier(httpRequest);
+        String userId = "Danny";
         String username = request.getUsername() != null ? request.getUsername() : "匿名用户";
 
-        RatingDTO rating = ratingService.createRating(toolId, clientIdentifier, username, request.getScore(), request.getComment());
+        RatingDTO rating = ratingService.createRating(toolId, userId, username, request.getScore(), request.getComment());
         return ResponseEntity.status(HttpStatus.CREATED).body(rating);
     }
 
@@ -66,9 +66,9 @@ public class RatingController {
             @PathVariable Long ratingId,
             @RequestBody RatingCreateRequest request,
             HttpServletRequest httpRequest) {
-        String clientIdentifier = getClientIdentifier(httpRequest);
+        String userId = "Danny";
 
-        RatingDTO rating = ratingService.updateRating(ratingId, clientIdentifier, request.getScore(), request.getComment());
+        RatingDTO rating = ratingService.updateRating(ratingId, userId, request.getScore(), request.getComment());
         return ResponseEntity.ok(rating);
     }
 
@@ -76,9 +76,9 @@ public class RatingController {
     public ResponseEntity<Void> deleteRating(
             @PathVariable Long ratingId,
             HttpServletRequest httpRequest) {
-        String clientIdentifier = getClientIdentifier(httpRequest);
+        String userId = "Danny";
 
-        ratingService.deleteRating(ratingId, clientIdentifier);
+        ratingService.deleteRating(ratingId, userId);
         return ResponseEntity.noContent().build();
     }
 
@@ -87,10 +87,10 @@ public class RatingController {
             @PathVariable Long ratingId,
             @RequestBody CommentReplyRequest request,
             HttpServletRequest httpRequest) {
-        String clientIdentifier = getClientIdentifier(httpRequest);
+        String userId = "Danny";
         String username = request.getUsername() != null ? request.getUsername() : "匿名用户";
 
-        CommentReplyDTO reply = ratingService.createReply(ratingId, clientIdentifier, username, request.getContent());
+        CommentReplyDTO reply = ratingService.createReply(ratingId, userId, username, request.getContent());
         return ResponseEntity.status(HttpStatus.CREATED).body(reply);
     }
 
@@ -98,18 +98,9 @@ public class RatingController {
     public ResponseEntity<Void> deleteReply(
             @PathVariable Long replyId,
             HttpServletRequest httpRequest) {
-        String clientIdentifier = getClientIdentifier(httpRequest);
+        String userId = "Danny";
 
-        ratingService.deleteReply(replyId, clientIdentifier);
+        ratingService.deleteReply(replyId, userId);
         return ResponseEntity.noContent().build();
-    }
-
-    /**
-     * 使用IP地址和User-Agent生成客户端标识符
-     */
-    private String getClientIdentifier(HttpServletRequest request) {
-        String ipAddress = request.getRemoteAddr();
-        String userAgent = request.getHeader("User-Agent");
-        return ipAddress + ":" + (userAgent != null ? userAgent : "");
     }
 }

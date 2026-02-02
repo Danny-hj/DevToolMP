@@ -11,14 +11,12 @@ import java.time.LocalDateTime;
 public class ViewRecord {
     private Long id;
     private Long toolId;
-    private String clientIdentifier;
-    private String ipAddress;
-    private String userAgent;
-    private LocalDateTime createdAt;
+    private String userId;
+    private LocalDateTime createTime;
 
     public void prePersist() {
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now();
+        if (createTime == null) {
+            createTime = LocalDateTime.now();
         }
     }
 }

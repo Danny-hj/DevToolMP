@@ -6,8 +6,8 @@
     <resultMap id="BaseResultMap" type="com.devtoolmp.entity.RatingLike">
         <id column="id" property="id"/>
         <result column="rating_id" property="ratingId"/>
-        <result column="client_identifier" property="clientIdentifier"/>
-        <result column="created_at" property="createdAt"/>
+        <result column="user_id" property="userId"/>
+        <result column="create_time" property="createTime"/>
     </resultMap>
 
     <select id="findById" resultMap="BaseResultMap">
@@ -15,7 +15,7 @@
     </select>
 
     <select id="findByRatingIdAndUserId" resultMap="BaseResultMap">
-        SELECT * FROM rating_likes WHERE rating_id = #{ratingId} AND client_identifier = #{clientIdentifier}
+        SELECT * FROM rating_likes WHERE rating_id = #{ratingId} AND user_id = #{userId}
     </select>
 
     <select id="findByRatingId" resultMap="BaseResultMap">
@@ -23,8 +23,8 @@
     </select>
 
     <insert id="insert" parameterType="com.devtoolmp.entity.RatingLike" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO rating_likes (rating_id, client_identifier, created_at)
-        VALUES (#{ratingId}, #{clientIdentifier}, #{createdAt})
+        INSERT INTO rating_likes (rating_id, user_id, create_time)
+        VALUES (#{ratingId}, #{userId}, #{createTime})
     </insert>
 
     <delete id="deleteById">
@@ -32,11 +32,11 @@
     </delete>
 
     <delete id="deleteByRatingIdAndUserId">
-        DELETE FROM rating_likes WHERE rating_id = #{ratingId} AND client_identifier = #{clientIdentifier}
+        DELETE FROM rating_likes WHERE rating_id = #{ratingId} AND user_id = #{userId}
     </delete>
 
     <select id="existsByRatingIdAndUserId" resultType="boolean">
-        SELECT COUNT(*) > 0 FROM rating_likes WHERE rating_id = #{ratingId} AND client_identifier = #{clientIdentifier}
+        SELECT COUNT(*) > 0 FROM rating_likes WHERE rating_id = #{ratingId} AND user_id = #{userId}
     </select>
 
 </mapper>

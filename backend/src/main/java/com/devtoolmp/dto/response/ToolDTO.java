@@ -1,5 +1,6 @@
 package com.devtoolmp.dto.response;
 
+import com.devtoolmp.entity.Codehub;
 import com.devtoolmp.entity.Tool;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -18,9 +19,10 @@ public class ToolDTO {
     private String description;
     private Long categoryId;
     private String categoryName;
-    private String githubOwner;
-    private String githubRepo;
-    private String githubUrl;
+    private Long codehubId;
+    private String codehubOwner;
+    private String codehubRepo;
+    private String codehubUrl;
     private String version;
     private Integer stars;
     private Integer forks;
@@ -37,37 +39,36 @@ public class ToolDTO {
     private BigDecimal hotScoreAlltime;
     private String status;
     private List<String> tags;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private LocalDateTime createTime;
+    private LocalDateTime updateTime;
 
-    public static ToolDTO fromEntity(Tool tool, String categoryName, List<String> tags) {
+    public static ToolDTO fromEntity(Tool tool, String categoryName, List<String> tags, Codehub codehub) {
         ToolDTO dto = new ToolDTO();
         dto.setId(tool.getId());
         dto.setName(tool.getName());
         dto.setDescription(tool.getDescription());
         dto.setCategoryId(tool.getCategoryId());
         dto.setCategoryName(categoryName);
-        dto.setGithubOwner(tool.getGithubOwner());
-        dto.setGithubRepo(tool.getGithubRepo());
-        dto.setGithubUrl(tool.getGitHubUrl());
-        dto.setVersion(tool.getVersion());
-        dto.setStars(tool.getStars());
-        dto.setForks(tool.getForks());
-        dto.setOpenIssues(tool.getOpenIssues());
-        dto.setWatchers(tool.getWatchers());
-        dto.setViewCount(tool.getViewCount());
-        dto.setFavoriteCount(tool.getFavoriteCount());
-        dto.setInstallCount(tool.getInstallCount());
-        dto.setViewCountYesterday(tool.getViewCountYesterday());
-        dto.setFavoriteCountYesterday(tool.getFavoriteCountYesterday());
-        dto.setInstallCountYesterday(tool.getInstallCountYesterday());
-        dto.setHotScoreDaily(tool.getHotScoreDaily());
-        dto.setHotScoreWeekly(tool.getHotScoreWeekly());
-        dto.setHotScoreAlltime(tool.getHotScoreAlltime());
+        dto.setCodehubId(tool.getCodehubId());
+
+        // 设置 codehub 信息
+        if (codehub != null) {
+            dto.setCodehubOwner(codehub.getOwner());
+            dto.setCodehubRepo(codehub.getRepo());
+            dto.setCodehubUrl(codehub.getUrl());
+            dto.setVersion(codehub.getVersion());
+            dto.setStars(codehub.getStars());
+            dto.setForks(codehub.getForks());
+            dto.setOpenIssues(codehub.getOpenIssues());
+            dto.setWatchers(codehub.getWatchers());
+        }
+
+        // 统计数据需要在 service 层动态设置
         dto.setStatus(tool.getStatus());
         dto.setTags(tags);
-        dto.setCreatedAt(tool.getCreatedAt());
-        dto.setUpdatedAt(tool.getUpdatedAt());
+        dto.setCreateTime(tool.getCreateTime());
+        dto.setUpdateTime(tool.getUpdateTime());
         return dto;
     }
 }
+

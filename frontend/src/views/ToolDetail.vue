@@ -11,14 +11,14 @@
           <div class="header-info">
             <h1 class="tool-name">{{ tool.name }}</h1>
             <div class="tool-meta">
-              <a v-if="tool.githubUrl" :href="tool.githubUrl" target="_blank" rel="noopener" class="repo-link">
+              <a v-if="tool.codehubUrl" :href="tool.codehubUrl" target="_blank" rel="noopener" class="repo-link">
                 <el-icon><Link /></el-icon>
-                {{ tool.githubOwner }}/{{ tool.githubRepo }}
+                {{ tool.codehubOwner }}/{{ tool.codehubRepo }}
               </a>
-              <span v-else-if="tool.githubOwner && tool.githubRepo" class="repo-text">
-                {{ tool.githubOwner }}/{{ tool.githubRepo }}
+              <span v-else-if="tool.codehubOwner && tool.codehubRepo" class="repo-text">
+                {{ tool.codehubOwner }}/{{ tool.codehubRepo }}
               </span>
-              <span v-else class="no-repo">未关联 GitHub 仓库</span>
+              <span v-else class="no-repo">未关联 Codehub 仓库</span>
             </div>
           </div>
         </div>
@@ -34,13 +34,13 @@
             {{ tool.isFavorited ? '已收藏' : '收藏' }}
           </el-button>
           <el-button
-            v-if="tool.githubUrl"
+            v-if="tool.codehubUrl"
             type="default"
-            @click="openGitHub"
+            @click="openCodehub"
             class="action-btn"
           >
             <el-icon><Link /></el-icon>
-            GitHub
+            Codehub
           </el-button>
         </div>
       </div>
@@ -71,7 +71,7 @@
             </div>
             <div class="stat-info">
               <div class="stat-value">{{ formatNumber(tool.stars) }}</div>
-              <div class="stat-label">GitHub Stars</div>
+              <div class="stat-label">Codehub Stars</div>
             </div>
           </div>
           <div class="stat-card">
@@ -100,6 +100,134 @@
               <div class="stat-value">{{ formatNumber(tool.installCount) }}</div>
               <div class="stat-label">安装量</div>
             </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">
+              <el-icon><Star /></el-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ formatNumber(tool.forks) }}</div>
+              <div class="stat-label">Codehub Forks</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">
+              <el-icon><Warning /></el-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ formatNumber(tool.openIssues) }}</div>
+              <div class="stat-label">Open Issues</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">
+              <el-icon><View /></el-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ formatNumber(tool.watchers) }}</div>
+              <div class="stat-label">Watchers</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 昨日统计 -->
+      <div class="detail-section">
+        <h2 class="section-title">昨日统计</h2>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">
+              <el-icon><View /></el-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ formatNumber(tool.viewCountYesterday) }}</div>
+              <div class="stat-label">昨日浏览</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">
+              <el-icon><Collection /></el-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ formatNumber(tool.favoriteCountYesterday) }}</div>
+              <div class="stat-label">昨日收藏</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">
+              <el-icon><Download /></el-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ formatNumber(tool.installCountYesterday) }}</div>
+              <div class="stat-label">昨日安装</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 热度分数 -->
+      <div class="detail-section">
+        <h2 class="section-title">热度分数</h2>
+        <div class="stats-grid">
+          <div class="stat-card hot-score">
+            <div class="stat-icon hot-icon">
+              🔥
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ tool.hotScoreDaily ? tool.hotScoreDaily.toFixed(2) : '0.00' }}</div>
+              <div class="stat-label">日热度</div>
+            </div>
+          </div>
+          <div class="stat-card hot-score">
+            <div class="stat-icon hot-icon">
+              🔥
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ tool.hotScoreWeekly ? tool.hotScoreWeekly.toFixed(2) : '0.00' }}</div>
+              <div class="stat-label">周热度</div>
+            </div>
+          </div>
+          <div class="stat-card hot-score">
+            <div class="stat-icon hot-icon">
+              🔥
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ tool.hotScoreAlltime ? tool.hotScoreAlltime.toFixed(2) : '0.00' }}</div>
+              <div class="stat-label">总热度</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 基本信息 -->
+      <div class="detail-section">
+        <h2 class="section-title">基本信息</h2>
+        <div class="info-list">
+          <div class="info-item">
+            <span class="info-label">工具名称</span>
+            <span class="info-value">{{ tool.name }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">版本号</span>
+            <span class="info-value">{{ tool.version || 'N/A' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">分类</span>
+            <span class="info-value">{{ tool.categoryName || 'N/A' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">状态</span>
+            <el-tag :type="tool.status === 'active' ? 'success' : 'info'">
+              {{ tool.status === 'active' ? '已上架' : '已下架' }}
+            </el-tag>
+          </div>
+          <div class="info-item">
+            <span class="info-label">创建时间</span>
+            <span class="info-value">{{ formatDate(tool.createdAt) }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">更新时间</span>
+            <span class="info-value">{{ formatDate(tool.updatedAt) }}</span>
           </div>
         </div>
       </div>
@@ -133,7 +261,8 @@ import {
   Link,
   Star,
   View,
-  Collection
+  Collection,
+  Warning
 } from '@element-plus/icons-vue'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
@@ -229,9 +358,9 @@ const handleFavorite = async () => {
   }
 }
 
-const openGitHub = () => {
-  if (tool.value.githubUrl) {
-    window.open(tool.value.githubUrl, '_blank', 'noopener,noreferrer')
+const openCodehub = () => {
+  if (tool.value.codehubUrl) {
+    window.open(tool.value.codehubUrl, '_blank', 'noopener,noreferrer')
   }
 }
 
@@ -261,6 +390,18 @@ const formatNumber = (num) => {
     return (num / 1000).toFixed(1) + 'K'
   }
   return num.toString()
+}
+
+const formatDate = (date) => {
+  if (!date) return 'N/A'
+  const d = new Date(date)
+  return d.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
 }
 
 onUnmounted(() => {
@@ -641,6 +782,56 @@ onUnmounted(() => {
   color: $text-color-secondary;
 }
 
+.hot-score {
+  background: linear-gradient(135deg, rgba(255, 87, 34, 0.1), rgba(255, 152, 0, 0.05));
+  border-color: rgba(255, 87, 34, 0.3);
+
+  &:hover {
+    border-color: rgba(255, 87, 34, 0.6);
+    box-shadow: 0 4px 12px rgba(255, 87, 34, 0.2);
+  }
+}
+
+.hot-icon {
+  background: linear-gradient(135deg, rgba(255, 87, 34, 0.2), rgba(255, 152, 0, 0.1));
+  font-size: 24px;
+
+  .el-icon {
+    display: none;
+  }
+}
+
+.info-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md 0;
+  border-bottom: 1px solid $border-color-base;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.info-label {
+  font-size: $font-size-base;
+  font-weight: 600;
+  color: $text-color-secondary;
+  flex-shrink: 0;
+}
+
+.info-value {
+  font-size: $font-size-base;
+  color: $text-color-primary;
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+}
+
 @media (max-width: 768px) {
   .tool-detail-page {
     padding: $spacing-lg;
@@ -681,6 +872,12 @@ onUnmounted(() => {
     .el-button {
       width: 100%;
     }
+  }
+
+  .info-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: $spacing-xs;
   }
 }
 

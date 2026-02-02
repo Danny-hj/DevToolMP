@@ -215,24 +215,36 @@ const toolsStore = useToolsStore()
 // 添加一个刷新计数器，用于强制重新渲染
 const refreshKey = ref(0)
 
-// 统计数据（使用合理数值，配合K/M单位显示）
-const totalTools = ref(156)
-const totalInstalls = ref(89) // 会显示为 89K
-const totalCategories = ref(12)
+// 统计数据（从API动态获取）
+const totalTools = computed(() => toolsStore.total || 60)
+const totalInstalls = computed(() => {
+  const tools = toolsStore.tools
+  const total = tools.reduce((sum, tool) => sum + (tool.installCount || 0), 0)
+  return total > 0 ? (total / 1000).toFixed(0) : 89
+})
+const totalCategories = computed(() => {
+  const categoryMap = new Map()
+  toolsStore.tools.forEach(tool => {
+    if (tool.categoryId && tool.categoryName) {
+      categoryMap.set(tool.categoryId, tool.categoryName)
+    }
+  })
+  return categoryMap.size || 4
+})
 const activeUsers = ref(3.2) // 会显示为 3.2K
 
 const popularTools = computed(() => {
   const tools = toolsStore.tools
   return tools
-    .filter(t => t.hotScoreAlltime > 500)
-    .sort((a, b) => b.hotScoreAlltime - a.hotScoreAlltime)
+    .filter(t => t.hotScoreAlltime && t.hotScoreAlltime > 0)
+    .sort((a, b) => (b.hotScoreAlltime || 0) - (a.hotScoreAlltime || 0))
     .slice(0, 4)
 })
 
 const latestTools = computed(() => {
   const tools = toolsStore.tools
   return tools
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
     .slice(0, 4)
 })
 
@@ -245,8 +257,8 @@ const refreshData = async () => {
   toolsStore.tools = []
   // 增加刷新计数器
   refreshKey.value++
-  // 重新获取数据
-  await toolsStore.fetchTools(0, 20)
+  // 重新获取所有数据（设置足够大的size以获取所有工具）
+  await toolsStore.fetchTools(0, 100)
   console.log('[Home] Data refresh completed, tools count:', toolsStore.tools.length)
 }
 
@@ -276,8 +288,10 @@ const handleToolClick = (tool) => {
 
 const handleFavorite = async (tool) => {
   try {
-    await toolsStore.toggleFavorite(tool.id)
+    const isFavorited = await toolsStore.toggleFavorite(tool.id)
+    ElMessage.success(isFavorited ? '已收藏' : '已取消收藏')
   } catch (error) {
+    ElMessage.error('操作失败，请稍后重试')
     console.error('收藏失败:', error)
   }
 }

@@ -15,25 +15,25 @@ public class ToolRankingDTO {
     private Long id;
     private String name;
     private String description;
-    private String githubOwner;
-    private String githubRepo;
-    private String githubUrl;
+    private String codehubOwner;
+    private String codehubRepo;
+    private String codehubUrl;
     private Integer stars;
     private Integer viewCount;
     private Integer favoriteCount;
     private Integer installCount;
-    private BigDecimal hotScore;
+    private Double hotScore;
     private Double changePercentage;
     private List<String> tags;
 
-    public static ToolRankingDTO fromToolDTO(ToolDTO toolDTO, BigDecimal hotScore, Double changePercentage) {
+    public static ToolRankingDTO fromToolDTO(ToolDTO toolDTO, Double hotScore, Double changePercentage) {
         ToolRankingDTO dto = new ToolRankingDTO();
         dto.setId(toolDTO.getId());
         dto.setName(toolDTO.getName());
         dto.setDescription(toolDTO.getDescription());
-        dto.setGithubOwner(toolDTO.getGithubOwner());
-        dto.setGithubRepo(toolDTO.getGithubRepo());
-        dto.setGithubUrl(toolDTO.getGithubUrl());
+        dto.setCodehubOwner(toolDTO.getCodehubOwner());
+        dto.setCodehubRepo(toolDTO.getCodehubRepo());
+        dto.setCodehubUrl(toolDTO.getCodehubUrl());
         dto.setStars(toolDTO.getStars());
         dto.setViewCount(toolDTO.getViewCount());
         dto.setFavoriteCount(toolDTO.getFavoriteCount());

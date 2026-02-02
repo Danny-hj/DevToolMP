@@ -63,12 +63,23 @@ export const useToolsStore = defineStore('tools', () => {
   const toggleFavorite = async (id) => {
     try {
       const response = await request.post(`/tools/${id}/favorite`)
+      // 更新详情页的工具状态
       if (currentTool.value && currentTool.value.id === id) {
         currentTool.value.isFavorited = response
         if (response) {
           currentTool.value.favoriteCount++
         } else {
           currentTool.value.favoriteCount--
+        }
+      }
+      // 更新列表中的工具状态
+      const tool = tools.value.find(t => t.id === id)
+      if (tool) {
+        tool.isFavorited = response
+        if (response) {
+          tool.favoriteCount++
+        } else {
+          tool.favoriteCount--
         }
       }
       return response
@@ -139,10 +150,11 @@ export const useToolsStore = defineStore('tools', () => {
   const updateTool = async (id, toolData) => {
     try {
       const response = await request.put(`/tools/${id}`, toolData)
-      // 更新本地状态
+      // 更新详情页工具状态
       if (currentTool.value && currentTool.value.id === id) {
         Object.assign(currentTool.value, response)
       }
+      // 更新列表中的工具状态（当前页）
       const tool = tools.value.find(t => t.id === id)
       if (tool) {
         Object.assign(tool, response)
@@ -154,10 +166,10 @@ export const useToolsStore = defineStore('tools', () => {
     }
   }
 
-  // GitHub相关方法
-  const syncGitHubData = async (id) => {
+  // Codehub相关方法
+  const syncCodehubData = async (id) => {
     try {
-      const response = await request.post(`/github/sync/${id}`)
+      const response = await request.post(`/codehub/sync/${id}`)
       // 更新当前工具数据
       if (currentTool.value && currentTool.value.id === id) {
         Object.assign(currentTool.value, response)
@@ -169,44 +181,44 @@ export const useToolsStore = defineStore('tools', () => {
       }
       return response
     } catch (error) {
-      console.error('同步GitHub数据失败:', error)
+      console.error('同步Codehub数据失败:', error)
       throw error
     }
   }
 
-  const syncAllGitHubData = async () => {
+  const syncAllCodehubData = async () => {
     try {
-      const response = await request.post('/github/sync/all')
+      const response = await request.post('/codehub/sync/all')
       return response
     } catch (error) {
-      console.error('批量同步GitHub数据失败:', error)
+      console.error('批量同步Codehub数据失败:', error)
       throw error
     }
   }
 
-  const fetchGitHubRepoInfo = async (owner, repo) => {
+  const fetchCodehubRepoInfo = async (owner, repo) => {
     try {
-      const response = await request.get(`/github/repos/${owner}/${repo}`)
+      const response = await request.get(`/codehub/repos/${owner}/${repo}`)
       return response
     } catch (error) {
-      console.error('获取GitHub仓库信息失败:', error)
+      console.error('获取Codehub仓库信息失败:', error)
       throw error
     }
   }
 
-  const validateGitHubRepo = async (owner, repo) => {
+  const validateCodehubRepo = async (owner, repo) => {
     try {
-      const response = await request.get(`/github/repos/${owner}/${repo}/validate`)
+      const response = await request.get(`/codehub/repos/${owner}/${repo}/validate`)
       return response.valid
     } catch (error) {
-      console.error('验证GitHub仓库失败:', error)
+      console.error('验证Codehub仓库失败:', error)
       return false
     }
   }
 
-  const fetchGitHubReadme = async (owner, repo) => {
+  const fetchCodehubReadme = async (owner, repo) => {
     try {
-      const response = await request.get(`/github/repos/${owner}/${repo}/readme`)
+      const response = await request.get(`/codehub/repos/${owner}/${repo}/readme`)
       return response.content
     } catch (error) {
       console.error('获取README失败:', error)
@@ -214,9 +226,9 @@ export const useToolsStore = defineStore('tools', () => {
     }
   }
 
-  const fetchGitHubLatestRelease = async (owner, repo) => {
+  const fetchCodehubLatestRelease = async (owner, repo) => {
     try {
-      const response = await request.get(`/github/repos/${owner}/${repo}/releases/latest`)
+      const response = await request.get(`/codehub/repos/${owner}/${repo}/releases/latest`)
       return response
     } catch (error) {
       console.error('获取最新版本失败:', error)
@@ -227,7 +239,7 @@ export const useToolsStore = defineStore('tools', () => {
   const autoDiscoverAgentSkills = async () => {
     try {
       // 为同步操作设置更长的超时时间（2分钟）
-      const response = await request.post('/github/agent-skills/auto-discover', {}, {
+      const response = await request.post('/codehub/agent-skills/auto-discover', {}, {
         timeout: 120000
       })
       return response
@@ -252,12 +264,12 @@ export const useToolsStore = defineStore('tools', () => {
     unpublishTool,
     createTool,
     updateTool,
-    syncGitHubData,
-    syncAllGitHubData,
-    fetchGitHubRepoInfo,
-    validateGitHubRepo,
-    fetchGitHubReadme,
-    fetchGitHubLatestRelease,
+    syncCodehubData,
+    syncAllCodehubData,
+    fetchCodehubRepoInfo,
+    validateCodehubRepo,
+    fetchCodehubReadme,
+    fetchCodehubLatestRelease,
     autoDiscoverAgentSkills
   }
 })

@@ -18,5 +18,5 @@ public class CommentReplyDTO {
     private Long replyToUserId;
     private String replyToUsername;
     private String content;
-    private LocalDateTime createdAt;
+    private LocalDateTime createTime;
 }

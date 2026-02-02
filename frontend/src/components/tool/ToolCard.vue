@@ -20,20 +20,20 @@
         <h3>{{ tool.name }}</h3>
         <p class="tool-repo">
           <a
-            v-if="tool.githubUrl"
-            :href="tool.githubUrl"
+            v-if="tool.codehubUrl"
+            :href="tool.codehubUrl"
             target="_blank"
             rel="noopener noreferrer"
             @click.stop
-            class="github-link"
+            class="codehub-link"
           >
-            {{ tool.githubOwner }}/{{ tool.githubRepo }}
+            {{ tool.codehubOwner }}/{{ tool.codehubRepo }}
             <el-icon class="external-link-icon"><Link /></el-icon>
           </a>
-          <span v-else-if="tool.githubOwner && tool.githubRepo">
-            {{ tool.githubOwner }}/{{ tool.githubRepo }}
+          <span v-else-if="tool.codehubOwner && tool.codehubRepo">
+            {{ tool.codehubOwner }}/{{ tool.codehubRepo }}
           </span>
-          <span v-else class="no-repo">未关联 GitHub 仓库</span>
+          <span v-else class="no-repo">未关联 Codehub 仓库</span>
         </p>
       </div>
     </div>
@@ -50,13 +50,22 @@
 
     <!-- 统计数据 -->
     <div class="tool-stats">
-      <div class="stat-item" title="GitHub Stars">
+      <div class="stat-item" title="Codehub Stars">
         <div class="stat-icon">
           <el-icon><Star /></el-icon>
         </div>
         <div class="stat-info">
           <span class="stat-value">{{ formatNumber(tool.stars) }}</span>
           <span class="stat-label">Stars</span>
+        </div>
+      </div>
+      <div class="stat-item" title="Codehub Forks">
+        <div class="stat-icon">
+          <el-icon><Operation /></el-icon>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ formatNumber(tool.forks) }}</span>
+          <span class="stat-label">Forks</span>
         </div>
       </div>
       <div class="stat-item" title="浏览量">
@@ -75,6 +84,15 @@
         <div class="stat-info">
           <span class="stat-value">{{ formatNumber(tool.favoriteCount) }}</span>
           <span class="stat-label">收藏</span>
+        </div>
+      </div>
+      <div class="stat-item" title="Open Issues">
+        <div class="stat-icon">
+          <el-icon><Warning /></el-icon>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ formatNumber(tool.openIssues) }}</span>
+          <span class="stat-label">Issues</span>
         </div>
       </div>
       <div class="stat-item" title="安装量">
@@ -105,13 +123,13 @@
       <div class="actions">
         <!-- 管理模式下的按钮 -->
         <template v-if="adminMode">
-          <!-- 同步GitHub按钮 -->
+          <!-- 同步Codehub按钮 -->
           <el-button
             :loading="syncing"
             type="info"
             size="small"
             plain
-            @click.stop="handleSyncGitHub"
+            @click.stop="handleSyncCodehub"
             class="action-btn"
           >
             <el-icon><Refresh /></el-icon>
@@ -141,17 +159,17 @@
         </template>
         <!-- 普通模式下的按钮 -->
         <template v-else>
-          <!-- GitHub跳转按钮 -->
+          <!-- Codehub跳转按钮 -->
           <el-button
-            v-if="tool.githubUrl"
+            v-if="tool.codehubUrl"
             type="primary"
             size="small"
             plain
-            @click.stop="openGitHub"
+            @click.stop="openCodehub"
             class="action-btn"
           >
             <el-icon><Link /></el-icon>
-            GitHub
+            Codehub
           </el-button>
           <el-button
             type="primary"
@@ -173,7 +191,8 @@
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Star, View, Collection, CollectionTag, Download,
-         CircleCheck, CircleClose, Link, Refresh, Edit, FolderOpened, CircleCheckFilled } from '@element-plus/icons-vue'
+         CircleCheck, CircleClose, Link, Refresh, Edit, FolderOpened, CircleCheckFilled,
+         Operation, Warning } from '@element-plus/icons-vue'
 import { useToolsStore } from '@/stores/tools'
 
 const props = defineProps({
@@ -236,14 +255,14 @@ const handleTogglePublish = async () => {
   }
 }
 
-const handleSyncGitHub = async () => {
+const handleSyncCodehub = async () => {
   syncing.value = true
   try {
-    await toolsStore.syncGitHubData(props.tool.id)
-    ElMessage.success('GitHub数据同步成功')
+    await toolsStore.syncCodehubData(props.tool.id)
+    ElMessage.success('Codehub数据同步成功')
     emit('synced', props.tool)
   } catch (error) {
-    ElMessage.error('GitHub数据同步失败')
+    ElMessage.error('Codehub数据同步失败')
   } finally {
     syncing.value = false
   }
@@ -253,9 +272,9 @@ const handleEdit = () => {
   emit('edit', props.tool)
 }
 
-const openGitHub = () => {
-  if (props.tool.githubUrl) {
-    window.open(props.tool.githubUrl, '_blank', 'noopener,noreferrer')
+const openCodehub = () => {
+  if (props.tool.codehubUrl) {
+    window.open(props.tool.codehubUrl, '_blank', 'noopener,noreferrer')
   }
 }
 
@@ -455,7 +474,7 @@ const formatNumber = (num) => {
   color: $text-color-secondary;
   font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
 
-  .github-link {
+  .codehub-link {
     color: $primary-color;
     text-decoration: none;
     display: inline-flex;
@@ -514,8 +533,8 @@ const formatNumber = (num) => {
 
 .tool-stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: $spacing-md;
+  grid-template-columns: repeat(6, 1fr);
+  gap: $spacing-sm;
   margin-bottom: $spacing-lg;
   padding: $spacing-md 0;
   border-top: 1px solid rgba($border-color-base, 0.5);

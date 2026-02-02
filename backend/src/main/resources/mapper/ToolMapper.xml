@@ -8,33 +8,18 @@
         <result column="name" property="name"/>
         <result column="description" property="description"/>
         <result column="category_id" property="categoryId"/>
-        <result column="github_owner" property="githubOwner"/>
-        <result column="github_repo" property="githubRepo"/>
-        <result column="version" property="version"/>
-        <result column="stars" property="stars"/>
-        <result column="forks" property="forks"/>
-        <result column="open_issues" property="openIssues"/>
-        <result column="watchers" property="watchers"/>
-        <result column="view_count" property="viewCount"/>
-        <result column="favorite_count" property="favoriteCount"/>
-        <result column="install_count" property="installCount"/>
-        <result column="view_count_yesterday" property="viewCountYesterday"/>
-        <result column="favorite_count_yesterday" property="favoriteCountYesterday"/>
-        <result column="install_count_yesterday" property="installCountYesterday"/>
-        <result column="hot_score_daily" property="hotScoreDaily"/>
-        <result column="hot_score_weekly" property="hotScoreWeekly"/>
-        <result column="hot_score_alltime" property="hotScoreAlltime"/>
+        <result column="codehub_id" property="codehubId"/>
         <result column="status" property="status"/>
-        <result column="created_at" property="createdAt"/>
-        <result column="updated_at" property="updatedAt"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
     </resultMap>
 
     <select id="findById" resultMap="BaseResultMap">
         SELECT * FROM tools WHERE id = #{id}
     </select>
 
-    <select id="findByGithubOwnerAndGithubRepo" resultMap="BaseResultMap">
-        SELECT * FROM tools WHERE github_owner = #{githubOwner} AND github_repo = #{githubRepo}
+    <select id="findByCodehubId" resultMap="BaseResultMap">
+        SELECT * FROM tools WHERE codehub_id = #{codehubId}
     </select>
 
     <select id="findByCategoryId" resultMap="BaseResultMap">
@@ -43,30 +28,6 @@
 
     <select id="findByStatus" resultMap="BaseResultMap">
         SELECT * FROM tools WHERE status = #{status}
-    </select>
-
-    <select id="findTop20ByStatusOrderByHotScoreDailyDesc" resultMap="BaseResultMap">
-        SELECT * FROM tools WHERE status = 'active' ORDER BY hot_score_daily DESC LIMIT 20
-    </select>
-
-    <select id="findTop20ByStatusOrderByHotScoreWeeklyDesc" resultMap="BaseResultMap">
-        SELECT * FROM tools WHERE status = 'active' ORDER BY hot_score_weekly DESC LIMIT 20
-    </select>
-
-    <select id="findTop20ByStatusOrderByHotScoreAlltimeDesc" resultMap="BaseResultMap">
-        SELECT * FROM tools WHERE status = 'active' ORDER BY hot_score_alltime DESC LIMIT 20
-    </select>
-
-    <select id="findByStatusOrderByHotScoreDailyDescWithPage" resultMap="BaseResultMap">
-        SELECT * FROM tools WHERE status = #{status} ORDER BY hot_score_daily DESC LIMIT #{limit} OFFSET #{offset}
-    </select>
-
-    <select id="findByStatusOrderByHotScoreWeeklyDescWithPage" resultMap="BaseResultMap">
-        SELECT * FROM tools WHERE status = #{status} ORDER BY hot_score_weekly DESC LIMIT #{limit} OFFSET #{offset}
-    </select>
-
-    <select id="findByStatusOrderByHotScoreAlltimeDescWithPage" resultMap="BaseResultMap">
-        SELECT * FROM tools WHERE status = #{status} ORDER BY hot_score_alltime DESC LIMIT #{limit} OFFSET #{offset}
     </select>
 
     <select id="searchByKeyword" resultMap="BaseResultMap">
@@ -78,7 +39,7 @@
     <select id="findByStatusWithPage" resultMap="BaseResultMap">
         SELECT * FROM tools
         WHERE status = #{status}
-        ORDER BY created_at DESC
+        ORDER BY create_time DESC
         LIMIT #{limit} OFFSET #{offset}
     </select>
 
@@ -93,18 +54,8 @@
     </select>
 
     <insert id="insert" parameterType="com.devtoolmp.entity.Tool" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO tools (name, description, category_id, github_owner, github_repo, version,
-                          stars, forks, open_issues, watchers,
-                          view_count, favorite_count, install_count,
-                          view_count_yesterday, favorite_count_yesterday, install_count_yesterday,
-                          hot_score_daily, hot_score_weekly, hot_score_alltime,
-                          status, created_at, updated_at)
-        VALUES (#{name}, #{description}, #{categoryId}, #{githubOwner}, #{githubRepo}, #{version},
-                #{stars}, #{forks}, #{openIssues}, #{watchers},
-                #{viewCount}, #{favoriteCount}, #{installCount},
-                #{viewCountYesterday}, #{favoriteCountYesterday}, #{installCountYesterday},
-                #{hotScoreDaily}, #{hotScoreWeekly}, #{hotScoreAlltime},
-                #{status}, #{createdAt}, #{updatedAt})
+        INSERT INTO tools (name, description, category_id, codehub_id, status, create_time, update_time)
+        VALUES (#{name}, #{description}, #{categoryId}, #{codehubId}, #{status}, #{createTime}, #{updateTime})
     </insert>
 
     <update id="update" parameterType="com.devtoolmp.entity.Tool">
@@ -112,24 +63,9 @@
         SET name = #{name},
             description = #{description},
             category_id = #{categoryId},
-            github_owner = #{githubOwner},
-            github_repo = #{githubRepo},
-            version = #{version},
-            stars = #{stars},
-            forks = #{forks},
-            open_issues = #{openIssues},
-            watchers = #{watchers},
-            view_count = #{viewCount},
-            favorite_count = #{favoriteCount},
-            install_count = #{installCount},
-            view_count_yesterday = #{viewCountYesterday},
-            favorite_count_yesterday = #{favoriteCountYesterday},
-            install_count_yesterday = #{installCountYesterday},
-            hot_score_daily = #{hotScoreDaily},
-            hot_score_weekly = #{hotScoreWeekly},
-            hot_score_alltime = #{hotScoreAlltime},
+            codehub_id = #{codehubId},
             status = #{status},
-            updated_at = #{updatedAt}
+            update_time = #{updateTime}
         WHERE id = #{id}
     </update>
 

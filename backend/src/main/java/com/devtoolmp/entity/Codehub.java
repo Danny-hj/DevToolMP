@@ -8,13 +8,15 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Rating {
+public class Codehub {
     private Long id;
-    private Long toolId;
-    private String userId;
-    private String username;
-    private Integer score;
-    private String comment;
+    private String owner;
+    private String repo;
+    private String version;
+    private Integer stars = 0;
+    private Integer forks = 0;
+    private Integer openIssues = 0;
+    private Integer watchers = 0;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 
@@ -28,5 +30,13 @@ public class Rating {
 
     public void preUpdate() {
         updateTime = LocalDateTime.now();
+    }
+
+    public String getUrl() {
+        if (owner != null && !owner.trim().isEmpty()
+                && repo != null && !repo.trim().isEmpty()) {
+            return "https://github.com/" + owner + "/" + repo;
+        }
+        return null;
     }
 }

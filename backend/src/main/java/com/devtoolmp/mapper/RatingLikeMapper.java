@@ -11,7 +11,7 @@ public interface RatingLikeMapper {
 
     RatingLike findById(@Param("id") Long id);
 
-    RatingLike findByRatingIdAndUserId(@Param("ratingId") Long ratingId, @Param("userId") Long userId);
+    RatingLike findByRatingIdAndUserId(@Param("ratingId") Long ratingId, @Param("userId") String userId);
 
     List<RatingLike> findByRatingId(@Param("ratingId") Long ratingId);
 
@@ -19,7 +19,7 @@ public interface RatingLikeMapper {
 
     void deleteById(@Param("id") Long id);
 
-    void deleteByRatingIdAndUserId(@Param("ratingId") Long ratingId, @Param("userId") Long userId);
+    void deleteByRatingIdAndUserId(@Param("ratingId") Long ratingId, @Param("userId") String userId);
 
-    boolean existsByRatingIdAndUserId(@Param("ratingId") Long ratingId, @Param("userId") Long userId);
+    boolean existsByRatingIdAndUserId(@Param("ratingId") Long ratingId, @Param("userId") String userId);
 }

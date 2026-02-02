@@ -2,7 +2,7 @@ package com.devtoolmp.controller;
 
 import com.devtoolmp.dto.response.ToolDTO;
 import com.devtoolmp.entity.Tool;
-import com.devtoolmp.service.GitHubService;
+import com.devtoolmp.service.CodehubService;
 import com.devtoolmp.service.ToolService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -12,26 +12,26 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * GitHub集成控制器
+ * 代码仓库集成控制器
  */
 @RestController
-@RequestMapping("/github")
-public class GitHubController {
+@RequestMapping("/codehub")
+public class CodehubController {
 
     @Autowired
-    private GitHubService gitHubService;
+    private CodehubService codehubService;
 
     @Autowired
     private ToolService toolService;
 
     /**
-     * 获取GitHub仓库信息
+     * 获取代码仓库信息
      */
     @GetMapping("/repos/{owner}/{repo}")
     public ResponseEntity<Map<String, Object>> getRepositoryInfo(
             @PathVariable String owner,
             @PathVariable String repo) {
-        Map<String, Object> repoInfo = gitHubService.fetchRepositoryInfo(owner, repo);
+        Map<String, Object> repoInfo = codehubService.fetchRepositoryInfo(owner, repo);
         if (repoInfo == null) {
             return ResponseEntity.notFound().build();
         }
@@ -39,12 +39,12 @@ public class GitHubController {
     }
 
     /**
-     * 同步单个工具的GitHub数据
+     * 同步单个工具的代码仓库数据
      */
     @PostMapping("/sync/{toolId}")
-    public ResponseEntity<ToolDTO> syncToolGitHubData(@PathVariable Long toolId) {
+    public ResponseEntity<ToolDTO> syncToolCodehubData(@PathVariable Long toolId) {
         try {
-            Tool tool = gitHubService.syncGitHubData(toolId);
+            Tool tool = codehubService.syncCodehubData(toolId);
             ToolDTO toolDTO = toolService.getToolById(toolId);
             return ResponseEntity.ok(toolDTO);
         } catch (Exception e) {
@@ -53,11 +53,11 @@ public class GitHubController {
     }
 
     /**
-     * 批量同步所有工具的GitHub数据
+     * 批量同步所有工具的代码仓库数据
      */
     @PostMapping("/sync/all")
-    public ResponseEntity<Map<String, Object>> syncAllToolsGitHubData() {
-        Map<String, Object> result = gitHubService.syncAllToolsGitHubData();
+    public ResponseEntity<Map<String, Object>> syncAllToolsCodehubData() {
+        Map<String, Object> result = codehubService.syncAllToolsCodehubData();
         return ResponseEntity.ok(result);
     }
 
@@ -68,7 +68,7 @@ public class GitHubController {
     public ResponseEntity<Map<String, String>> getReadme(
             @PathVariable String owner,
             @PathVariable String repo) {
-        String readme = gitHubService.fetchReadme(owner, repo);
+        String readme = codehubService.fetchReadme(owner, repo);
         if (readme == null) {
             return ResponseEntity.notFound().build();
         }
@@ -86,7 +86,7 @@ public class GitHubController {
     public ResponseEntity<Map<String, Object>> getLatestRelease(
             @PathVariable String owner,
             @PathVariable String repo) {
-        Map<String, Object> release = gitHubService.fetchLatestRelease(owner, repo);
+        Map<String, Object> release = codehubService.fetchLatestRelease(owner, repo);
         if (release == null) {
             return ResponseEntity.notFound().build();
         }
@@ -94,13 +94,13 @@ public class GitHubController {
     }
 
     /**
-     * 验证GitHub仓库是否存在
+     * 验证代码仓库是否存在
      */
     @GetMapping("/repos/{owner}/{repo}/validate")
     public ResponseEntity<Map<String, Boolean>> validateRepository(
             @PathVariable String owner,
             @PathVariable String repo) {
-        boolean isValid = gitHubService.isValidRepository(owner, repo);
+        boolean isValid = codehubService.isValidRepository(owner, repo);
         return ResponseEntity.ok(Map.of("valid", isValid));
     }
 
@@ -111,7 +111,7 @@ public class GitHubController {
     public ResponseEntity<Map<String, Object>> validateAgentSkill(
             @PathVariable String owner,
             @PathVariable String repo) {
-        Map<String, Object> result = gitHubService.validateAgentSkill(owner, repo);
+        Map<String, Object> result = codehubService.validateAgentSkill(owner, repo);
         return ResponseEntity.ok(result);
     }
 
@@ -120,7 +120,7 @@ public class GitHubController {
      */
     @PostMapping("/agent-skills/auto-discover")
     public ResponseEntity<Map<String, Object>> autoDiscoverAgentSkills() {
-        Map<String, Object> result = gitHubService.autoDiscoverAndCreateAgentSkills();
+        Map<String, Object> result = codehubService.autoDiscoverAndCreateAgentSkills();
         return ResponseEntity.ok(result);
     }
 
@@ -129,7 +129,28 @@ public class GitHubController {
      */
     @GetMapping("/agent-skills/search")
     public ResponseEntity<List<Map<String, Object>>> searchAgentSkills() {
-        List<Map<String, Object>> results = gitHubService.searchAgentSkillRepos();
+        List<Map<String, Object>> results = codehubService.searchAgentSkillRepos();
         return ResponseEntity.ok(results);
+    }
+
+    /**
+     * 获取所有代码仓库列表
+     */
+    @GetMapping
+    public ResponseEntity<List<com.devtoolmp.entity.Codehub>> getAllCodehubs() {
+        List<com.devtoolmp.entity.Codehub> codehubs = codehubService.getAllCodehubs();
+        return ResponseEntity.ok(codehubs);
+    }
+
+    /**
+     * 根据ID获取代码仓库
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<com.devtoolmp.entity.Codehub> getCodehubById(@PathVariable Long id) {
+        com.devtoolmp.entity.Codehub codehub = codehubService.getCodehubById(id);
+        if (codehub == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(codehub);
     }
 }

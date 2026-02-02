@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,10 +23,16 @@ public class ToolService {
     private CategoryMapper categoryMapper;
 
     @Autowired
+    private CodehubMapper codehubMapper;
+
+    @Autowired
     private FavoriteMapper favoriteMapper;
 
     @Autowired
     private ViewRecordMapper viewRecordMapper;
+
+    @Autowired
+    private InstallRecordMapper installRecordMapper;
 
     @Autowired
     private ToolTagMapper toolTagMapper;
@@ -35,13 +42,25 @@ public class ToolService {
 
     @Transactional
     public Tool createTool(ToolCreateRequest request) {
+        // 首先创建或获取 Codehub 记录
+        Codehub codehub = null;
+        if (request.getGithubOwner() != null && request.getGithubRepo() != null) {
+            codehub = codehubMapper.findByOwnerAndRepo(request.getGithubOwner(), request.getGithubRepo());
+            if (codehub == null) {
+                codehub = new Codehub();
+                codehub.setOwner(request.getGithubOwner());
+                codehub.setRepo(request.getGithubRepo());
+                codehub.setVersion(request.getVersion());
+                codehub.prePersist();
+                codehubMapper.insert(codehub);
+            }
+        }
+
         Tool tool = new Tool();
         tool.setName(request.getName());
         tool.setDescription(request.getDescription());
         tool.setCategoryId(request.getCategoryId());
-        tool.setGithubOwner(request.getGithubOwner());
-        tool.setGithubRepo(request.getGithubRepo());
-        tool.setVersion(request.getVersion());
+        tool.setCodehubId(codehub != null ? codehub.getId() : null);
         tool.setStatus(request.getStatus() != null ? request.getStatus() : "active");
         tool.prePersist();
         toolMapper.insert(tool);
@@ -62,7 +81,7 @@ public class ToolService {
     }
 
     @Transactional
-    public Tool updateTool(Long id, ToolUpdateRequest request) {
+    public ToolDTO updateTool(Long id, ToolUpdateRequest request) {
         Tool tool = toolMapper.findById(id);
         if (tool == null) {
             throw new RuntimeException("Tool not found");
@@ -76,18 +95,40 @@ public class ToolService {
         if (request.getCategoryId() != null) {
             tool.setCategoryId(request.getCategoryId());
         }
-        if (request.getGithubOwner() != null) {
-            tool.setGithubOwner(request.getGithubOwner());
+
+        // 更新 codehub 信息
+        if (request.getGithubOwner() != null && request.getGithubRepo() != null) {
+            Codehub codehub = codehubMapper.findByOwnerAndRepo(request.getGithubOwner(), request.getGithubRepo());
+            if (codehub == null) {
+                codehub = new Codehub();
+                codehub.setOwner(request.getGithubOwner());
+                codehub.setRepo(request.getGithubRepo());
+                codehub.setVersion(request.getVersion());
+                codehub.prePersist();
+                codehubMapper.insert(codehub);
+            } else {
+                if (request.getVersion() != null) {
+                    codehub.setVersion(request.getVersion());
+                    codehub.preUpdate();
+                    codehubMapper.update(codehub);
+                }
+            }
+            tool.setCodehubId(codehub.getId());
         }
-        if (request.getGithubRepo() != null) {
-            tool.setGithubRepo(request.getGithubRepo());
-        }
-        if (request.getVersion() != null) {
-            tool.setVersion(request.getVersion());
-        }
+
         tool.preUpdate();
         toolMapper.update(tool);
-        return tool;
+
+        // 获取分类信息和 codehub 信息
+        Category category = tool.getCategoryId() != null ? categoryMapper.findById(tool.getCategoryId()) : null;
+        String categoryName = category != null ? category.getName() : null;
+        Codehub codehub = tool.getCodehubId() != null ? codehubMapper.findById(tool.getCodehubId()) : null;
+
+        // 获取标签信息
+        List<ToolTag> toolTags = toolTagMapper.findByToolId(tool.getId());
+        List<String> tags = toolTags.stream().map(ToolTag::getTagName).collect(Collectors.toList());
+
+        return ToolDTO.fromEntity(tool, categoryName, tags, codehub);
     }
 
     @Transactional
@@ -102,18 +143,20 @@ public class ToolService {
         }
         Category category = tool.getCategoryId() != null ? categoryMapper.findById(tool.getCategoryId()) : null;
         String categoryName = category != null ? category.getName() : null;
+        Codehub codehub = tool.getCodehubId() != null ? codehubMapper.findById(tool.getCodehubId()) : null;
         List<ToolTag> toolTags = toolTagMapper.findByToolId(id);
         List<String> tags = toolTags.stream().map(ToolTag::getTagName).collect(Collectors.toList());
-        return ToolDTO.fromEntity(tool, categoryName, tags);
+        return ToolDTO.fromEntity(tool, categoryName, tags, codehub);
     }
 
-    public ToolDetailDTO getToolDetailById(Long id, String clientIdentifier) {
+    public ToolDetailDTO getToolDetailById(Long id, String userId) {
         Tool tool = toolMapper.findById(id);
         if (tool == null) {
             throw new RuntimeException("Tool not found");
         }
         Category category = tool.getCategoryId() != null ? categoryMapper.findById(tool.getCategoryId()) : null;
         String categoryName = category != null ? category.getName() : null;
+        Codehub codehub = tool.getCodehubId() != null ? codehubMapper.findById(tool.getCodehubId()) : null;
         List<ToolTag> toolTags = toolTagMapper.findByToolId(id);
         List<String> tags = toolTags.stream().map(ToolTag::getTagName).collect(Collectors.toList());
 
@@ -121,34 +164,71 @@ public class ToolService {
         Long totalRatings = (long) ratingMapper.countByToolId(id);
 
         boolean isFavorited = false;
-        if (clientIdentifier != null) {
-            isFavorited = favoriteMapper.existsByClientIdentifierAndToolId(clientIdentifier, id);
+        if (userId != null) {
+            isFavorited = favoriteMapper.existsByUserIdAndToolId(userId, id);
         }
+
+        // 动态计算统计数据
+        int viewCount = viewRecordMapper.countByToolId(id);
+        int favoriteCount = favoriteMapper.countByToolId(id);
+        int installCount = installRecordMapper.countByToolId(id);
+
+        // 计算昨天的数据
+        LocalDateTime yesterdayStart = LocalDateTime.now().minusDays(1).withHour(0).withMinute(0).withSecond(0);
+        LocalDateTime yesterdayEnd = LocalDateTime.now().minusDays(1).withHour(23).withMinute(59).withSecond(59);
+        int viewCountYesterday = viewRecordMapper.countByToolIdAndCreatedAtBetween(id, yesterdayStart, yesterdayEnd);
+        int favoriteCountYesterday = favoriteMapper.countByToolIdAndCreatedAtBetween(id, yesterdayStart, yesterdayEnd);
+        int installCountYesterday = installRecordMapper.countByToolIdAndCreatedAtBetween(id, yesterdayStart, yesterdayEnd);
+
+        // 计算热度分数
+        double hotScoreDaily = calculateHotScore(viewCountYesterday, favoriteCountYesterday, installCountYesterday);
+        double hotScoreWeekly = calculateHotScore(
+            viewRecordMapper.countByToolIdAndCreatedAtBetween(id, LocalDateTime.now().minusDays(7), LocalDateTime.now()),
+            favoriteMapper.countByToolIdAndCreatedAtBetween(id, LocalDateTime.now().minusDays(7), LocalDateTime.now()),
+            installRecordMapper.countByToolIdAndCreatedAtBetween(id, LocalDateTime.now().minusDays(7), LocalDateTime.now())
+        );
+        double hotScoreAlltime = calculateHotScore(viewCount, favoriteCount, installCount);
 
         ToolDetailDTO dto = new ToolDetailDTO();
         dto.setId(tool.getId());
         dto.setName(tool.getName());
         dto.setDescription(tool.getDescription());
         dto.setCategoryName(categoryName);
-        dto.setGithubOwner(tool.getGithubOwner());
-        dto.setGithubRepo(tool.getGithubRepo());
-        dto.setGithubUrl(tool.getGitHubUrl());
-        dto.setVersion(tool.getVersion());
-        dto.setStars(tool.getStars());
-        dto.setForks(tool.getForks());
-        dto.setOpenIssues(tool.getOpenIssues());
-        dto.setWatchers(tool.getWatchers());
-        dto.setViewCount(tool.getViewCount());
-        dto.setFavoriteCount(tool.getFavoriteCount());
-        dto.setInstallCount(tool.getInstallCount());
+
+        // 设置 codehub 信息
+        if (codehub != null) {
+            dto.setCodehubId(codehub.getId());
+            dto.setCodehubOwner(codehub.getOwner());
+            dto.setCodehubRepo(codehub.getRepo());
+            dto.setCodehubUrl(codehub.getUrl());
+            dto.setVersion(codehub.getVersion());
+            dto.setStars(codehub.getStars());
+            dto.setForks(codehub.getForks());
+            dto.setOpenIssues(codehub.getOpenIssues());
+            dto.setWatchers(codehub.getWatchers());
+        }
+
+        dto.setViewCount(viewCount);
+        dto.setFavoriteCount(favoriteCount);
+        dto.setInstallCount(installCount);
+        dto.setViewCountYesterday(viewCountYesterday);
+        dto.setFavoriteCountYesterday(favoriteCountYesterday);
+        dto.setInstallCountYesterday(installCountYesterday);
+        dto.setHotScoreDaily(java.math.BigDecimal.valueOf(hotScoreDaily));
+        dto.setHotScoreWeekly(java.math.BigDecimal.valueOf(hotScoreWeekly));
+        dto.setHotScoreAlltime(java.math.BigDecimal.valueOf(hotScoreAlltime));
         dto.setStatus(tool.getStatus());
         dto.setTags(tags);
         dto.setAverageRating(averageRating);
         dto.setTotalRatings(totalRatings != null ? totalRatings.intValue() : 0);
         dto.setFavorited(isFavorited);
-        dto.setUpdatedAt(tool.getUpdatedAt());
-        dto.setCreatedAt(tool.getCreatedAt());
+        dto.setUpdateTime(tool.getUpdateTime());
+        dto.setCreateTime(tool.getCreateTime());
         return dto;
+    }
+
+    private double calculateHotScore(int views, int favorites, int installs) {
+        return views * 1.0 + favorites * 5.0 + installs * 10.0;
     }
 
     public PageResponse<ToolDTO> getTools(int page, int size) {
@@ -159,9 +239,31 @@ public class ToolService {
         List<ToolDTO> toolDTOs = tools.stream().map(tool -> {
             Category category = tool.getCategoryId() != null ? categoryMapper.findById(tool.getCategoryId()) : null;
             String categoryName = category != null ? category.getName() : null;
+            Codehub codehub = tool.getCodehubId() != null ? codehubMapper.findById(tool.getCodehubId()) : null;
             List<ToolTag> toolTags = toolTagMapper.findByToolId(tool.getId());
             List<String> tags = toolTags.stream().map(ToolTag::getTagName).collect(Collectors.toList());
-            return ToolDTO.fromEntity(tool, categoryName, tags);
+
+            // 计算热度分数（使用昨天数据）
+            int viewCountYesterday = viewRecordMapper.countByToolIdAndCreatedAtBetween(
+                tool.getId(),
+                LocalDateTime.now().minusDays(1).withHour(0).withMinute(0).withSecond(0),
+                LocalDateTime.now().minusDays(1).withHour(23).withMinute(59).withSecond(59)
+            );
+            int favoriteCountYesterday = favoriteMapper.countByToolIdAndCreatedAtBetween(
+                tool.getId(),
+                LocalDateTime.now().minusDays(1).withHour(0).withMinute(0).withSecond(0),
+                LocalDateTime.now().minusDays(1).withHour(23).withMinute(59).withSecond(59)
+            );
+            int installCountYesterday = installRecordMapper.countByToolIdAndCreatedAtBetween(
+                tool.getId(),
+                LocalDateTime.now().minusDays(1).withHour(0).withMinute(0).withSecond(0),
+                LocalDateTime.now().minusDays(1).withHour(23).withMinute(59).withSecond(59)
+            );
+            double hotScoreDaily = calculateHotScore(viewCountYesterday, favoriteCountYesterday, installCountYesterday);
+
+            ToolDTO dto = ToolDTO.fromEntity(tool, categoryName, tags, codehub);
+            dto.setHotScoreDaily(java.math.BigDecimal.valueOf(hotScoreDaily));
+            return dto;
         }).collect(Collectors.toList());
 
         return PageResponse.of(toolDTOs, page, size, (long) total);
@@ -178,73 +280,66 @@ public class ToolService {
         List<ToolDTO> toolDTOs = tools.stream().map(tool -> {
             Category category = tool.getCategoryId() != null ? categoryMapper.findById(tool.getCategoryId()) : null;
             String categoryName = category != null ? category.getName() : null;
+            Codehub codehub = tool.getCodehubId() != null ? codehubMapper.findById(tool.getCodehubId()) : null;
             List<ToolTag> toolTags = toolTagMapper.findByToolId(tool.getId());
             List<String> tags = toolTags.stream().map(ToolTag::getTagName).collect(Collectors.toList());
-            return ToolDTO.fromEntity(tool, categoryName, tags);
+            return ToolDTO.fromEntity(tool, categoryName, tags, codehub);
         }).collect(Collectors.toList());
 
         return PageResponse.of(toolDTOs, page, size, (long) total);
     }
 
     @Transactional
-    public void recordView(Long toolId, String clientIdentifier, String ipAddress, String userAgent) {
+    public void recordView(Long toolId, String userId) {
         Tool tool = toolMapper.findById(toolId);
         if (tool == null) {
             throw new RuntimeException("Tool not found");
         }
-        tool.setViewCount(tool.getViewCount() + 1);
-        tool.preUpdate();
-        toolMapper.update(tool);
 
         ViewRecord viewRecord = new ViewRecord();
         viewRecord.setToolId(toolId);
-        viewRecord.setClientIdentifier(clientIdentifier);
-        viewRecord.setIpAddress(ipAddress);
-        viewRecord.setUserAgent(userAgent);
+        viewRecord.setUserId(userId);
         viewRecord.prePersist();
         viewRecordMapper.insert(viewRecord);
     }
 
     @Transactional
-    public boolean toggleFavorite(Long toolId, String clientIdentifier) {
-        Favorite favorite = favoriteMapper.findByClientIdentifierAndToolId(clientIdentifier, toolId);
+    public boolean toggleFavorite(Long toolId, String userId) {
+        Favorite favorite = favoriteMapper.findByUserIdAndToolId(userId, toolId);
         Tool tool = toolMapper.findById(toolId);
         if (tool == null) {
             throw new RuntimeException("Tool not found");
         }
 
         if (favorite != null) {
-            favoriteMapper.deleteByClientIdentifierAndToolId(clientIdentifier, toolId);
-            tool.setFavoriteCount(tool.getFavoriteCount() - 1);
-            tool.preUpdate();
-            toolMapper.update(tool);
+            favoriteMapper.deleteByUserIdAndToolId(userId, toolId);
             return false;
         } else {
             favorite = new Favorite();
-            favorite.setClientIdentifier(clientIdentifier);
+            favorite.setUserId(userId);
             favorite.setToolId(toolId);
             favorite.prePersist();
             favoriteMapper.insert(favorite);
-            tool.setFavoriteCount(tool.getFavoriteCount() + 1);
-            tool.preUpdate();
-            toolMapper.update(tool);
             return true;
         }
     }
 
-    public boolean isFavorited(Long toolId, String clientIdentifier) {
-        return favoriteMapper.existsByClientIdentifierAndToolId(clientIdentifier, toolId);
+    public boolean isFavorited(Long toolId, String userId) {
+        return favoriteMapper.existsByUserIdAndToolId(userId, toolId);
     }
 
     @Transactional
-    public void recordInstall(Long toolId, String ipAddress, String userAgent) {
+    public void recordInstall(Long toolId, String userId) {
         Tool tool = toolMapper.findById(toolId);
         if (tool == null) {
             throw new RuntimeException("Tool not found");
         }
-        tool.setInstallCount(tool.getInstallCount() + 1);
-        tool.preUpdate();
-        toolMapper.update(tool);
+
+        InstallRecord installRecord = new InstallRecord();
+        installRecord.setToolId(toolId);
+        installRecord.setUserId(userId);
+        installRecord.prePersist();
+        installRecordMapper.insert(installRecord);
     }
 
     @Transactional

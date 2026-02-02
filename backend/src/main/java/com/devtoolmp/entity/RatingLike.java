@@ -11,12 +11,12 @@ import java.time.LocalDateTime;
 public class RatingLike {
     private Long id;
     private Long ratingId;
-    private Long userId;
-    private LocalDateTime createdAt;
+    private String userId;
+    private LocalDateTime createTime;
 
     public void prePersist() {
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now();
+        if (createTime == null) {
+            createTime = LocalDateTime.now();
         }
     }
 }

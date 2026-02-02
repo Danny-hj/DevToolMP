@@ -11,23 +11,11 @@ public interface ToolMapper {
 
     Tool findById(@Param("id") Long id);
 
-    Tool findByGithubOwnerAndGithubRepo(@Param("githubOwner") String githubOwner, @Param("githubRepo") String githubRepo);
+    Tool findByCodehubId(@Param("codehubId") Long codehubId);
 
     List<Tool> findByCategoryId(@Param("categoryId") Long categoryId);
 
     List<Tool> findByStatus(@Param("status") String status);
-
-    List<Tool> findTop20ByStatusOrderByHotScoreDailyDesc();
-
-    List<Tool> findTop20ByStatusOrderByHotScoreWeeklyDesc();
-
-    List<Tool> findTop20ByStatusOrderByHotScoreAlltimeDesc();
-
-    List<Tool> findByStatusOrderByHotScoreDailyDescWithPage(@Param("status") String status, @Param("offset") int offset, @Param("limit") int limit);
-
-    List<Tool> findByStatusOrderByHotScoreWeeklyDescWithPage(@Param("status") String status, @Param("offset") int offset, @Param("limit") int limit);
-
-    List<Tool> findByStatusOrderByHotScoreAlltimeDescWithPage(@Param("status") String status, @Param("offset") int offset, @Param("limit") int limit);
 
     List<Tool> searchByKeyword(@Param("keyword") String keyword);
 

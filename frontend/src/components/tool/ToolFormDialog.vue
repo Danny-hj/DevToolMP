@@ -50,43 +50,43 @@
         </el-select>
       </el-form-item>
 
-      <el-form-item label="GitHub所有者" prop="githubOwner">
+      <el-form-item label="Codehub所有者" prop="codehubOwner">
         <el-input
-          v-model="formData.githubOwner"
+          v-model="formData.codehubOwner"
           placeholder="例如: vuejs（可选）"
           @blur="validateGithubRepo"
         >
           <template #append>
-            <el-button @click="fetchGithubRepo" :loading="fetching" :disabled="!formData.githubOwner || !formData.githubRepo">
+            <el-button @click="fetchGithubRepo" :loading="fetching" :disabled="!formData.codehubOwner || !formData.codehubRepo">
               <el-icon><Refresh /></el-icon>
             </el-button>
           </template>
         </el-input>
       </el-form-item>
 
-      <el-form-item label="GitHub仓库" prop="githubRepo">
+      <el-form-item label="Codehub仓库" prop="codehubRepo">
         <el-input
-          v-model="formData.githubRepo"
+          v-model="formData.codehubRepo"
           placeholder="例如: vue（可选）"
           @blur="validateGithubRepo"
         >
           <template #append>
-            <el-button @click="fetchGithubRepo" :loading="fetching" :disabled="!formData.githubOwner || !formData.githubRepo">
+            <el-button @click="fetchGithubRepo" :loading="fetching" :disabled="!formData.codehubOwner || !formData.codehubRepo">
               <el-icon><Refresh /></el-icon>
             </el-button>
           </template>
         </el-input>
-        <div v-if="githubRepoValid" class="repo-status">
+        <div v-if="codehubRepoValid" class="repo-status">
           <el-icon color="#67C23A"><SuccessFilled /></el-icon>
           <span>仓库有效</span>
         </div>
-        <div v-else-if="formData.githubOwner && formData.githubRepo" class="repo-status invalid">
+        <div v-else-if="formData.codehubOwner && formData.codehubRepo" class="repo-status invalid">
           <el-icon color="#F56C6C"><CircleCloseFilled /></el-icon>
           <span>仓库无效或不存在</span>
         </div>
-        <div v-if="!formData.githubOwner || !formData.githubRepo" class="repo-hint">
+        <div v-if="!formData.codehubOwner || !formData.codehubRepo" class="repo-hint">
           <el-icon><InfoFilled /></el-icon>
-          <span>如果不填写 GitHub 信息，工具将无法同步 GitHub 数据和显示仓库链接</span>
+          <span>如果不填写 Codehub 信息，工具将无法同步 Codehub 数据和显示仓库链接</span>
         </div>
       </el-form-item>
 
@@ -128,8 +128,8 @@
           {{ isEdit ? '保存' : '创建' }}
         </el-button>
         <el-button @click="handleClose">取消</el-button>
-        <el-button v-if="!isEdit && formData.githubOwner && formData.githubRepo" type="info" @click="fillFromGithub">
-          从GitHub获取信息
+        <el-button v-if="!isEdit && formData.codehubOwner && formData.codehubRepo" type="info" @click="fillFromGithub">
+          从Codehub获取信息
         </el-button>
       </el-form-item>
     </el-form>
@@ -157,15 +157,15 @@ const formRef = ref()
 const dialogVisible = ref(false)
 const submitting = ref(false)
 const fetching = ref(false)
-const githubRepoValid = ref(false)
+const codehubRepoValid = ref(false)
 
 // 表单数据
 const formData = ref({
   name: '',
   description: '',
   categoryId: null,
-  githubOwner: '',
-  githubRepo: '',
+  codehubOwner: '',
+  codehubRepo: '',
   version: '',
   tags: [],
   status: 'active'
@@ -174,13 +174,17 @@ const formData = ref({
 // 是否为编辑模式
 const isEdit = computed(() => !!props.tool)
 
-// 分类列表（示例数据，实际应从API获取）
+// 分类列表（与数据库保持一致）
 const categories = ref([
-  { id: 1, name: '开发工具' },
-  { id: 2, name: '设计工具' },
-  { id: 3, name: '生产力工具' },
-  { id: 4, name: '测试工具' }
+  { id: 1, name: 'MCP' },
+  { id: 2, name: 'Skill' },
+  { id: 3, name: '开发工具' },
+  { id: 4, name: '设计工具' },
+  { id: 5, name: '生产力工具' },
+  { id: 6, name: '测试工具' }
 ])
+
+// 移除fetchCategories相关的代码
 
 // 常用标签
 const commonTags = [
@@ -218,13 +222,13 @@ watch(() => props.modelValue, (val) => {
         name: props.tool.name || '',
         description: props.tool.description || '',
         categoryId: props.tool.categoryId || null,
-        githubOwner: props.tool.githubOwner || '',
-        githubRepo: props.tool.githubRepo || '',
+        codehubOwner: props.tool.codehubOwner || '',
+        codehubRepo: props.tool.codehubRepo || '',
         version: props.tool.version || '',
         tags: props.tool.tags || [],
         status: props.tool.status || 'active'
       })
-      githubRepoValid.value = true
+      codehubRepoValid.value = true
     } else {
       // 新增模式：重置表单（延迟执行，确保DOM已渲染）
       nextTick(() => {
@@ -249,13 +253,13 @@ const resetForm = () => {
     name: '',
     description: '',
     categoryId: null,
-    githubOwner: '',
-    githubRepo: '',
+    codehubOwner: '',
+    codehubRepo: '',
     version: '',
     tags: [],
     status: 'active'
   }
-  githubRepoValid.value = false
+  codehubRepoValid.value = false
   // 使用 nextTick 确保表单已渲染
   nextTick(() => {
     formRef.value?.clearValidate()
@@ -267,36 +271,36 @@ const handleClose = () => {
   dialogVisible.value = false
 }
 
-// 验证GitHub仓库
+// 验证Codehub仓库
 const validateGithubRepo = async () => {
-  if (!formData.value.githubOwner || !formData.value.githubRepo) {
-    githubRepoValid.value = false
+  if (!formData.value.codehubOwner || !formData.value.codehubRepo) {
+    codehubRepoValid.value = false
     return
   }
 
   try {
-    const isValid = await toolsStore.validateGitHubRepo(
-      formData.value.githubOwner,
-      formData.value.githubRepo
+    const isValid = await toolsStore.validateCodehubRepo(
+      formData.value.codehubOwner,
+      formData.value.codehubRepo
     )
-    githubRepoValid.value = isValid
+    codehubRepoValid.value = isValid
   } catch (error) {
-    githubRepoValid.value = false
+    codehubRepoValid.value = false
   }
 }
 
-// 从GitHub获取仓库信息
+// 从Codehub获取仓库信息
 const fetchGithubRepo = async () => {
-  if (!formData.value.githubOwner || !formData.value.githubRepo) {
-    ElMessage.warning('请先填写GitHub所有者和仓库名')
+  if (!formData.value.codehubOwner || !formData.value.codehubRepo) {
+    ElMessage.warning('请先填写Codehub所有者和仓库名')
     return
   }
 
   fetching.value = true
   try {
-    const repoInfo = await toolsStore.fetchGitHubRepoInfo(
-      formData.value.githubOwner,
-      formData.value.githubRepo
+    const repoInfo = await toolsStore.fetchCodehubRepoInfo(
+      formData.value.codehubOwner,
+      formData.value.codehubRepo
     )
 
     if (repoInfo) {
@@ -307,38 +311,38 @@ const fetchGithubRepo = async () => {
       if (!formData.value.description) {
         formData.value.description = repoInfo.description || ''
       }
-      githubRepoValid.value = true
-      ElMessage.success('GitHub仓库信息获取成功')
+      codehubRepoValid.value = true
+      ElMessage.success('Codehub仓库信息获取成功')
     } else {
-      githubRepoValid.value = false
-      ElMessage.error('无法获取GitHub仓库信息，请检查仓库地址是否正确')
+      codehubRepoValid.value = false
+      ElMessage.error('无法获取Codehub仓库信息，请检查仓库地址是否正确')
     }
   } catch (error) {
-    githubRepoValid.value = false
-    ElMessage.error('获取GitHub仓库信息失败')
+    codehubRepoValid.value = false
+    ElMessage.error('获取Codehub仓库信息失败')
   } finally {
     fetching.value = false
   }
 }
 
-// 从GitHub填充完整信息
+// 从Codehub填充完整信息
 const fillFromGithub = async () => {
   await fetchGithubRepo()
-  if (!githubRepoValid.value) {
+  if (!codehubRepoValid.value) {
     return
   }
 
   try {
-    const repoInfo = await toolsStore.fetchGitHubRepoInfo(
-      formData.value.githubOwner,
-      formData.value.githubRepo
+    const repoInfo = await toolsStore.fetchCodehubRepoInfo(
+      formData.value.codehubOwner,
+      formData.value.codehubRepo
     )
 
     if (repoInfo) {
       formData.value.name = repoInfo.name || ''
       formData.value.description = repoInfo.description || ''
       formData.value.version = 'latest'
-      ElMessage.success('已从GitHub填充信息')
+      ElMessage.success('已从Codehub填充信息')
     }
   } catch (error) {
     ElMessage.error('填充信息失败')
@@ -355,8 +359,8 @@ const handleSubmit = async () => {
       name: formData.value.name,
       description: formData.value.description,
       categoryId: formData.value.categoryId,
-      githubOwner: formData.value.githubOwner,
-      githubRepo: formData.value.githubRepo,
+      codehubOwner: formData.value.codehubOwner,
+      codehubRepo: formData.value.codehubRepo,
       version: formData.value.version,
       tags: formData.value.tags,
       status: formData.value.status

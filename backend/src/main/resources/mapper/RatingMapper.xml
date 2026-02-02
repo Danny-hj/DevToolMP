@@ -6,20 +6,20 @@
     <resultMap id="BaseResultMap" type="com.devtoolmp.entity.Rating">
         <id column="id" property="id"/>
         <result column="tool_id" property="toolId"/>
-        <result column="client_identifier" property="clientIdentifier"/>
+        <result column="user_id" property="userId"/>
         <result column="username" property="username"/>
         <result column="score" property="score"/>
         <result column="comment" property="comment"/>
-        <result column="created_at" property="createdAt"/>
-        <result column="updated_at" property="updatedAt"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
     </resultMap>
 
     <select id="findById" resultMap="BaseResultMap">
         SELECT * FROM ratings WHERE id = #{id}
     </select>
 
-    <select id="findByToolIdAndClientIdentifier" resultMap="BaseResultMap">
-        SELECT * FROM ratings WHERE tool_id = #{toolId} AND client_identifier = #{clientIdentifier}
+    <select id="findByToolIdAndUserId" resultMap="BaseResultMap">
+        SELECT * FROM ratings WHERE tool_id = #{toolId} AND user_id = #{userId}
     </select>
 
     <select id="findByToolId" resultMap="BaseResultMap">
@@ -44,15 +44,15 @@
     </select>
 
     <insert id="insert" parameterType="com.devtoolmp.entity.Rating" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO ratings (tool_id, client_identifier, username, score, comment, created_at, updated_at)
-        VALUES (#{toolId}, #{clientIdentifier}, #{username}, #{score}, #{comment}, #{createdAt}, #{updatedAt})
+        INSERT INTO ratings (tool_id, user_id, username, score, comment, create_time, update_time)
+        VALUES (#{toolId}, #{userId}, #{username}, #{score}, #{comment}, #{createTime}, #{updateTime})
     </insert>
 
     <update id="update" parameterType="com.devtoolmp.entity.Rating">
         UPDATE ratings
         SET score = #{score},
             comment = #{comment},
-            updated_at = #{updatedAt}
+            update_time = #{updateTime}
         WHERE id = #{id}
     </update>
 

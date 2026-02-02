@@ -29,7 +29,7 @@
         <template #label>
           <span class="tab-label">
             <span>全部</span>
-            <span class="tab-count">{{ tools.length }}</span>
+            <span class="tab-count">{{ total }}</span>
           </span>
         </template>
       </el-tab-pane>
@@ -57,6 +57,7 @@
         v-for="tool in filteredTools"
         :key="tool.id"
         :tool="tool"
+        :hot-score="tool.hotScoreDaily"
         :admin-mode="adminMode"
         @click="handleToolClick"
         @favorite="handleFavorite"
@@ -73,7 +74,7 @@
       v-model:current-page="currentPage"
       v-model:page-size="pageSize"
       :total="total"
-      :page-sizes="[12, 24, 48]"
+      :page-sizes="[24, 48, 60, 100]"
       layout="total, sizes, prev, pager, next, jumper"
       @current-change="handlePageChange"
       @size-change="handleSizeChange"
@@ -103,12 +104,13 @@ const toolsStore = useToolsStore()
 const userStore = useUserStore()
 
 const currentPage = ref(1)
-const pageSize = ref(12)
+const pageSize = ref(24)
 const sortBy = ref('latest')
 const activeTab = ref('all')
 const showAddDialog = ref(false)
 const editingTool = ref(null)
 const syncingSkills = ref(false)
+const allTools = ref([]) // 存储所有工具用于分类统计
 
 // 管理模式
 const adminMode = computed(() => userStore.adminMode)
@@ -120,7 +122,9 @@ const total = computed(() => toolsStore.total)
 // 计算所有唯一分类
 const categories = computed(() => {
   const categoryMap = new Map()
-  tools.value.forEach(tool => {
+  // 基于所有工具（不仅仅是当前页）计算分类
+  const toolsToUse = allTools.value.length > 0 ? allTools.value : tools.value
+  toolsToUse.forEach(tool => {
     if (tool.categoryId && tool.categoryName) {
       categoryMap.set(tool.categoryId, {
         id: tool.categoryId,
@@ -131,9 +135,10 @@ const categories = computed(() => {
   return Array.from(categoryMap.values()).sort((a, b) => a.id - b.id)
 })
 
-// 获取某个分类的工具数量
+// 获取某个分类的工具数量（基于所有工具）
 const getCategoryCount = (categoryId) => {
-  return tools.value.filter(tool => tool.categoryId === categoryId).length
+  const toolsToUse = allTools.value.length > 0 ? allTools.value : tools.value
+  return toolsToUse.filter(tool => tool.categoryId === categoryId).length
 }
 
 // 根据 Tab 筛选工具
@@ -145,13 +150,31 @@ const filteredTools = computed(() => {
   return tools.value.filter(tool => tool.categoryId === categoryId)
 })
 
-onMounted(() => {
+onMounted(async () => {
+  // 首先加载所有工具用于分类统计
+  await fetchAllToolsForStats()
+  // 然后加载第一页工具
   fetchTools()
 })
 
 watch([currentPage, pageSize], () => {
   fetchTools()
 })
+
+// 加载所有工具用于统计（后台请求，不影响UI）
+const fetchAllToolsForStats = async () => {
+  try {
+    // 获取所有工具用于分类统计
+    const response = await fetch('http://localhost:8080/api/tools?page=0&size=1000', {
+      credentials: 'include'
+    })
+    const data = await response.json()
+    allTools.value = data.content || []
+    console.log('[Tools] Fetched all tools for stats:', allTools.value.length)
+  } catch (error) {
+    console.error('[Tools] Failed to fetch all tools for stats:', error)
+  }
+}
 
 const fetchTools = () => {
   const page = currentPage.value - 1
@@ -174,7 +197,10 @@ const handleSort = () => {
 
 const handleTabChange = (tabName) => {
   activeTab.value = tabName
-  currentPage.value = 1
+  // 切换tab时重置到第一页
+  if (currentPage.value !== 1) {
+    currentPage.value = 1
+  }
 }
 
 const handleToolClick = (tool) => {
@@ -210,24 +236,55 @@ const handleUnpublish = async (tool) => {
 }
 
 const handleSynced = (tool) => {
-  ElMessage.success(`${tool.name} 的GitHub数据已同步`)
+  ElMessage.success(`${tool.name} 的Codehub数据已同步`)
 }
 
-const handleEdit = (tool) => {
-  editingTool.value = tool
+const handleAddTool = () => {
+  editingTool.value = null
   showAddDialog.value = true
 }
 
-const handleToolSuccess = () => {
+const handleEdit = (tool) => {
+  // 保存工具的原始分类ID，用于对比是否修改了分类
+  editingTool.value = {
+    ...tool,
+    originalCategoryId: tool.categoryId
+  }
+  showAddDialog.value = true
+}
+
+const handleToolSuccess = async () => {
+  // 保存编辑前的工具信息
+  const editingToolId = editingTool.value?.id
+  const previousCategoryId = editingTool.value?.originalCategoryId || editingTool.value?.categoryId
+
   editingTool.value = null
-  // 刷新列表
-  fetchTools()
+
+  // 刷新所有工具数据（包括分类统计）
+  await fetchAllToolsForStats()
+
+  // 刷新当前页工具列表
+  await fetchTools()
+
+  // 如果是编辑模式且修改了分类，自动切换到新的分类tab
+  if (editingToolId && previousCategoryId) {
+    // 从allTools中找到刚才编辑的工具，查看它的最新分类
+    const updatedTool = allTools.value.find(t => t.id === editingToolId)
+    if (updatedTool && updatedTool.categoryId !== previousCategoryId) {
+      // 切换到新的分类tab
+      activeTab.value = String(updatedTool.categoryId)
+      ElMessage.success(`工具已移动到 ${updatedTool.categoryName || '新分类'}`)
+      return
+    }
+  }
+
+  ElMessage.success(editingToolId ? '保存成功' : '创建成功')
 }
 
 const handleSyncAgentSkills = async () => {
   try {
     await ElMessageBox.confirm(
-      '将从 GitHub 搜索并同步 Agent Skills 仓库到工具市场。\n\n此操作可能需要 30-60 秒，请耐心等待。',
+      '将从 Codehub 搜索并同步 Agent Skills 仓库到工具市场。\n\n此操作可能需要 30-60 秒，请耐心等待。',
       '确认同步',
       {
         confirmButtonText: '确定',
@@ -277,7 +334,7 @@ const handleSyncAgentSkills = async () => {
     let errorMessage = '同步失败，请稍后重试'
 
     if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
-      errorMessage = '同步超时，GitHub API 响应较慢，请稍后重试'
+      errorMessage = '同步超时，Codehub API 响应较慢，请稍后重试'
     } else if (error.response) {
       errorMessage = `服务器错误: ${error.response.status} - ${error.response.data?.message || '未知错误'}`
     } else if (error.message) {

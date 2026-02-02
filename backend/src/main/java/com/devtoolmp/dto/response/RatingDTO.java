@@ -19,7 +19,7 @@ public class RatingDTO {
     private Integer score;
     private String comment;
     private Integer likes;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private LocalDateTime createTime;
+    private LocalDateTime updateTime;
     private List<CommentReplyDTO> replies;
 }

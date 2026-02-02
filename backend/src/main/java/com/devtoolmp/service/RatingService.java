@@ -67,15 +67,15 @@ public class RatingService {
     }
 
     @Transactional
-    public RatingDTO createRating(Long toolId, String clientIdentifier, String username, Integer score, String comment) {
-        Rating existingRating = ratingMapper.findByToolIdAndClientIdentifier(toolId, clientIdentifier);
+    public RatingDTO createRating(Long toolId, String userId, String username, Integer score, String comment) {
+        Rating existingRating = ratingMapper.findByToolIdAndUserId(toolId, userId);
         if (existingRating != null) {
-            throw new RuntimeException("该客户端已对此工具评分");
+            throw new RuntimeException("该用户已对此工具评分");
         }
 
         Rating rating = new Rating();
         rating.setToolId(toolId);
-        rating.setClientIdentifier(clientIdentifier);
+        rating.setUserId(userId);
         rating.setUsername(username);
         rating.setScore(score);
         rating.setComment(comment);
@@ -85,12 +85,12 @@ public class RatingService {
     }
 
     @Transactional
-    public RatingDTO updateRating(Long ratingId, String clientIdentifier, Integer score, String comment) {
+    public RatingDTO updateRating(Long ratingId, String userId, Integer score, String comment) {
         Rating rating = ratingMapper.findById(ratingId);
         if (rating == null) {
             throw new RuntimeException("Rating not found");
         }
-        if (!rating.getClientIdentifier().equals(clientIdentifier)) {
+        if (!rating.getUserId().equals(userId)) {
             throw new RuntimeException("只能修改自己的评分");
         }
         rating.setScore(score);
@@ -101,12 +101,12 @@ public class RatingService {
     }
 
     @Transactional
-    public void deleteRating(Long ratingId, String clientIdentifier) {
+    public void deleteRating(Long ratingId, String userId) {
         Rating rating = ratingMapper.findById(ratingId);
         if (rating == null) {
             throw new RuntimeException("Rating not found");
         }
-        if (!rating.getClientIdentifier().equals(clientIdentifier)) {
+        if (!rating.getUserId().equals(userId)) {
             throw new RuntimeException("只能删除自己的评分");
         }
         commentReplyMapper.deleteByRatingId(ratingId);
@@ -119,7 +119,7 @@ public class RatingService {
     }
 
     @Transactional
-    public CommentReplyDTO createReply(Long ratingId, String clientIdentifier, String username, String content) {
+    public CommentReplyDTO createReply(Long ratingId, String userId, String username, String content) {
         Rating rating = ratingMapper.findById(ratingId);
         if (rating == null) {
             throw new RuntimeException("Rating not found");
@@ -127,7 +127,7 @@ public class RatingService {
 
         CommentReply reply = new CommentReply();
         reply.setRatingId(ratingId);
-        reply.setClientIdentifier(clientIdentifier);
+        reply.setUserId(userId);
         reply.setUsername(username);
         reply.setContent(content);
         reply.prePersist();
@@ -136,12 +136,12 @@ public class RatingService {
     }
 
     @Transactional
-    public void deleteReply(Long replyId, String clientIdentifier) {
+    public void deleteReply(Long replyId, String userId) {
         CommentReply reply = commentReplyMapper.findById(replyId);
         if (reply == null) {
             throw new RuntimeException("Reply not found");
         }
-        if (!reply.getClientIdentifier().equals(clientIdentifier)) {
+        if (!reply.getUserId().equals(userId)) {
             throw new RuntimeException("只能删除自己的回复");
         }
         commentReplyMapper.deleteById(replyId);
@@ -157,8 +157,8 @@ public class RatingService {
         dto.setScore(rating.getScore());
         dto.setComment(rating.getComment());
         dto.setLikes(0);
-        dto.setCreatedAt(rating.getCreatedAt());
-        dto.setUpdatedAt(rating.getUpdatedAt());
+        dto.setCreateTime(rating.getCreateTime());
+        dto.setUpdateTime(rating.getUpdateTime());
 
         // 加载回复数据
         List<CommentReply> replies = commentReplyMapper.findByRatingIdOrderByCreatedAtAsc(rating.getId());
@@ -180,7 +180,7 @@ public class RatingService {
         dto.setReplyToUserId(reply.getReplyToUserId());
         dto.setReplyToUsername(reply.getReplyToUsername());
         dto.setContent(reply.getContent());
-        dto.setCreatedAt(reply.getCreatedAt());
+        dto.setCreateTime(reply.getCreateTime());
         return dto;
     }
 }

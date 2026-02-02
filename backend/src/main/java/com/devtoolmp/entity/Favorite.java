@@ -10,13 +10,13 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class Favorite {
     private Long id;
-    private String clientIdentifier;
+    private String userId;
     private Long toolId;
-    private LocalDateTime createdAt;
+    private LocalDateTime createTime;
 
     public void prePersist() {
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now();
+        if (createTime == null) {
+            createTime = LocalDateTime.now();
         }
     }
 }

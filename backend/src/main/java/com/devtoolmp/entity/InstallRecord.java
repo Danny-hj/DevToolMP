@@ -8,14 +8,10 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CommentReply {
+public class InstallRecord {
     private Long id;
-    private Long ratingId;
+    private Long toolId;
     private String userId;
-    private String username;
-    private Long replyToUserId;
-    private String replyToUsername;
-    private String content;
     private LocalDateTime createTime;
 
     public void prePersist() {

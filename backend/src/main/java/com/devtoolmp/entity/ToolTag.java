@@ -12,11 +12,11 @@ public class ToolTag {
     private Long id;
     private Long toolId;
     private String tagName;
-    private LocalDateTime createdAt;
+    private LocalDateTime createTime;
 
     public void prePersist() {
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now();
+        if (createTime == null) {
+            createTime = LocalDateTime.now();
         }
     }
 }

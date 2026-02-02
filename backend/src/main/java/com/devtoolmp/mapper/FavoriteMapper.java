@@ -4,6 +4,7 @@ import com.devtoolmp.entity.Favorite;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Mapper
@@ -11,17 +12,26 @@ public interface FavoriteMapper {
 
     Favorite findById(@Param("id") Long id);
 
-    Favorite findByClientIdentifierAndToolId(@Param("clientIdentifier") String clientIdentifier, @Param("toolId") Long toolId);
+    Favorite findByUserIdAndToolId(@Param("userId") String userId, @Param("toolId") Long toolId);
 
-    List<Favorite> findByClientIdentifier(@Param("clientIdentifier") String clientIdentifier, @Param("offset") int offset, @Param("limit") int limit);
+    List<Favorite> findByUserId(@Param("userId") String userId, @Param("offset") int offset, @Param("limit") int limit);
 
-    int countByClientIdentifier(@Param("clientIdentifier") String clientIdentifier);
+    int countByUserId(@Param("userId") String userId);
 
     void insert(Favorite favorite);
 
     void deleteById(@Param("id") Long id);
 
-    void deleteByClientIdentifierAndToolId(@Param("clientIdentifier") String clientIdentifier, @Param("toolId") Long toolId);
+    void deleteByUserIdAndToolId(@Param("userId") String userId, @Param("toolId") Long toolId);
 
-    boolean existsByClientIdentifierAndToolId(@Param("clientIdentifier") String clientIdentifier, @Param("toolId") Long toolId);
+    boolean existsByUserIdAndToolId(@Param("userId") String userId, @Param("toolId") Long toolId);
+
+    // 统计相关方法
+    int countByToolId(@Param("toolId") Long toolId);
+
+    int countByToolIdAndCreatedAtBetween(
+            @Param("toolId") Long toolId,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
 }

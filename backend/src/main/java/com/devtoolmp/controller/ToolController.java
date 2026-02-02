@@ -42,9 +42,9 @@ public class ToolController {
     public ResponseEntity<ToolDetailDTO> getToolDetail(
             @PathVariable Long id,
             HttpServletRequest request) {
-        String clientIdentifier = getClientIdentifier(request);
+        String userId = "Danny";
 
-        ToolDetailDTO toolDetail = toolService.getToolDetailById(id, clientIdentifier);
+        ToolDetailDTO toolDetail = toolService.getToolDetailById(id, userId);
         return ResponseEntity.ok(toolDetail);
     }
 
@@ -73,8 +73,7 @@ public class ToolController {
     public ResponseEntity<ToolDTO> updateTool(
             @PathVariable Long id,
             @Valid @RequestBody ToolUpdateRequest request) {
-        Tool tool = toolService.updateTool(id, request);
-        ToolDTO toolDTO = toolService.getToolById(tool.getId());
+        ToolDTO toolDTO = toolService.updateTool(id, request);
         return ResponseEntity.ok(toolDTO);
     }
 
@@ -88,11 +87,9 @@ public class ToolController {
     public ResponseEntity<Void> recordView(
             @PathVariable Long id,
             HttpServletRequest request) {
-        String clientIdentifier = getClientIdentifier(request);
-        String ipAddress = request.getRemoteAddr();
-        String userAgent = request.getHeader("User-Agent");
+        String userId = "Danny";
 
-        toolService.recordView(id, clientIdentifier, ipAddress, userAgent);
+        toolService.recordView(id, userId);
         return ResponseEntity.ok().build();
     }
 
@@ -100,9 +97,9 @@ public class ToolController {
     public ResponseEntity<Boolean> toggleFavorite(
             @PathVariable Long id,
             HttpServletRequest request) {
-        String clientIdentifier = getClientIdentifier(request);
+        String userId = "Danny";
 
-        boolean isFavorited = toolService.toggleFavorite(id, clientIdentifier);
+        boolean isFavorited = toolService.toggleFavorite(id, userId);
         return ResponseEntity.ok(isFavorited);
     }
 
@@ -110,9 +107,9 @@ public class ToolController {
     public ResponseEntity<Boolean> checkFavorite(
             @PathVariable Long id,
             HttpServletRequest request) {
-        String clientIdentifier = getClientIdentifier(request);
+        String userId = "Danny";
 
-        boolean isFavorited = toolService.isFavorited(id, clientIdentifier);
+        boolean isFavorited = toolService.isFavorited(id, userId);
         return ResponseEntity.ok(isFavorited);
     }
 
@@ -120,10 +117,9 @@ public class ToolController {
     public ResponseEntity<Void> recordInstall(
             @PathVariable Long id,
             HttpServletRequest request) {
-        String ipAddress = request.getRemoteAddr();
-        String userAgent = request.getHeader("User-Agent");
+        String userId = "Danny";
 
-        toolService.recordInstall(id, ipAddress, userAgent);
+        toolService.recordInstall(id, userId);
         return ResponseEntity.ok().build();
     }
 
@@ -137,14 +133,5 @@ public class ToolController {
     public ResponseEntity<Void> unpublishTool(@PathVariable Long id) {
         toolService.unpublishTool(id);
         return ResponseEntity.ok().build();
-    }
-
-    /**
-     * 使用IP地址和User-Agent生成客户端标识符
-     */
-    private String getClientIdentifier(HttpServletRequest request) {
-        String ipAddress = request.getRemoteAddr();
-        String userAgent = request.getHeader("User-Agent");
-        return ipAddress + ":" + (userAgent != null ? userAgent : "");
     }
 }

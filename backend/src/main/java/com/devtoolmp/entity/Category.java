@@ -12,13 +12,12 @@ public class Category {
     private Long id;
     private String name;
     private String description;
-    private String icon;
     private Integer sortOrder = 0;
-    private LocalDateTime createdAt;
+    private LocalDateTime createTime;
 
     public void prePersist() {
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now();
+        if (createTime == null) {
+            createTime = LocalDateTime.now();
         }
     }
 }

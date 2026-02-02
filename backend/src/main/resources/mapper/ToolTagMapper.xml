@@ -7,7 +7,7 @@
         <id column="id" property="id"/>
         <result column="tool_id" property="toolId"/>
         <result column="tag_name" property="tagName"/>
-        <result column="created_at" property="createdAt"/>
+        <result column="create_time" property="createTime"/>
     </resultMap>
 
     <select id="findById" resultMap="BaseResultMap">
@@ -23,8 +23,8 @@
     </select>
 
     <insert id="insert" parameterType="com.devtoolmp.entity.ToolTag" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO tool_tags (tool_id, tag_name, created_at)
-        VALUES (#{toolId}, #{tagName}, #{createdAt})
+        INSERT INTO tool_tags (tool_id, tag_name, create_time)
+        VALUES (#{toolId}, #{tagName}, #{createTime})
     </insert>
 
     <delete id="deleteById">

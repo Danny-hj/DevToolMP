@@ -299,7 +299,7 @@ const formatNumber = (num) => {
 const copyInstallCommand = async (tool) => {
   const command = tool.packageName
     ? `npm install ${tool.packageName}`
-    : `npm install ${tool.githubOwner}/${tool.githubRepo}`
+    : `npm install ${tool.codehubOwner}/${tool.codehubRepo}`
 
   try {
     await navigator.clipboard.writeText(command)

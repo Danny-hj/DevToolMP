@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.devtoolmp.mapper.ViewRecordMapper">
+<mapper namespace="com.devtoolmp.mapper.InstallRecordMapper">
 
-    <resultMap id="BaseResultMap" type="com.devtoolmp.entity.ViewRecord">
+    <resultMap id="BaseResultMap" type="com.devtoolmp.entity.InstallRecord">
         <id column="id" property="id"/>
         <result column="tool_id" property="toolId"/>
         <result column="user_id" property="userId"/>
@@ -11,31 +11,31 @@
     </resultMap>
 
     <select id="findById" resultMap="BaseResultMap">
-        SELECT * FROM view_records WHERE id = #{id}
+        SELECT * FROM install_records WHERE id = #{id}
     </select>
 
     <select id="findByToolIdAndCreatedAtBetween" resultMap="BaseResultMap">
-        SELECT * FROM view_records
+        SELECT * FROM install_records
         WHERE tool_id = #{toolId}
         AND create_time BETWEEN #{start} AND #{end}
     </select>
 
-    <insert id="insert" parameterType="com.devtoolmp.entity.ViewRecord" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO view_records (tool_id, user_id, create_time)
+    <insert id="insert" parameterType="com.devtoolmp.entity.InstallRecord" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO install_records (tool_id, user_id, create_time)
         VALUES (#{toolId}, #{userId}, #{createTime})
     </insert>
 
     <delete id="deleteById">
-        DELETE FROM view_records WHERE id = #{id}
+        DELETE FROM install_records WHERE id = #{id}
     </delete>
 
     <!-- 统计相关方法 -->
     <select id="countByToolId" resultType="int">
-        SELECT COUNT(*) FROM view_records WHERE tool_id = #{toolId}
+        SELECT COUNT(*) FROM install_records WHERE tool_id = #{toolId}
     </select>
 
     <select id="countByToolIdAndCreatedAtBetween" resultType="int">
-        SELECT COUNT(*) FROM view_records
+        SELECT COUNT(*) FROM install_records
         WHERE tool_id = #{toolId}
         AND create_time BETWEEN #{start} AND #{end}
     </select>

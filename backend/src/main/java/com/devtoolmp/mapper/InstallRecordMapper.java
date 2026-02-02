@@ -1,6 +1,6 @@
 package com.devtoolmp.mapper;
 
-import com.devtoolmp.entity.ViewRecord;
+import com.devtoolmp.entity.InstallRecord;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -8,17 +8,17 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Mapper
-public interface ViewRecordMapper {
+public interface InstallRecordMapper {
 
-    ViewRecord findById(@Param("id") Long id);
+    InstallRecord findById(@Param("id") Long id);
 
-    List<ViewRecord> findByToolIdAndCreatedAtBetween(
+    List<InstallRecord> findByToolIdAndCreatedAtBetween(
             @Param("toolId") Long toolId,
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end
     );
 
-    void insert(ViewRecord viewRecord);
+    void insert(InstallRecord installRecord);
 
     void deleteById(@Param("id") Long id);
 
