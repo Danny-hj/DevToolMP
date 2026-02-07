@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.devtoolmp.mapper.CodehubMapper">
+
+    <resultMap id="BaseResultMap" type="com.devtoolmp.entity.Codehub">
+        <id column="id" property="id"/>
+        <result column="owner" property="owner"/>
+        <result column="repo" property="repo"/>
+        <result column="version" property="version"/>
+        <result column="stars" property="stars"/>
+        <result column="forks" property="forks"/>
+        <result column="open_issues" property="openIssues"/>
+        <result column="watchers" property="watchers"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT * FROM toolmk_codehub WHERE id = #{id}
+    </select>
+
+    <select id="findByOwnerAndRepo" resultMap="BaseResultMap">
+        SELECT * FROM toolmk_codehub WHERE owner = #{owner} AND repo = #{repo}
+    </select>
+
+    <select id="findAll" resultMap="BaseResultMap">
+        SELECT * FROM toolmk_codehub ORDER BY stars DESC
+    </select>
+
+    <insert id="insert" parameterType="com.devtoolmp.entity.Codehub" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO toolmk_codehub (owner, repo, version, stars, forks, open_issues, watchers, create_time, update_time)
+        VALUES (#{owner}, #{repo}, #{version}, #{stars}, #{forks}, #{openIssues}, #{watchers}, #{createTime}, #{updateTime})
+    </insert>
+
+    <update id="update" parameterType="com.devtoolmp.entity.Codehub">
+        UPDATE toolmk_codehub
+        SET owner = #{owner},
+            repo = #{repo},
+            version = #{version},
+            stars = #{stars},
+            forks = #{forks},
+            open_issues = #{openIssues},
+            watchers = #{watchers},
+            update_time = #{updateTime}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM toolmk_codehub WHERE id = #{id}
+    </delete>
+
+    <select id="countAll" resultType="int">
+        SELECT COUNT(*) FROM toolmk_codehub
+    </select>
+
+</mapper>

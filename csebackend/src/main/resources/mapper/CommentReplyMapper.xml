@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.devtoolmp.mapper.CommentReplyMapper">
+
+    <resultMap id="BaseResultMap" type="com.devtoolmp.entity.CommentReply">
+        <id column="id" property="id"/>
+        <result column="rating_id" property="ratingId"/>
+        <result column="user_id" property="userId"/>
+        <result column="username" property="username"/>
+        <result column="reply_to_user_id" property="replyToUserId"/>
+        <result column="reply_to_username" property="replyToUsername"/>
+        <result column="content" property="content"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT * FROM toolmk_comment_replies WHERE id = #{id}
+    </select>
+
+    <select id="findByRatingIdOrderByCreatedAtAsc" resultMap="BaseResultMap">
+        SELECT * FROM toolmk_comment_replies WHERE rating_id = #{ratingId} ORDER BY create_time ASC
+    </select>
+
+    <insert id="insert" parameterType="com.devtoolmp.entity.CommentReply" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO toolmk_comment_replies (rating_id, user_id, username, reply_to_user_id, reply_to_username, content, create_time)
+        VALUES (#{ratingId}, #{userId}, #{username}, #{replyToUserId}, #{replyToUsername}, #{content}, #{createTime})
+    </insert>
+
+    <delete id="deleteById">
+        DELETE FROM toolmk_comment_replies WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteByRatingId">
+        DELETE FROM toolmk_comment_replies WHERE rating_id = #{ratingId}
+    </delete>
+
+</mapper>

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.devtoolmp.mapper.RatingMapper">
+
+    <resultMap id="BaseResultMap" type="com.devtoolmp.entity.Rating">
+        <id column="id" property="id"/>
+        <result column="tool_id" property="toolId"/>
+        <result column="user_id" property="userId"/>
+        <result column="username" property="username"/>
+        <result column="score" property="score"/>
+        <result column="comment" property="comment"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT * FROM toolmk_ratings WHERE id = #{id}
+    </select>
+
+    <select id="findByToolIdAndUserId" resultMap="BaseResultMap">
+        SELECT * FROM toolmk_ratings WHERE tool_id = #{toolId} AND user_id = #{userId}
+    </select>
+
+    <select id="findByToolId" resultMap="BaseResultMap">
+        SELECT * FROM toolmk_ratings WHERE tool_id = #{toolId}
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countByToolId" resultType="int">
+        SELECT COUNT(*) FROM toolmk_ratings WHERE tool_id = #{toolId}
+    </select>
+
+    <select id="getAverageScoreByToolId" resultType="java.lang.Double">
+        SELECT AVG(score) FROM toolmk_ratings WHERE tool_id = #{toolId}
+    </select>
+
+    <select id="countByToolIdAndScore" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM toolmk_ratings WHERE tool_id = #{toolId} AND score = #{score}
+    </select>
+
+    <select id="getScoreDistribution" resultType="java.util.Map">
+        SELECT score, COUNT(*) as count FROM toolmk_ratings WHERE tool_id = #{toolId} GROUP BY score
+    </select>
+
+    <insert id="insert" parameterType="com.devtoolmp.entity.Rating" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO toolmk_ratings (tool_id, user_id, username, score, comment, create_time, update_time)
+        VALUES (#{toolId}, #{userId}, #{username}, #{score}, #{comment}, #{createTime}, #{updateTime})
+    </insert>
+
+    <update id="update" parameterType="com.devtoolmp.entity.Rating">
+        UPDATE toolmk_ratings
+        SET score = #{score},
+            comment = #{comment},
+            update_time = #{updateTime}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM toolmk_ratings WHERE id = #{id}
+    </delete>
+
+</mapper>
